@@ -1,0 +1,5 @@
+.env
+llm_env/
+newllm_env/
+venv/
+env/

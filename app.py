@@ -160,6 +160,9 @@ if __name__ == '__main__':
     else:
         print("WARNING: GROQ_API_KEY not found in environment!")
     
-    # Run app on the specified port
-    print(f"Starting Flask app on port {args.port}")
-    app.run(debug=True, port=args.port) 
+    # Get port from environment variable (Heroku sets this) or use default
+    port = int(os.environ.get('PORT', args.port))
+    host = '0.0.0.0'  # Necessary for Heroku
+    
+    print(f"Starting Flask app on {host}:{port}")
+    app.run(host=host, port=port, debug=False)  # Set debug=False for production 
