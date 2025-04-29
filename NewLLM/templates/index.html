@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voice Conversation App</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Voice Conversation App</h1>
+            <p class="status" id="status">Ready</p>
+        </header>
+        
+        <main>
+            <div class="conversation" id="conversation">
+                <!-- Conversation messages will be displayed here -->
+            </div>
+            
+            <div class="controls">
+                <button id="recordButton" class="record-button">
+                    <span class="record-icon"></span>
+                    Hold to Speak
+                </button>
+            </div>
+        </main>
+        
+        <footer>
+            <p>Powered by Groq API</p>
+        </footer>
+    </div>
+    
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html> 
