@@ -4,6 +4,7 @@ import base64
 import sys
 import argparse
 import json
+import glob
 
 # Load environment variables first
 from dotenv import load_dotenv
@@ -33,12 +34,22 @@ app = Flask(__name__)
 # Initialize conversation history
 conversation_history = []
 
+# Global variable to store the current patient simulation
+current_patient_simulation = None
+
+def get_available_patient_simulations():
+    """Get list of available patient simulation files"""
+    simulation_files = glob.glob('patient_simulation_*.json')
+    return [os.path.basename(f) for f in simulation_files]
+
 def initialize_patient_data(patient_file=None):
+    global current_patient_simulation
     patient_data = {}
     if patient_file:
         patient_data = load_patient_simulation(patient_file)
         if patient_data:
-            print("Patient simulation data loaded successfully")
+            print(f"Patient simulation data loaded successfully from {patient_file}")
+            current_patient_simulation = patient_file
         else:
             print("Warning: Failed to load patient simulation data")
     return patient_data
@@ -55,13 +66,8 @@ if __name__ == '__main__':
     args = parser.parse_args()
     
     # Load patient simulation data if provided
-    patient_data = {}
     if args.patient_file:
-        patient_data = load_patient_simulation(args.patient_file)
-        if patient_data:
-            print("Patient simulation data loaded successfully")
-        else:
-            print("Warning: Failed to load patient simulation data")
+        patient_data = initialize_patient_data(args.patient_file)
     
     # Create utils directory if it doesn't exist
     os.makedirs('utils', exist_ok=True)
@@ -84,6 +90,54 @@ if __name__ == '__main__':
 def index():
     """Render the main page"""
     return render_template('index.html')
+
+@app.route('/api/patient-simulations', methods=['GET'])
+def list_patient_simulations():
+    """List available patient simulations"""
+    simulations = get_available_patient_simulations()
+    return jsonify({
+        'status': 'success',
+        'simulations': simulations,
+        'current_simulation': current_patient_simulation
+    })
+
+@app.route('/api/select-simulation', methods=['POST'])
+def select_simulation():
+    """Select a patient simulation"""
+    global patient_data, current_patient_simulation
+    
+    try:
+        data = request.get_json()
+        if not data or 'simulation_file' not in data:
+            return jsonify({
+                'status': 'error',
+                'message': 'No simulation file specified'
+            }), 400
+            
+        simulation_file = data['simulation_file']
+        if not os.path.exists(simulation_file):
+            return jsonify({
+                'status': 'error',
+                'message': f'Simulation file {simulation_file} not found'
+            }), 404
+            
+        # Load the selected simulation
+        patient_data = initialize_patient_data(simulation_file)
+        
+        # Clear conversation history when changing simulations
+        conversation_history.clear()
+        
+        return jsonify({
+            'status': 'success',
+            'message': f'Selected simulation: {simulation_file}',
+            'current_simulation': current_patient_simulation
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'status': 'error',
+            'message': f'Error selecting simulation: {str(e)}'
+        }), 500
 
 @app.route('/process_audio', methods=['POST'])
 def process_audio():

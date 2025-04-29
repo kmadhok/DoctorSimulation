@@ -181,4 +181,96 @@ footer {
     .record-button {
         padding: 0.8rem 1.5rem;
     }
+}
+
+/* Add styles for simulation selector */
+.simulation-selector {
+    margin: 1rem 0;
+    text-align: center;
+}
+
+.simulation-selector label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: bold;
+}
+
+.simulation-selector select {
+    padding: 0.5rem;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+    font-size: 1rem;
+    min-width: 200px;
+}
+
+.simulation-selector select:focus {
+    outline: none;
+    border-color: #007bff;
+    box-shadow: 0 0 0 2px rgba(0,123,255,0.25);
+}
+
+/* Existing styles */
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.status {
+    color: #666;
+    font-style: italic;
+}
+
+.conversation {
+    margin-bottom: 2rem;
+    padding: 1rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    min-height: 200px;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.controls {
+    text-align: center;
+}
+
+.record-button {
+    padding: 1rem 2rem;
+    font-size: 1.2rem;
+    border: none;
+    border-radius: 4px;
+    background-color: #007bff;
+    color: white;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.record-button:hover {
+    background-color: #0056b3;
+}
+
+.record-button:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+}
+
+.record-icon {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    background-color: white;
+    border-radius: 50%;
+    margin-right: 8px;
+}
+
+footer {
+    text-align: center;
+    margin-top: 2rem;
+    color: #666;
 } 

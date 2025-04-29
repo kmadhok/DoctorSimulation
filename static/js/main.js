@@ -1,13 +1,15 @@
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', async () => {
     // DOM elements
     const recordButton = document.getElementById('recordButton');
     const statusElement = document.getElementById('status');
     const conversationElement = document.getElementById('conversation');
+    const simulationSelect = document.getElementById('simulationSelect');
     
     // Audio recording variables
-    let mediaRecorder;
+    let mediaRecorder = null;
     let audioChunks = [];
     let isRecording = false;
+    let currentSimulation = null;
     
     // Audio context for playback
     let audioContext;
@@ -20,6 +22,15 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
+    // Load available simulations
+    await loadSimulations();
+    
+    // Set up event listeners
+    recordButton.addEventListener('mousedown', startRecording);
+    recordButton.addEventListener('mouseup', stopRecording);
+    recordButton.addEventListener('mouseleave', stopRecording);
+    simulationSelect.addEventListener('change', handleSimulationChange);
+    
     // Request microphone access
     async function setupMicrophone() {
         try {
@@ -29,16 +40,16 @@ document.addEventListener('DOMContentLoaded', function() {
             mediaRecorder = new MediaRecorder(stream);
             
             // Handle data available event
-            mediaRecorder.addEventListener('dataavailable', event => {
+            mediaRecorder.ondataavailable = (event) => {
                 if (event.data.size > 0) {
                     audioChunks.push(event.data);
                 }
-            });
+            };
             
             // Handle recording stop event
-            mediaRecorder.addEventListener('stop', () => {
-                processAudio();
-            });
+            mediaRecorder.onstop = async () => {
+                await processAudio(new Blob(audioChunks, { type: 'audio/wav' }));
+            };
             
             return true;
         } catch (error) {
@@ -53,114 +64,170 @@ document.addEventListener('DOMContentLoaded', function() {
         statusElement.textContent = message;
     }
     
-    // Start recording
-    function startRecording() {
-        if (!mediaRecorder) {
-            updateStatus('Microphone not available');
-            return;
+    // Load available simulations
+    async function loadSimulations() {
+        try {
+            const response = await fetch('/api/patient-simulations');
+            const data = await response.json();
+            
+            if (data.status === 'success') {
+                // Clear loading option
+                simulationSelect.innerHTML = '';
+                
+                // Add simulations to select
+                data.simulations.forEach(simulation => {
+                    const option = document.createElement('option');
+                    option.value = simulation;
+                    option.textContent = simulation;
+                    simulationSelect.appendChild(option);
+                });
+                
+                // Set current simulation if available
+                if (data.current_simulation) {
+                    simulationSelect.value = data.current_simulation;
+                    currentSimulation = data.current_simulation;
+                    recordButton.disabled = false;
+                }
+            } else {
+                throw new Error(data.message || 'Failed to load simulations');
+            }
+        } catch (error) {
+            console.error('Error loading simulations:', error);
+            statusElement.textContent = 'Error loading simulations';
         }
-        
-        // Initialize audio chunks
-        audioChunks = [];
-        
-        // Update UI
-        updateStatus('Listening...');
-        recordButton.classList.add('recording');
-        isRecording = true;
-        
-        // Start recording
-        mediaRecorder.start();
     }
     
-    // Stop recording
-    function stopRecording() {
-        if (!isRecording) return;
+    // Handle simulation change
+    async function handleSimulationChange(event) {
+        const selectedSimulation = event.target.value;
+        if (!selectedSimulation) return;
         
-        // Update UI
-        updateStatus('Processing...');
-        recordButton.classList.remove('recording');
-        isRecording = false;
-        
-        // Stop recording
-        mediaRecorder.stop();
+        try {
+            statusElement.textContent = 'Loading simulation...';
+            recordButton.disabled = true;
+            
+            const response = await fetch('/api/select-simulation', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    simulation_file: selectedSimulation
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (data.status === 'success') {
+                currentSimulation = data.current_simulation;
+                statusElement.textContent = 'Ready';
+                recordButton.disabled = false;
+                conversationElement.innerHTML = ''; // Clear conversation
+            } else {
+                throw new Error(data.message || 'Failed to select simulation');
+            }
+        } catch (error) {
+            console.error('Error selecting simulation:', error);
+            statusElement.textContent = 'Error selecting simulation';
+            recordButton.disabled = true;
+        }
     }
     
-    // Process recorded audio
-    async function processAudio() {
-        if (audioChunks.length === 0) {
-            updateStatus('No audio recorded');
+    // Start recording
+    async function startRecording() {
+        if (!currentSimulation) {
+            statusElement.textContent = 'Please select a simulation first';
             return;
         }
         
         try {
-            // Create audio blob
-            const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            mediaRecorder = new MediaRecorder(stream);
+            audioChunks = [];
             
-            // Create form data
+            mediaRecorder.ondataavailable = (event) => {
+                audioChunks.push(event.data);
+            };
+            
+            mediaRecorder.onstop = async () => {
+                await processAudio(new Blob(audioChunks, { type: 'audio/wav' }));
+            };
+            
+            mediaRecorder.start();
+            isRecording = true;
+            statusElement.textContent = 'Recording...';
+            recordButton.classList.add('recording');
+        } catch (error) {
+            console.error('Error starting recording:', error);
+            statusElement.textContent = 'Error starting recording';
+        }
+    }
+    
+    // Stop recording
+    function stopRecording() {
+        if (isRecording && mediaRecorder) {
+            mediaRecorder.stop();
+            isRecording = false;
+            statusElement.textContent = 'Processing...';
+            recordButton.classList.remove('recording');
+            
+            // Stop all audio tracks
+            mediaRecorder.stream.getTracks().forEach(track => track.stop());
+        }
+    }
+    
+    // Process audio
+    async function processAudio(audioBlob) {
+        try {
             const formData = new FormData();
-            formData.append('audio', audioBlob, 'recording.wav');
-            
-            // Send to server
-            updateStatus('Sending to server...');
+            formData.append('audio', audioBlob);
             
             const response = await fetch('/process_audio', {
                 method: 'POST',
                 body: formData
             });
             
-            if (!response.ok) {
-                throw new Error(`Server error: ${response.status}`);
-            }
-            
             const data = await response.json();
             
-            // Handle the response
-            if (data.status === 'error') {
-                throw new Error(data.message || 'Unknown error');
-            } else if (data.status === 'exit') {
-                // Handle exit command
-                addMessageToConversation('user', data.user_transcription);
-                addMessageToConversation('assistant', data.assistant_response_text);
-                updateStatus('Conversation ended');
-            } else {
-                // Add messages to conversation
-                addMessageToConversation('user', data.user_transcription);
-                addMessageToConversation('assistant', data.assistant_response_text);
+            if (data.status === 'success') {
+                // Add user message
+                addMessage('user', data.user_transcription);
+                
+                // Add assistant message
+                addMessage('assistant', data.assistant_response_text);
                 
                 // Play audio response if available
-                if (data.assistant_response_audio && data.assistant_response_audio.length > 0) {
-                    updateStatus('Speaking...');
-                    try {
-                        await playAudio(data.assistant_response_audio);
-                    } catch (error) {
-                        console.error('Error playing audio:', error);
-                        updateStatus('Error playing audio, but response received');
-                    }
-                } else {
-                    console.log('No audio response received from server');
+                if (data.assistant_response_audio) {
+                    playAudioResponse(data.assistant_response_audio);
                 }
                 
-                updateStatus('Ready');
+                statusElement.textContent = 'Ready';
+            } else if (data.status === 'exit') {
+                addMessage('assistant', data.assistant_response_text);
+                statusElement.textContent = 'Conversation ended';
+                recordButton.disabled = true;
+            } else {
+                throw new Error(data.message || 'Failed to process audio');
             }
         } catch (error) {
-            updateStatus(`Error: ${error.message}`);
             console.error('Error processing audio:', error);
+            statusElement.textContent = 'Error processing audio';
         }
     }
     
     // Add message to conversation
-    function addMessageToConversation(role, message) {
-        const messageElement = document.createElement('div');
-        messageElement.className = `message ${role}`;
-        
-        const textElement = document.createElement('p');
-        textElement.textContent = message;
-        
-        messageElement.appendChild(textElement);
-        conversationElement.appendChild(messageElement);
-        
-        // Scroll to bottom
+    function addMessage(role, content) {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `message ${role}`;
+        messageDiv.textContent = content;
+        conversationElement.appendChild(messageDiv);
         conversationElement.scrollTop = conversationElement.scrollHeight;
+    }
+    
+    // Play audio response
+    function playAudioResponse(base64Audio) {
+        const audio = new Audio(`data:audio/wav;base64,${base64Audio}`);
+        audio.play();
     }
     
     // Play audio from base64 string
@@ -214,36 +281,6 @@ document.addEventListener('DOMContentLoaded', function() {
             throw error;
         }
     }
-    
-    // Set up button event listeners
-    recordButton.addEventListener('mousedown', async function() {
-        // Stop any currently playing audio
-        if (currentAudioSource) {
-            currentAudioSource.stop();
-            currentAudioSource = null;
-        }
-        
-        // Initialize audio context on first interaction
-        initAudioContext();
-        
-        // Ensure microphone is set up
-        if (!mediaRecorder) {
-            const setupSuccess = await setupMicrophone();
-            if (!setupSuccess) return;
-        }
-        
-        startRecording();
-    });
-    
-    recordButton.addEventListener('mouseup', function() {
-        stopRecording();
-    });
-    
-    recordButton.addEventListener('mouseleave', function() {
-        if (isRecording) {
-            stopRecording();
-        }
-    });
     
     // Add touch support for mobile devices
     recordButton.addEventListener('touchstart', async function(e) {

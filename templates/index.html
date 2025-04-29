@@ -10,6 +10,12 @@
     <div class="container">
         <header>
             <h1>Voice Conversation App</h1>
+            <div class="simulation-selector">
+                <label for="simulationSelect">Select Patient Simulation:</label>
+                <select id="simulationSelect">
+                    <option value="">Loading simulations...</option>
+                </select>
+            </div>
             <p class="status" id="status">Ready</p>
         </header>
         
@@ -19,7 +25,7 @@
             </div>
             
             <div class="controls">
-                <button id="recordButton" class="record-button">
+                <button id="recordButton" class="record-button" disabled>
                     <span class="record-icon"></span>
                     Hold to Speak
                 </button>
