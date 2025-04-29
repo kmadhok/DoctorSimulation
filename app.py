@@ -5,12 +5,6 @@ import sys
 import argparse
 import json
 
-# Parse command line arguments
-parser = argparse.ArgumentParser(description='Run the voice conversation app')
-parser.add_argument('--port', type=int, default=5000, help='Port to run the app on')
-parser.add_argument('--patient-file', type=str, help='Path to patient simulation JSON file')
-args = parser.parse_args()
-
 # Load environment variables first
 from dotenv import load_dotenv
 load_dotenv()
@@ -39,14 +33,52 @@ app = Flask(__name__)
 # Initialize conversation history
 conversation_history = []
 
-# Load patient simulation data if provided
-patient_data = {}
-if args.patient_file:
-    patient_data = load_patient_simulation(args.patient_file)
-    if patient_data:
-        print("Patient simulation data loaded successfully")
+def initialize_patient_data(patient_file=None):
+    patient_data = {}
+    if patient_file:
+        patient_data = load_patient_simulation(patient_file)
+        if patient_data:
+            print("Patient simulation data loaded successfully")
+        else:
+            print("Warning: Failed to load patient simulation data")
+    return patient_data
+
+# Use this global variable instead of the one dependent on args
+patient_data = initialize_patient_data()
+
+# Move the argument parsing inside the if __name__ == '__main__' block
+if __name__ == '__main__':
+    # Parse command line arguments only when running directly with Python
+    parser = argparse.ArgumentParser(description='Run the voice conversation app')
+    parser.add_argument('--port', type=int, default=5000, help='Port to run the app on')
+    parser.add_argument('--patient-file', type=str, help='Path to patient simulation JSON file')
+    args = parser.parse_args()
+    
+    # Load patient simulation data if provided
+    patient_data = {}
+    if args.patient_file:
+        patient_data = load_patient_simulation(args.patient_file)
+        if patient_data:
+            print("Patient simulation data loaded successfully")
+        else:
+            print("Warning: Failed to load patient simulation data")
+    
+    # Create utils directory if it doesn't exist
+    os.makedirs('utils', exist_ok=True)
+    
+    # Print API key status (without revealing the key)
+    api_key = os.environ.get('GROQ_API_KEY')
+    if api_key:
+        print(f"GROQ_API_KEY found - length: {len(api_key)}")
     else:
-        print("Warning: Failed to load patient simulation data")
+        print("WARNING: GROQ_API_KEY not found in environment!")
+    
+    # Get port from environment variable (Heroku sets this) or use default
+    port = int(os.environ.get('PORT', args.port))
+    host = '0.0.0.0'
+    
+    print(f"Starting Flask app on {host}:{port}")
+    app.run(host=host, port=port, debug=False)
 
 @app.route('/')
 def index():
@@ -147,22 +179,4 @@ def process_audio():
         return jsonify({
             'status': 'error',
             'message': f"Error processing request: {str(e)}"
-        }), 500
-
-if __name__ == '__main__':
-    # Create utils directory if it doesn't exist
-    os.makedirs('utils', exist_ok=True)
-    
-    # Print API key status (without revealing the key)
-    api_key = os.environ.get('GROQ_API_KEY')
-    if api_key:
-        print(f"GROQ_API_KEY found - length: {len(api_key)}")
-    else:
-        print("WARNING: GROQ_API_KEY not found in environment!")
-    
-    # Get port from environment variable (Heroku sets this) or use default
-    port = int(os.environ.get('PORT', args.port))
-    host = '0.0.0.0'  # Necessary for Heroku
-    
-    print(f"Starting Flask app on {host}:{port}")
-    app.run(host=host, port=port, debug=False)  # Set debug=False for production 
+        }), 500 
