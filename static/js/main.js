@@ -231,9 +231,50 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
     
     // Play audio response
-    function playAudioResponse(base64Audio) {
-        const audio = new Audio(`data:audio/wav;base64,${base64Audio}`);
-        audio.play();
+    async function playAudioResponse(base64Audio) {
+        try {
+            initAudioContext();
+            
+            // Stop any currently playing audio
+            if (currentAudioSource) {
+                currentAudioSource.stop();
+                currentAudioSource = null;
+            }
+            
+            // Convert base64 to ArrayBuffer
+            const binaryString = atob(base64Audio);
+            const len = binaryString.length;
+            const bytes = new Uint8Array(len);
+            
+            for (let i = 0; i < len; i++) {
+                bytes[i] = binaryString.charCodeAt(i);
+            }
+            
+            // Decode audio data
+            const audioBuffer = await audioContext.decodeAudioData(bytes.buffer);
+            
+            // Create source node
+            const source = audioContext.createBufferSource();
+            source.buffer = audioBuffer;
+            source.connect(audioContext.destination);
+            
+            // Store current source for potential interruption
+            currentAudioSource = source;
+            
+            // Play audio
+            source.start(0);
+            
+            // Return a promise that resolves when audio finishes playing
+            return new Promise(resolve => {
+                source.onended = () => {
+                    currentAudioSource = null;
+                    resolve();
+                };
+            });
+        } catch (error) {
+            console.error('Error playing audio:', error);
+            throw error;
+        }
     }
     
     // Play audio from base64 string
