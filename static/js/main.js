@@ -141,6 +141,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
         
         try {
+            // Stop any currently playing audio
+            if (currentAudioSource) {
+                currentAudioSource.stop();
+                currentAudioSource = null;
+            }
+            
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
             mediaRecorder = new MediaRecorder(stream);
             audioChunks = [];
