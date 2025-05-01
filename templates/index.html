@@ -19,18 +19,27 @@
             <p class="status" id="status">Ready</p>
         </header>
         
-        <main>
-            <div class="conversation" id="conversation">
-                <!-- Conversation messages will be displayed here -->
-            </div>
+        <div class="main-content">
+            <aside class="sidebar">
+                <h2>Conversations</h2>
+                <div class="conversation-list" id="conversationList">
+                    <!-- Conversations will be listed here -->
+                </div>
+            </aside>
             
-            <div class="controls">
-                <button id="recordButton" class="record-button" disabled>
-                    <span class="record-icon"></span>
-                    Hold to Speak
-                </button>
-            </div>
-        </main>
+            <main>
+                <div class="conversation" id="conversation">
+                    <!-- Conversation messages will be displayed here -->
+                </div>
+                
+                <div class="controls">
+                    <button id="recordButton" class="record-button" disabled>
+                        <span class="record-icon"></span>
+                        Hold to Speak
+                    </button>
+                </div>
+            </main>
+        </div>
         
         <footer>
             <p>Powered by Groq API</p>
