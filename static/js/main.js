@@ -4,14 +4,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     const statusElement = document.getElementById('status');
     const conversationElement = document.getElementById('conversation');
     const simulationSelect = document.getElementById('simulationSelect');
-    const conversationList = document.getElementById('conversationList');
     
     // Audio recording variables
     let mediaRecorder = null;
     let audioChunks = [];
     let isRecording = false;
     let currentSimulation = null;
-    let currentConversationId = null;
     
     // Audio context for playback
     let audioContext;
@@ -24,128 +22,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
     
-    // Initialize the application
-    async function initializeApp() {
-        try {
-            // Load available simulations
-            const response = await fetch('/api/patient-simulations');
-            const data = await response.json();
-            
-            if (data.status === 'success') {
-                simulationSelect.innerHTML = data.simulations
-                    .map(sim => `<option value="${sim}">${sim}</option>`)
-                    .join('');
-                
-                if (data.current_simulation) {
-                    simulationSelect.value = data.current_simulation;
-                    currentSimulation = data.current_simulation;
-                    recordButton.disabled = false;
-                }
-            }
-            
-            // Load conversations
-            await loadConversations();
-        } catch (error) {
-            console.error('Error initializing app:', error);
-            statusElement.textContent = 'Error initializing app';
-        }
-    }
+    // Load available simulations
+    await loadSimulations();
     
-    // Load conversations from the server
-    async function loadConversations() {
-        try {
-            const response = await fetch('/api/conversations');
-            const data = await response.json();
-            
-            if (data.status === 'success') {
-                conversationList.innerHTML = data.conversations
-                    .map(conv => `
-                        <div class="conversation-item" data-id="${conv.id}">
-                            <div class="simulation">${conv.patient_simulation || 'No simulation'}</div>
-                            <div class="timestamp">${new Date(conv.created_at).toLocaleString()}</div>
-                        </div>
-                    `)
-                    .join('');
-                
-                // Add click handlers to conversation items
-                document.querySelectorAll('.conversation-item').forEach(item => {
-                    item.addEventListener('click', () => displayConversation(item.dataset.id, data.conversations));
-                });
-            }
-        } catch (error) {
-            console.error('Error loading conversations:', error);
-        }
-    }
-    
-    // Display a specific conversation
-    function displayConversation(conversationId, conversations) {
-        const conversation = conversations.find(c => c.id === parseInt(conversationId));
-        if (!conversation) return;
-        
-        // Update active state
-        document.querySelectorAll('.conversation-item').forEach(item => {
-            item.classList.toggle('active', item.dataset.id === conversationId);
-        });
-        
-        // Display messages
-        conversationElement.innerHTML = conversation.messages
-            .map(msg => `
-                <div class="message ${msg.role}">
-                    <div class="content">${msg.content}</div>
-                    <div class="timestamp">${new Date(msg.timestamp).toLocaleString()}</div>
-                </div>
-            `)
-            .join('');
-        
-        // Scroll to bottom
-        conversationElement.scrollTop = conversationElement.scrollHeight;
-        
-        // Update current conversation ID
-        currentConversationId = conversationId;
-    }
-    
-    // Handle simulation selection
-    simulationSelect.addEventListener('change', async (e) => {
-        try {
-            const response = await fetch('/api/select-simulation', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    simulation_file: e.target.value
-                })
-            });
-            
-            const data = await response.json();
-            if (data.status === 'success') {
-                statusElement.textContent = `Selected: ${data.current_simulation}`;
-                // Clear conversation display
-                conversationElement.innerHTML = '';
-                // Reload conversations to get the new one
-                await loadConversations();
-            }
-        } catch (error) {
-            console.error('Error selecting simulation:', error);
-            statusElement.textContent = 'Error selecting simulation';
-        }
-    });
-    
-    // Handle recording
+    // Set up event listeners
     recordButton.addEventListener('mousedown', startRecording);
     recordButton.addEventListener('mouseup', stopRecording);
     recordButton.addEventListener('mouseleave', stopRecording);
-    
-    // Touch events for mobile
-    recordButton.addEventListener('touchstart', (e) => {
-        e.preventDefault();
-        startRecording();
-    });
-    
-    recordButton.addEventListener('touchend', (e) => {
-        e.preventDefault();
-        stopRecording();
-    });
+    simulationSelect.addEventListener('change', handleSimulationChange);
     
     // Request microphone access
     async function setupMicrophone() {
@@ -178,6 +62,75 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Update status message
     function updateStatus(message) {
         statusElement.textContent = message;
+    }
+    
+    // Load available simulations
+    async function loadSimulations() {
+        try {
+            const response = await fetch('/api/patient-simulations');
+            const data = await response.json();
+            
+            if (data.status === 'success') {
+                // Clear loading option
+                simulationSelect.innerHTML = '';
+                
+                // Add simulations to select
+                data.simulations.forEach(simulation => {
+                    const option = document.createElement('option');
+                    option.value = simulation;
+                    option.textContent = simulation;
+                    simulationSelect.appendChild(option);
+                });
+                
+                // Set current simulation if available
+                if (data.current_simulation) {
+                    simulationSelect.value = data.current_simulation;
+                    currentSimulation = data.current_simulation;
+                    recordButton.disabled = false;
+                }
+            } else {
+                throw new Error(data.message || 'Failed to load simulations');
+            }
+        } catch (error) {
+            console.error('Error loading simulations:', error);
+            statusElement.textContent = 'Error loading simulations';
+        }
+    }
+    
+    // Handle simulation change
+    async function handleSimulationChange(event) {
+        const selectedSimulation = event.target.value;
+        if (!selectedSimulation) return;
+        
+        try {
+            statusElement.textContent = 'Loading simulation...';
+            recordButton.disabled = true;
+            
+            const response = await fetch('/api/select-simulation', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    simulation_file: selectedSimulation
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (data.status === 'success') {
+                currentSimulation = data.current_simulation;
+                statusElement.textContent = 'Ready';
+                recordButton.disabled = false;
+                conversationElement.innerHTML = ''; // Clear conversation
+            } else {
+                throw new Error(data.message || 'Failed to select simulation');
+            }
+        } catch (error) {
+            console.error('Error selecting simulation:', error);
+            statusElement.textContent = 'Error selecting simulation';
+            recordButton.disabled = true;
+        }
     }
     
     // Start recording
@@ -255,9 +208,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
                 
                 statusElement.textContent = 'Ready';
-                
-                // Reload conversations to get the updated one
-                await loadConversations();
             } else if (data.status === 'exit') {
                 addMessage('assistant', data.assistant_response_text);
                 statusElement.textContent = 'Conversation ended';
@@ -275,10 +225,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     function addMessage(role, content) {
         const messageDiv = document.createElement('div');
         messageDiv.className = `message ${role}`;
-        messageDiv.innerHTML = `
-            <div class="content">${content}</div>
-            <div class="timestamp">${new Date().toLocaleString()}</div>
-        `;
+        messageDiv.textContent = content;
         conversationElement.appendChild(messageDiv);
         conversationElement.scrollTop = conversationElement.scrollHeight;
     }
@@ -382,6 +329,27 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
     
+    // Add touch support for mobile devices
+    recordButton.addEventListener('touchstart', async function(e) {
+        e.preventDefault(); // Prevent default touch behavior
+        
+        // Initialize audio context on first interaction
+        initAudioContext();
+        
+        // Ensure microphone is set up
+        if (!mediaRecorder) {
+            const setupSuccess = await setupMicrophone();
+            if (!setupSuccess) return;
+        }
+        
+        startRecording();
+    });
+    
+    recordButton.addEventListener('touchend', function(e) {
+        e.preventDefault(); // Prevent default touch behavior
+        stopRecording();
+    });
+    
     // Initialize the app
-    initializeApp();
+    updateStatus('Ready');
 }); 

@@ -27,24 +27,15 @@ from utils.groq_integration import get_groq_response
 from utils.groq_transcribe import transcribe_audio_data
 from utils.groq_tts_speech import generate_speech_audio
 from utils.patient_simulation import load_patient_simulation, get_patient_system_prompt
-from models import db, Conversation, Message
 
 # Initialize Flask app
 app = Flask(__name__)
-
-# Configure SQLite database
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///conversations.db'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-
-# Initialize database
-db.init_app(app)
 
 # Initialize conversation history
 conversation_history = []
 
 # Global variable to store the current patient simulation
 current_patient_simulation = None
-current_conversation = None
 
 def get_available_patient_simulations():
     """Get list of available patient simulation files"""
@@ -65,10 +56,6 @@ def initialize_patient_data(patient_file=None):
 
 # Use this global variable instead of the one dependent on args
 patient_data = initialize_patient_data()
-
-# Create database tables
-with app.app_context():
-    db.create_all()
 
 # Move the argument parsing inside the if __name__ == '__main__' block
 if __name__ == '__main__':
@@ -117,7 +104,7 @@ def list_patient_simulations():
 @app.route('/api/select-simulation', methods=['POST'])
 def select_simulation():
     """Select a patient simulation"""
-    global patient_data, current_patient_simulation, current_conversation
+    global patient_data, current_patient_simulation
     
     try:
         data = request.get_json()
@@ -137,11 +124,6 @@ def select_simulation():
         # Load the selected simulation
         patient_data = initialize_patient_data(simulation_file)
         
-        # Create a new conversation for this simulation
-        current_conversation = Conversation(patient_simulation=simulation_file)
-        db.session.add(current_conversation)
-        db.session.commit()
-        
         # Clear conversation history when changing simulations
         conversation_history.clear()
         
@@ -157,36 +139,6 @@ def select_simulation():
             'message': f'Error selecting simulation: {str(e)}'
         }), 500
 
-@app.route('/api/conversations', methods=['GET'])
-def get_conversations():
-    """Get all conversations"""
-    try:
-        conversations = Conversation.query.order_by(Conversation.created_at.desc()).all()
-        result = []
-        for conv in conversations:
-            messages = [{
-                'role': msg.role,
-                'content': msg.content,
-                'timestamp': msg.timestamp.isoformat()
-            } for msg in conv.messages]
-            
-            result.append({
-                'id': conv.id,
-                'patient_simulation': conv.patient_simulation,
-                'created_at': conv.created_at.isoformat(),
-                'messages': messages
-            })
-        
-        return jsonify({
-            'status': 'success',
-            'conversations': result
-        })
-    except Exception as e:
-        return jsonify({
-            'status': 'error',
-            'message': f'Error fetching conversations: {str(e)}'
-        }), 500
-
 @app.route('/process_audio', methods=['POST'])
 def process_audio():
     """
@@ -197,7 +149,7 @@ def process_audio():
     4. Generate speech audio from response
     5. Return all results to client
     """
-    global conversation_history, current_conversation
+    global conversation_history
     
     try:
         # Check if audio file was sent
@@ -258,22 +210,6 @@ def process_audio():
         # Update conversation history
         conversation_history.append({"role": "user", "content": transcription})
         conversation_history.append({"role": "assistant", "content": response_text})
-        
-        # Save messages to database if we have a current conversation
-        if current_conversation:
-            user_message = Message(
-                conversation_id=current_conversation.id,
-                role='user',
-                content=transcription
-            )
-            assistant_message = Message(
-                conversation_id=current_conversation.id,
-                role='assistant',
-                content=response_text
-            )
-            db.session.add(user_message)
-            db.session.add(assistant_message)
-            db.session.commit()
         
         # Generate speech audio from response
         speech_audio_bytes = generate_speech_audio(response_text)
