@@ -27,6 +27,7 @@ from utils.groq_integration import get_groq_response
 from utils.groq_transcribe import transcribe_audio_data
 from utils.groq_tts_speech import generate_speech_audio
 from utils.patient_simulation import load_patient_simulation, get_patient_system_prompt
+from utils.database import ConversationDatabase
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -34,8 +35,12 @@ app = Flask(__name__)
 # Initialize conversation history
 conversation_history = []
 
+# Initialize database
+db = ConversationDatabase()
+
 # Global variable to store the current patient simulation
 current_patient_simulation = None
+current_conversation_id = None
 
 def get_available_patient_simulations():
     """Get list of available patient simulation files"""
@@ -104,7 +109,7 @@ def list_patient_simulations():
 @app.route('/api/select-simulation', methods=['POST'])
 def select_simulation():
     """Select a patient simulation"""
-    global patient_data, current_patient_simulation
+    global patient_data, current_patient_simulation, current_conversation_id
     
     try:
         data = request.get_json()
@@ -126,6 +131,13 @@ def select_simulation():
         
         # Clear conversation history when changing simulations
         conversation_history.clear()
+        
+        # End current conversation if exists
+        if current_conversation_id:
+            db.end_conversation(current_conversation_id)
+        
+        # Start new conversation
+        current_conversation_id = db.start_conversation(simulation_file)
         
         return jsonify({
             'status': 'success',
@@ -149,7 +161,7 @@ def process_audio():
     4. Generate speech audio from response
     5. Return all results to client
     """
-    global conversation_history
+    global conversation_history, current_conversation_id
     
     try:
         # Check if audio file was sent
@@ -175,6 +187,11 @@ def process_audio():
         
         # Check for termination commands
         if "exit" in transcription.lower() or "quit" in transcription.lower():
+            # End conversation in database
+            if current_conversation_id:
+                db.end_conversation(current_conversation_id)
+                current_conversation_id = None
+            
             return jsonify({
                 'status': 'exit',
                 'user_transcription': transcription,
@@ -211,6 +228,11 @@ def process_audio():
         conversation_history.append({"role": "user", "content": transcription})
         conversation_history.append({"role": "assistant", "content": response_text})
         
+        # Store messages in database
+        if current_conversation_id:
+            db.add_message(current_conversation_id, "user", transcription)
+            db.add_message(current_conversation_id, "assistant", response_text)
+        
         # Generate speech audio from response
         speech_audio_bytes = generate_speech_audio(response_text)
         
@@ -233,4 +255,40 @@ def process_audio():
         return jsonify({
             'status': 'error',
             'message': f"Error processing request: {str(e)}"
+        }), 500
+
+@app.route('/api/conversations', methods=['GET'])
+def list_conversations():
+    """List all conversations"""
+    try:
+        conversations = db.get_all_conversations()
+        return jsonify({
+            'status': 'success',
+            'conversations': conversations
+        })
+    except Exception as e:
+        return jsonify({
+            'status': 'error',
+            'message': f'Error listing conversations: {str(e)}'
+        }), 500
+
+@app.route('/api/conversations/<int:conversation_id>', methods=['GET'])
+def get_conversation(conversation_id):
+    """Get a specific conversation"""
+    try:
+        conversation = db.get_conversation(conversation_id)
+        if conversation is None:
+            return jsonify({
+                'status': 'error',
+                'message': 'Conversation not found'
+            }), 404
+        
+        return jsonify({
+            'status': 'success',
+            'conversation': conversation
+        })
+    except Exception as e:
+        return jsonify({
+            'status': 'error',
+            'message': f'Error getting conversation: {str(e)}'
         }), 500 

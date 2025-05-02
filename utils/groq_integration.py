@@ -21,8 +21,8 @@ def get_groq_response(input_text, model="llama3-8b-8192", history=None, system_p
         str: The LLM response
     """
     # Get Groq API key from environment variable
-
-    api_key=os.environ.get("GROQ_API_KEY")
+    api_key="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"
+    #api_key=os.environ.get("GROQ_API_KEY")
     if not api_key:
         return "Error: GROQ_API_KEY environment variable not set. Please set it with your Groq API key."
     

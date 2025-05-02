@@ -68,7 +68,7 @@ def run_prompt_comparison(input_text, prompts_dict, model="llama3-8b-8192"):
     
     # Save results to file
     timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-    filename = f"prompt_comparison_{timestamp}.json"
+    filename = os.path.join("prompts", "results", f"prompt_comparison_{timestamp}.json")
     
     output = {
         "input": input_text,
@@ -108,7 +108,7 @@ def run_patient_simulation(doctor_question, patient_details, markdown_file, mode
     
     # Save the simulation to file
     timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-    filename = f"patient_simulation_{timestamp}.json"
+    filename = os.path.join("prompts", "results", f"patient_simulation_{timestamp}.json")
     
     output = {
         "prompt_template": prompt_template,
@@ -162,7 +162,7 @@ if __name__ == "__main__":
     parser.add_argument("--prompts-file", type=str, help="JSON file containing multiple prompts to compare")
     parser.add_argument("--input", type=str, help="Input text to test with different prompts")
     parser.add_argument("--patient-simulation", action="store_true", help="Run patient simulation mode")
-    parser.add_argument("--prompt-template", type=str, default="prompts/patient_simulation.md", 
+    parser.add_argument("--prompt-template", type=str, default="prompts/templates/patient_simulation.md", 
                       help="Markdown file containing the patient simulation prompt template")
     parser.add_argument("--doctor-question", type=str, default="What brings you in today?", 
                       help="Doctor's question to the patient")
