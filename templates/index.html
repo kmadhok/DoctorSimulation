@@ -12,9 +12,14 @@
         <aside class="sidebar">
             <div class="sidebar-header">
                 <h2>Conversation History</h2>
-                <button id="refreshConversationsBtn" class="refresh-button" title="Refresh conversations">
-                    <span class="refresh-icon">↻</span>
-                </button>
+                <div class="sidebar-actions">
+                    <button id="newConversationBtn" class="action-button" title="New Conversation">
+                        <span class="action-icon">+</span>
+                    </button>
+                    <button id="refreshConversationsBtn" class="action-button" title="Refresh conversations">
+                        <span class="action-icon">↻</span>
+                    </button>
+                </div>
             </div>
             <div class="conversation-list" id="conversationList">
                 <!-- Conversation history will be loaded here -->
@@ -27,9 +32,10 @@
             <header>
                 <h1>Voice Conversation App</h1>
                 <div class="simulation-selector">
-                    <label for="simulationSelect">Select Patient Simulation:</label>
+                    <label for="simulationSelect">Select Patient Simulation (Optional):</label>
                     <select id="simulationSelect">
-                        <option value="">Loading simulations...</option>
+                        <option value="">No simulation</option>
+                        <option value="" disabled>Loading simulations...</option>
                     </select>
                 </div>
                 <p class="status" id="status">Ready</p>
@@ -41,7 +47,7 @@
                 </div>
                 
                 <div class="controls">
-                    <button id="recordButton" class="record-button" disabled>
+                    <button id="recordButton" class="record-button">
                         <span class="record-icon"></span>
                         Hold to Speak
                     </button>

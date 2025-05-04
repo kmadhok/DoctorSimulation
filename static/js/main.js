@@ -6,6 +6,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const simulationSelect = document.getElementById('simulationSelect');
     const conversationListElement = document.getElementById('conversationList');
     const refreshConversationsBtn = document.getElementById('refreshConversationsBtn');
+    const newConversationBtn = document.getElementById('newConversationBtn');
     
     // Audio recording variables
     let mediaRecorder = null;
@@ -37,32 +38,43 @@ document.addEventListener('DOMContentLoaded', async () => {
     recordButton.addEventListener('mouseleave', stopRecording);
     simulationSelect.addEventListener('change', handleSimulationChange);
     refreshConversationsBtn.addEventListener('click', loadConversationHistory);
+    newConversationBtn.addEventListener('click', createNewConversation);
     
-    // Request microphone access
-    async function setupMicrophone() {
+    // Request microphone access on first recording attempt rather than on page load
+    let microphoneSetup = false;
+    
+    // Create a new empty conversation
+    async function createNewConversation() {
         try {
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            updateStatus('Creating new conversation...');
             
-            // Create media recorder
-            mediaRecorder = new MediaRecorder(stream);
+            // Clear simulation selection
+            simulationSelect.value = '';
+            currentSimulation = null;
             
-            // Handle data available event
-            mediaRecorder.ondataavailable = (event) => {
-                if (event.data.size > 0) {
-                    audioChunks.push(event.data);
-                }
-            };
+            const response = await fetch('/api/conversations/new', {
+                method: 'POST'
+            });
             
-            // Handle recording stop event
-            mediaRecorder.onstop = async () => {
-                await processAudio(new Blob(audioChunks, { type: 'audio/wav' }));
-            };
+            const data = await response.json();
             
-            return true;
+            if (data.status === 'success') {
+                currentConversationId = data.conversation_id;
+                conversationElement.innerHTML = ''; // Clear conversation display
+                
+                // Enable recording button
+                recordButton.disabled = false;
+                
+                // Refresh the conversation list
+                await loadConversationHistory();
+                
+                updateStatus('Ready');
+            } else {
+                throw new Error(data.message || 'Failed to create new conversation');
+            }
         } catch (error) {
-            updateStatus(`Error accessing microphone: ${error.message}`);
-            console.error('Error accessing microphone:', error);
-            return false;
+            console.error('Error creating new conversation:', error);
+            updateStatus('Error creating new conversation');
         }
     }
     
@@ -79,7 +91,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             
             if (data.status === 'success') {
                 // Clear loading option
-                simulationSelect.innerHTML = '';
+                // Keep the "No simulation" option and remove all others
+                while (simulationSelect.options.length > 1) {
+                    simulationSelect.remove(1);
+                }
                 
                 // Add simulations to select
                 data.simulations.forEach(simulation => {
@@ -93,7 +108,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if (data.current_simulation) {
                     simulationSelect.value = data.current_simulation;
                     currentSimulation = data.current_simulation;
-                    recordButton.disabled = false;
                 }
             } else {
                 throw new Error(data.message || 'Failed to load simulations');
@@ -198,7 +212,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     async function loadConversation(conversationId) {
         try {
             updateStatus('Loading conversation...');
-            recordButton.disabled = true;
             
             const response = await fetch(`/api/conversations/${conversationId}/load`, {
                 method: 'POST'
@@ -213,6 +226,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if (data.conversation.simulation_file) {
                     currentSimulation = data.conversation.simulation_file;
                     simulationSelect.value = currentSimulation;
+                } else {
+                    // Clear simulation if none is associated
+                    currentSimulation = null;
+                    simulationSelect.value = '';
                 }
                 
                 // Clear the conversation display
@@ -282,7 +299,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Handle simulation change
     async function handleSimulationChange(event) {
         const selectedSimulation = event.target.value;
-        if (!selectedSimulation) return;
         
         try {
             statusElement.textContent = 'Loading simulation...';
@@ -319,14 +335,34 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
     
-    // Start recording
-    async function startRecording() {
-        if (!currentSimulation) {
-            statusElement.textContent = 'Please select a simulation first';
-            return;
-        }
+    // Setup microphone access
+    async function setupMicrophone() {
+        if (microphoneSetup) return true;
         
         try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            microphoneSetup = true;
+            return true;
+        } catch (error) {
+            updateStatus(`Error accessing microphone: ${error.message}`);
+            console.error('Error accessing microphone:', error);
+            return false;
+        }
+    }
+    
+    // Start recording
+    async function startRecording() {
+        try {
+            // Initialize microphone if not already done
+            if (!await setupMicrophone()) {
+                return;
+            }
+            
+            // Create a new conversation if none exists
+            if (!currentConversationId) {
+                await createNewConversation();
+            }
+            
             // Stop any currently playing audio
             if (currentAudioSource) {
                 currentAudioSource.stop();
@@ -468,16 +504,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Add touch support for mobile devices
     recordButton.addEventListener('touchstart', async function(e) {
         e.preventDefault(); // Prevent default touch behavior
-        
-        // Initialize audio context on first interaction
-        initAudioContext();
-        
-        // Ensure microphone is set up
-        if (!mediaRecorder) {
-            const setupSuccess = await setupMicrophone();
-            if (!setupSuccess) return;
-        }
-        
         startRecording();
     });
     

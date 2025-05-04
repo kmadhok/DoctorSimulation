@@ -60,7 +60,12 @@ body {
     margin: 0;
 }
 
-.refresh-button {
+.sidebar-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.action-button {
     background: none;
     border: none;
     cursor: pointer;
@@ -68,15 +73,21 @@ body {
     color: #777;
     padding: 0.2rem;
     border-radius: 50%;
+    width: 28px;
+    height: 28px;
     display: flex;
     align-items: center;
     justify-content: center;
     transition: all 0.2s ease;
 }
 
-.refresh-button:hover {
+.action-button:hover {
     background-color: #e0e0e0;
     color: #333;
+}
+
+.action-icon {
+    display: inline-block;
 }
 
 .conversation-list {

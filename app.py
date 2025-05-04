@@ -109,6 +109,33 @@ def list_patient_simulations():
         'current_simulation': current_patient_simulation
     })
 
+@app.route('/api/conversations/new', methods=['POST'])
+def create_new_conversation():
+    """Create a new empty conversation without a patient simulation"""
+    global current_conversation_id, conversation_history
+    
+    try:
+        # Create a title based on the current timestamp
+        title = f"New Conversation - {datetime.now().strftime('%Y-%m-%d %H:%M')}"
+        
+        # Create a new conversation in the database
+        current_conversation_id = create_conversation(title, None)
+        
+        # Clear conversation history for the new conversation
+        conversation_history = []
+        
+        return jsonify({
+            'status': 'success',
+            'message': 'New conversation created',
+            'conversation_id': current_conversation_id
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'status': 'error',
+            'message': f'Error creating conversation: {str(e)}'
+        }), 500
+
 @app.route('/api/select-simulation', methods=['POST'])
 def select_simulation():
     """Select a patient simulation"""
@@ -123,20 +150,26 @@ def select_simulation():
             }), 400
             
         simulation_file = data['simulation_file']
-        if not os.path.exists(simulation_file):
+        
+        # Allow empty simulation file to clear the current simulation
+        if simulation_file == "":
+            current_patient_simulation = None
+            patient_data = {}
+        elif not os.path.exists(simulation_file):
             return jsonify({
                 'status': 'error',
                 'message': f'Simulation file {simulation_file} not found'
             }), 404
-            
-        # Load the selected simulation
-        patient_data = initialize_patient_data(simulation_file)
+        else:
+            # Load the selected simulation
+            patient_data = initialize_patient_data(simulation_file)
         
         # Clear conversation history when changing simulations
         conversation_history = []
         
         # Create a new conversation in the database
-        title = f"Conversation with {simulation_file} - {datetime.now().strftime('%Y-%m-%d %H:%M')}"
+        title = simulation_file if simulation_file else "Default Conversation"
+        title = f"Conversation with {title} - {datetime.now().strftime('%Y-%m-%d %H:%M')}"
         current_conversation_id = create_conversation(title, simulation_file)
         
         return jsonify({
@@ -165,6 +198,13 @@ def process_audio():
     global conversation_history, current_conversation_id
     
     try:
+        # Check if a conversation is active
+        if not current_conversation_id:
+            # Create a new conversation if none exists
+            title = f"New Conversation - {datetime.now().strftime('%Y-%m-%d %H:%M')}"
+            current_conversation_id = create_conversation(title, None)
+            conversation_history = []
+        
         # Check if audio file was sent
         if 'audio' not in request.files:
             return jsonify({
@@ -205,7 +245,7 @@ def process_audio():
             if last_assistant_message and transcription.lower() == last_assistant_message.get('content', '').lower():
                 response_text = "It seems you're repeating what I just said. Do you have a question about that?"
             else:
-                # Get LLM response with patient simulation context
+                # Get LLM response with patient simulation context (or default if none)
                 response_text = get_groq_response(
                     input_text=transcription,
                     model="llama3-8b-8192",
