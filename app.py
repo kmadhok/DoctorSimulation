@@ -5,6 +5,7 @@ import sys
 import argparse
 import json
 import glob
+from datetime import datetime
 
 # Load environment variables first
 from dotenv import load_dotenv
@@ -27,15 +28,22 @@ from utils.groq_integration import get_groq_response
 from utils.groq_transcribe import transcribe_audio_data
 from utils.groq_tts_speech import generate_speech_audio
 from utils.patient_simulation import load_patient_simulation, get_patient_system_prompt
+from utils.database import init_db, create_conversation, add_message, get_conversations, get_conversation, delete_conversation
 
 # Initialize Flask app
 app = Flask(__name__)
+
+# Initialize database
+init_db()
 
 # Initialize conversation history
 conversation_history = []
 
 # Global variable to store the current patient simulation
 current_patient_simulation = None
+
+# Global variable for current conversation ID
+current_conversation_id = None
 
 def get_available_patient_simulations():
     """Get list of available patient simulation files"""
@@ -104,7 +112,7 @@ def list_patient_simulations():
 @app.route('/api/select-simulation', methods=['POST'])
 def select_simulation():
     """Select a patient simulation"""
-    global patient_data, current_patient_simulation
+    global patient_data, current_patient_simulation, current_conversation_id, conversation_history
     
     try:
         data = request.get_json()
@@ -125,12 +133,17 @@ def select_simulation():
         patient_data = initialize_patient_data(simulation_file)
         
         # Clear conversation history when changing simulations
-        conversation_history.clear()
+        conversation_history = []
+        
+        # Create a new conversation in the database
+        title = f"Conversation with {simulation_file} - {datetime.now().strftime('%Y-%m-%d %H:%M')}"
+        current_conversation_id = create_conversation(title, simulation_file)
         
         return jsonify({
             'status': 'success',
             'message': f'Selected simulation: {simulation_file}',
-            'current_simulation': current_patient_simulation
+            'current_simulation': current_patient_simulation,
+            'conversation_id': current_conversation_id
         })
         
     except Exception as e:
@@ -149,7 +162,7 @@ def process_audio():
     4. Generate speech audio from response
     5. Return all results to client
     """
-    global conversation_history
+    global conversation_history, current_conversation_id
     
     try:
         # Check if audio file was sent
@@ -211,6 +224,11 @@ def process_audio():
         conversation_history.append({"role": "user", "content": transcription})
         conversation_history.append({"role": "assistant", "content": response_text})
         
+        # Save messages to database if a conversation is active
+        if current_conversation_id:
+            add_message(current_conversation_id, "user", transcription)
+            add_message(current_conversation_id, "assistant", response_text)
+        
         # Generate speech audio from response
         speech_audio_bytes = generate_speech_audio(response_text)
         
@@ -233,4 +251,100 @@ def process_audio():
         return jsonify({
             'status': 'error',
             'message': f"Error processing request: {str(e)}"
+        }), 500
+
+# Add new routes for conversation management
+@app.route('/api/conversations', methods=['GET'])
+def list_conversations():
+    """Get a list of all saved conversations"""
+    try:
+        conversations = get_conversations()
+        return jsonify({
+            'status': 'success',
+            'conversations': conversations
+        })
+    except Exception as e:
+        return jsonify({
+            'status': 'error',
+            'message': f'Error getting conversations: {str(e)}'
+        }), 500
+
+@app.route('/api/conversations/<int:conversation_id>', methods=['GET'])
+def get_conversation_by_id(conversation_id):
+    """Get a specific conversation by ID"""
+    try:
+        conversation = get_conversation(conversation_id)
+        if not conversation:
+            return jsonify({
+                'status': 'error',
+                'message': f'Conversation with ID {conversation_id} not found'
+            }), 404
+            
+        return jsonify({
+            'status': 'success',
+            'conversation': conversation
+        })
+    except Exception as e:
+        return jsonify({
+            'status': 'error',
+            'message': f'Error getting conversation: {str(e)}'
+        }), 500
+
+@app.route('/api/conversations/<int:conversation_id>', methods=['DELETE'])
+def delete_conversation_by_id(conversation_id):
+    """Delete a specific conversation by ID"""
+    try:
+        success = delete_conversation(conversation_id)
+        if not success:
+            return jsonify({
+                'status': 'error',
+                'message': f'Conversation with ID {conversation_id} not found'
+            }), 404
+            
+        return jsonify({
+            'status': 'success',
+            'message': f'Conversation {conversation_id} deleted successfully'
+        })
+    except Exception as e:
+        return jsonify({
+            'status': 'error',
+            'message': f'Error deleting conversation: {str(e)}'
+        }), 500
+
+@app.route('/api/conversations/<int:conversation_id>/load', methods=['POST'])
+def load_conversation_by_id(conversation_id):
+    """Load a conversation into the active session"""
+    global conversation_history, current_conversation_id, current_patient_simulation, patient_data
+    
+    try:
+        conversation = get_conversation(conversation_id)
+        if not conversation:
+            return jsonify({
+                'status': 'error',
+                'message': f'Conversation with ID {conversation_id} not found'
+            }), 404
+            
+        # Update current conversation ID
+        current_conversation_id = conversation_id
+        
+        # Load the simulation file if available
+        simulation_file = conversation.get('simulation_file')
+        if simulation_file and os.path.exists(simulation_file):
+            patient_data = initialize_patient_data(simulation_file)
+        
+        # Convert database messages to conversation history format
+        conversation_history = [
+            {"role": msg["role"], "content": msg["content"]}
+            for msg in conversation["messages"]
+        ]
+            
+        return jsonify({
+            'status': 'success',
+            'message': f'Conversation {conversation_id} loaded successfully',
+            'conversation': conversation
+        })
+    except Exception as e:
+        return jsonify({
+            'status': 'error',
+            'message': f'Error loading conversation: {str(e)}'
         }), 500 

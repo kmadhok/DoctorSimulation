@@ -4,12 +4,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     const statusElement = document.getElementById('status');
     const conversationElement = document.getElementById('conversation');
     const simulationSelect = document.getElementById('simulationSelect');
+    const conversationListElement = document.getElementById('conversationList');
+    const refreshConversationsBtn = document.getElementById('refreshConversationsBtn');
     
     // Audio recording variables
     let mediaRecorder = null;
     let audioChunks = [];
     let isRecording = false;
     let currentSimulation = null;
+    let currentConversationId = null;
     
     // Audio context for playback
     let audioContext;
@@ -25,11 +28,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Load available simulations
     await loadSimulations();
     
+    // Load conversation history
+    await loadConversationHistory();
+    
     // Set up event listeners
     recordButton.addEventListener('mousedown', startRecording);
     recordButton.addEventListener('mouseup', stopRecording);
     recordButton.addEventListener('mouseleave', stopRecording);
     simulationSelect.addEventListener('change', handleSimulationChange);
+    refreshConversationsBtn.addEventListener('click', loadConversationHistory);
     
     // Request microphone access
     async function setupMicrophone() {
@@ -97,6 +104,181 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
     
+    // Load conversation history from the server
+    async function loadConversationHistory() {
+        try {
+            updateStatus('Loading conversations...');
+            
+            const response = await fetch('/api/conversations');
+            const data = await response.json();
+            
+            if (data.status === 'success') {
+                renderConversationList(data.conversations);
+                updateStatus('Ready');
+            } else {
+                throw new Error(data.message || 'Failed to load conversations');
+            }
+        } catch (error) {
+            console.error('Error loading conversations:', error);
+            updateStatus('Error loading conversations');
+        }
+    }
+    
+    // Render the conversation list in the sidebar
+    function renderConversationList(conversations) {
+        // Clear the list
+        conversationListElement.innerHTML = '';
+        
+        if (conversations.length === 0) {
+            const emptyState = document.createElement('div');
+            emptyState.className = 'empty-state';
+            emptyState.textContent = 'No saved conversations';
+            conversationListElement.appendChild(emptyState);
+            return;
+        }
+        
+        // Add each conversation to the list
+        conversations.forEach(conversation => {
+            const item = document.createElement('div');
+            item.className = 'conversation-item';
+            if (conversation.id === currentConversationId) {
+                item.classList.add('active');
+            }
+            
+            // Create conversation title
+            const title = document.createElement('div');
+            title.className = 'conversation-title';
+            title.textContent = conversation.title;
+            
+            // Create date element
+            const date = document.createElement('div');
+            date.className = 'conversation-date';
+            date.textContent = formatDate(conversation.updated_at);
+            
+            // Create action buttons
+            const actions = document.createElement('div');
+            actions.className = 'conversation-actions';
+            
+            const loadBtn = document.createElement('button');
+            loadBtn.className = 'conversation-action-btn load';
+            loadBtn.textContent = 'Load';
+            loadBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                loadConversation(conversation.id);
+            });
+            
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = 'conversation-action-btn delete';
+            deleteBtn.textContent = 'Delete';
+            deleteBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                deleteConversation(conversation.id);
+            });
+            
+            actions.appendChild(loadBtn);
+            actions.appendChild(deleteBtn);
+            
+            // Add elements to the item
+            item.appendChild(title);
+            item.appendChild(date);
+            item.appendChild(actions);
+            
+            // Add item to the list
+            conversationListElement.appendChild(item);
+        });
+    }
+    
+    // Format a date string
+    function formatDate(dateString) {
+        const date = new Date(dateString);
+        return date.toLocaleString();
+    }
+    
+    // Load a conversation
+    async function loadConversation(conversationId) {
+        try {
+            updateStatus('Loading conversation...');
+            recordButton.disabled = true;
+            
+            const response = await fetch(`/api/conversations/${conversationId}/load`, {
+                method: 'POST'
+            });
+            
+            const data = await response.json();
+            
+            if (data.status === 'success') {
+                currentConversationId = conversationId;
+                
+                // Set the simulation if available
+                if (data.conversation.simulation_file) {
+                    currentSimulation = data.conversation.simulation_file;
+                    simulationSelect.value = currentSimulation;
+                }
+                
+                // Clear the conversation display
+                conversationElement.innerHTML = '';
+                
+                // Add messages to conversation display
+                data.conversation.messages.forEach(message => {
+                    addMessage(message.role, message.content);
+                });
+                
+                // Update UI
+                updateStatus('Ready');
+                recordButton.disabled = false;
+                
+                // Update active conversation in sidebar
+                const items = conversationListElement.querySelectorAll('.conversation-item');
+                items.forEach(item => item.classList.remove('active'));
+                const activeItem = Array.from(items).find(item => {
+                    return item.querySelector('.load').addEventListener('click', () => loadConversation(conversationId));
+                });
+                if (activeItem) {
+                    activeItem.classList.add('active');
+                }
+            } else {
+                throw new Error(data.message || 'Failed to load conversation');
+            }
+        } catch (error) {
+            console.error('Error loading conversation:', error);
+            updateStatus('Error loading conversation');
+        }
+    }
+    
+    // Delete a conversation
+    async function deleteConversation(conversationId) {
+        if (!confirm('Are you sure you want to delete this conversation? This action cannot be undone.')) {
+            return;
+        }
+        
+        try {
+            updateStatus('Deleting conversation...');
+            
+            const response = await fetch(`/api/conversations/${conversationId}`, {
+                method: 'DELETE'
+            });
+            
+            const data = await response.json();
+            
+            if (data.status === 'success') {
+                // If the deleted conversation was the current one, reset
+                if (currentConversationId === conversationId) {
+                    currentConversationId = null;
+                    conversationElement.innerHTML = '';
+                }
+                
+                // Reload the conversation list
+                await loadConversationHistory();
+                updateStatus('Conversation deleted');
+            } else {
+                throw new Error(data.message || 'Failed to delete conversation');
+            }
+        } catch (error) {
+            console.error('Error deleting conversation:', error);
+            updateStatus('Error deleting conversation');
+        }
+    }
+    
     // Handle simulation change
     async function handleSimulationChange(event) {
         const selectedSimulation = event.target.value;
@@ -120,9 +302,13 @@ document.addEventListener('DOMContentLoaded', async () => {
             
             if (data.status === 'success') {
                 currentSimulation = data.current_simulation;
+                currentConversationId = data.conversation_id;
                 statusElement.textContent = 'Ready';
                 recordButton.disabled = false;
                 conversationElement.innerHTML = ''; // Clear conversation
+                
+                // Refresh conversation list
+                await loadConversationHistory();
             } else {
                 throw new Error(data.message || 'Failed to select simulation');
             }
@@ -207,11 +393,17 @@ document.addEventListener('DOMContentLoaded', async () => {
                     playAudioResponse(data.assistant_response_audio);
                 }
                 
+                // Refresh conversation list to show the updated conversation
+                await loadConversationHistory();
+                
                 statusElement.textContent = 'Ready';
             } else if (data.status === 'exit') {
                 addMessage('assistant', data.assistant_response_text);
                 statusElement.textContent = 'Conversation ended';
                 recordButton.disabled = true;
+                
+                // Refresh conversation list
+                await loadConversationHistory();
             } else {
                 throw new Error(data.message || 'Failed to process audio');
             }
@@ -253,79 +445,23 @@ document.addEventListener('DOMContentLoaded', async () => {
             // Decode audio data
             const audioBuffer = await audioContext.decodeAudioData(bytes.buffer);
             
-            // Create source node
+            // Create and play audio source
             const source = audioContext.createBufferSource();
             source.buffer = audioBuffer;
             source.connect(audioContext.destination);
             
-            // Store current source for potential interruption
+            // Save reference to current source for potential interruption
             currentAudioSource = source;
             
             // Play audio
             source.start(0);
             
-            // Return a promise that resolves when audio finishes playing
-            return new Promise(resolve => {
-                source.onended = () => {
-                    currentAudioSource = null;
-                    resolve();
-                };
-            });
-        } catch (error) {
-            console.error('Error playing audio:', error);
-            throw error;
-        }
-    }
-    
-    // Play audio from base64 string
-    async function playAudio(base64Audio) {
-        if (!base64Audio || base64Audio.length === 0) {
-            console.error('Empty base64 audio data');
-            return Promise.resolve(); // Resolve immediately for empty audio
-        }
-        
-        try {
-            initAudioContext();
-            
-            // Stop any currently playing audio
-            if (currentAudioSource) {
-                currentAudioSource.stop();
+            // Clear reference when playback completes
+            source.onended = () => {
                 currentAudioSource = null;
-            }
-            
-            // Convert base64 to ArrayBuffer
-            const binaryString = atob(base64Audio);
-            const len = binaryString.length;
-            const bytes = new Uint8Array(len);
-            
-            for (let i = 0; i < len; i++) {
-                bytes[i] = binaryString.charCodeAt(i);
-            }
-            
-            // Decode audio data
-            const audioBuffer = await audioContext.decodeAudioData(bytes.buffer);
-            
-            // Create source node
-            const source = audioContext.createBufferSource();
-            source.buffer = audioBuffer;
-            source.connect(audioContext.destination);
-            
-            // Store current source for potential interruption
-            currentAudioSource = source;
-            
-            // Play audio
-            source.start(0);
-            
-            // Return a promise that resolves when audio finishes playing
-            return new Promise(resolve => {
-                source.onended = () => {
-                    currentAudioSource = null;
-                    resolve();
-                };
-            });
+            };
         } catch (error) {
             console.error('Error playing audio:', error);
-            throw error;
         }
     }
     

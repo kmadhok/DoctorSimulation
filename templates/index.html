@@ -7,34 +7,51 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>Voice Conversation App</h1>
-            <div class="simulation-selector">
-                <label for="simulationSelect">Select Patient Simulation:</label>
-                <select id="simulationSelect">
-                    <option value="">Loading simulations...</option>
-                </select>
-            </div>
-            <p class="status" id="status">Ready</p>
-        </header>
-        
-        <main>
-            <div class="conversation" id="conversation">
-                <!-- Conversation messages will be displayed here -->
-            </div>
-            
-            <div class="controls">
-                <button id="recordButton" class="record-button" disabled>
-                    <span class="record-icon"></span>
-                    Hold to Speak
+    <div class="container with-sidebar">
+        <!-- Sidebar for Conversation History -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2>Conversation History</h2>
+                <button id="refreshConversationsBtn" class="refresh-button" title="Refresh conversations">
+                    <span class="refresh-icon">↻</span>
                 </button>
             </div>
-        </main>
-        
-        <footer>
-            <p>Powered by Groq API</p>
-        </footer>
+            <div class="conversation-list" id="conversationList">
+                <!-- Conversation history will be loaded here -->
+                <div class="empty-state">No saved conversations</div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <header>
+                <h1>Voice Conversation App</h1>
+                <div class="simulation-selector">
+                    <label for="simulationSelect">Select Patient Simulation:</label>
+                    <select id="simulationSelect">
+                        <option value="">Loading simulations...</option>
+                    </select>
+                </div>
+                <p class="status" id="status">Ready</p>
+            </header>
+            
+            <main>
+                <div class="conversation" id="conversation">
+                    <!-- Conversation messages will be displayed here -->
+                </div>
+                
+                <div class="controls">
+                    <button id="recordButton" class="record-button" disabled>
+                        <span class="record-icon"></span>
+                        Hold to Speak
+                    </button>
+                </div>
+            </main>
+            
+            <footer>
+                <p>Powered by Groq API</p>
+            </footer>
+        </div>
     </div>
     
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
