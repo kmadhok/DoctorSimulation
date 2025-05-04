@@ -28,7 +28,7 @@ from utils.groq_integration import get_groq_response
 from utils.groq_transcribe import transcribe_audio_data
 from utils.groq_tts_speech import generate_speech_audio
 from utils.patient_simulation import load_patient_simulation, get_patient_system_prompt
-from utils.database import init_db, create_conversation, add_message, get_conversations, get_conversation, delete_conversation
+from utils.database import init_db, create_conversation, add_message, get_conversations, get_conversation, delete_conversation, update_conversation_title
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -115,8 +115,8 @@ def create_new_conversation():
     global current_conversation_id, conversation_history
     
     try:
-        # Create a title based on the current timestamp
-        title = f"New Conversation - {datetime.now().strftime('%Y-%m-%d %H:%M')}"
+        # Create a generic title that will be updated with the first message
+        title = f"New Conversation"
         
         # Create a new conversation in the database
         current_conversation_id = create_conversation(title, None)
@@ -167,9 +167,12 @@ def select_simulation():
         # Clear conversation history when changing simulations
         conversation_history = []
         
-        # Create a new conversation in the database
-        title = simulation_file if simulation_file else "Default Conversation"
-        title = f"Conversation with {title} - {datetime.now().strftime('%Y-%m-%d %H:%M')}"
+        # Create a new conversation in the database with a generic title
+        # The title will be updated with actual content after the first message
+        title = "New Conversation"
+        if simulation_file:
+            title = f"Conversation with {os.path.basename(simulation_file)}"
+        
         current_conversation_id = create_conversation(title, simulation_file)
         
         return jsonify({
@@ -268,6 +271,13 @@ def process_audio():
         if current_conversation_id:
             add_message(current_conversation_id, "user", transcription)
             add_message(current_conversation_id, "assistant", response_text)
+            
+            # Update conversation title if this is the first user message
+            conversation = get_conversation(current_conversation_id)
+            if conversation and len(conversation['messages']) == 2:  # First user-assistant exchange (2 messages)
+                # Create title from first 30 characters of user's message
+                title_text = transcription[:30] + "..." if len(transcription) > 30 else transcription
+                update_conversation_title(current_conversation_id, title_text)
         
         # Generate speech audio from response
         speech_audio_bytes = generate_speech_audio(response_text)

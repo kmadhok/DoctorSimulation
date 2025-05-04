@@ -128,4 +128,19 @@ def delete_conversation(conversation_id):
     conn.commit()
     conn.close()
     
-    return cursor.rowcount > 0  # Return True if a row was deleted 
+    return cursor.rowcount > 0  # Return True if a row was deleted
+
+def update_conversation_title(conversation_id, new_title):
+    """Update the title of a conversation"""
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    
+    cursor.execute(
+        'UPDATE conversations SET title = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+        (new_title, conversation_id)
+    )
+    
+    conn.commit()
+    conn.close()
+    
+    return cursor.rowcount > 0  # Return True if a row was updated 

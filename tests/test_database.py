@@ -9,7 +9,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 # Import the database module with the path now resolved
-from utils.database import init_db, create_conversation, add_message, get_conversations, get_conversation, delete_conversation
+from utils.database import init_db, create_conversation, add_message, get_conversations, get_conversation, delete_conversation, update_conversation_title
 
 # Use a temporary database for testing
 @pytest.fixture
@@ -110,4 +110,24 @@ def test_delete_conversation(test_db):
     
     # Try to delete a non-existent conversation
     result = delete_conversation(9999)
+    assert result is False
+
+def test_update_conversation_title(test_db):
+    # Create a test conversation
+    conversation_id = create_conversation("Initial Title")
+    
+    # Verify initial title
+    conversation = get_conversation(conversation_id)
+    assert conversation["title"] == "Initial Title"
+    
+    # Update the title
+    result = update_conversation_title(conversation_id, "Updated Title")
+    assert result is True
+    
+    # Verify the title was updated
+    updated_conversation = get_conversation(conversation_id)
+    assert updated_conversation["title"] == "Updated Title"
+    
+    # Try to update a non-existent conversation
+    result = update_conversation_title(9999, "Non-existent")
     assert result is False 

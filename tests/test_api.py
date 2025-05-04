@@ -4,6 +4,7 @@ import unittest
 import json
 from io import BytesIO
 import tempfile
+from unittest.mock import patch, MagicMock
 
 # Add parent directory to sys.path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
@@ -57,6 +58,49 @@ class APITestCase(unittest.TestCase):
         # This should return a 200 status code, but the actual transcription might fail
         # We're just testing that the API endpoint functions correctly
         self.assertEqual(response.status_code, 200)
+    
+    @patch('app.transcribe_audio_data')
+    @patch('app.get_groq_response')
+    @patch('app.generate_speech_audio')
+    @patch('app.get_conversation')
+    @patch('app.update_conversation_title')
+    def test_content_based_title_update(self, mock_update_title, mock_get_conversation, 
+                                       mock_generate_speech, mock_get_response, mock_transcribe):
+        """Test that conversation title is updated based on first message content"""
+        # Mock the audio transcription to return a test message
+        test_message = "This is a test message for content-based title"
+        mock_transcribe.return_value = test_message
+        
+        # Mock the LLM response
+        mock_get_response.return_value = "This is a test response"
+        
+        # Mock the speech generation
+        mock_generate_speech.return_value = b'test audio bytes'
+        
+        # Mock conversation data with two messages to simulate first exchange
+        mock_get_conversation.return_value = {
+            'id': 1,
+            'title': 'New Conversation',
+            'messages': [
+                {'role': 'user', 'content': test_message},
+                {'role': 'assistant', 'content': 'This is a test response'}
+            ]
+        }
+        
+        # Send a test audio file
+        with open(self.test_audio, 'rb') as f:
+            data = {'audio': (BytesIO(f.read()), 'test_audio.wav')}
+            self.client.post(
+                '/process_audio',
+                data=data,
+                content_type='multipart/form-data'
+            )
+        
+        # Verify that update_conversation_title was called with the first 30 chars
+        expected_title = test_message[:30] + "..." if len(test_message) > 30 else test_message
+        mock_update_title.assert_called_once()
+        args, _ = mock_update_title.call_args
+        self.assertEqual(args[1], expected_title)
         
 if __name__ == '__main__':
     unittest.main() 
