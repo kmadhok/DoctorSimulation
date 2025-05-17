@@ -462,8 +462,8 @@ if __name__ == '__main__':
     
     # Get port from environment variable (Heroku sets this) or use default
     port = int(os.environ.get('PORT', args.port))
-    host = '127.0.0.1'
-    
+    #host = '127.0.0.1'
+    host = '0.0.0.0'
     logger.info('Starting Flask app on %s:%d', host, port)
     app.run(host=host, port=port, debug=True)
 
