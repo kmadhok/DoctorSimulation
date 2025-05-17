@@ -119,40 +119,6 @@ def debug_routes():
         'routes': routes
     })
 
-# Keep the if __name__ == '__main__' block for running the app
-if __name__ == '__main__':
-    # Parse command line arguments only when running directly with Python
-    parser = argparse.ArgumentParser(description='Run the voice conversation app')
-    parser.add_argument('--port', type=int, default=5000, help='Port to run the app on')
-    parser.add_argument('--patient-file', type=str, help='Path to patient simulation JSON file')
-    args = parser.parse_args()
-    
-    # Load patient simulation data if provided
-    if args.patient_file:
-        patient_data = initialize_patient_data(args.patient_file)
-        logger.info('Loaded patient data from %s', args.patient_file)
-    
-    # Create utils directory if it doesn't exist
-    os.makedirs('utils', exist_ok=True)
-    
-    # Print API key status (without revealing the key)
-    api_key = os.environ.get('GROQ_API_KEY')
-    if api_key:
-        logger.info('GROQ_API_KEY found - length: %d', len(api_key))
-    else:
-        logger.warning('GROQ_API_KEY not found in environment!')
-    
-    # Get port from environment variable (Heroku sets this) or use default
-    port = int(os.environ.get('PORT', args.port))
-    host = '127.0.0.1'
-    
-    logger.info('Starting Flask app on %s:%d', host, port)
-    app.run(host=host, port=port, debug=True)
-
-    # Add this before app.run()
-    logger.info("Registered URL Rules:")
-    for rule in app.url_map.iter_rules():
-        logger.info(f"Route: {rule}, Endpoint: {rule.endpoint}")
 
 @app.route('/')
 def index():
@@ -470,3 +436,38 @@ def test_route():
         'status': 'success',
         'message': 'Flask server is running correctly'
     }) 
+
+# Keep the if __name__ == '__main__' block for running the app
+if __name__ == '__main__':
+    # Parse command line arguments only when running directly with Python
+    parser = argparse.ArgumentParser(description='Run the voice conversation app')
+    parser.add_argument('--port', type=int, default=5000, help='Port to run the app on')
+    parser.add_argument('--patient-file', type=str, help='Path to patient simulation JSON file')
+    args = parser.parse_args()
+    
+    # Load patient simulation data if provided
+    if args.patient_file:
+        patient_data = initialize_patient_data(args.patient_file)
+        logger.info('Loaded patient data from %s', args.patient_file)
+    
+    # Create utils directory if it doesn't exist
+    os.makedirs('utils', exist_ok=True)
+    
+    # Print API key status (without revealing the key)
+    api_key = os.environ.get('GROQ_API_KEY')
+    if api_key:
+        logger.info('GROQ_API_KEY found - length: %d', len(api_key))
+    else:
+        logger.warning('GROQ_API_KEY not found in environment!')
+    
+    # Get port from environment variable (Heroku sets this) or use default
+    port = int(os.environ.get('PORT', args.port))
+    host = '127.0.0.1'
+    
+    logger.info('Starting Flask app on %s:%d', host, port)
+    app.run(host=host, port=port, debug=True)
+
+    # Add this before app.run()
+    logger.info("Registered URL Rules:")
+    for rule in app.url_map.iter_rules():
+        logger.info(f"Route: {rule}, Endpoint: {rule.endpoint}")
