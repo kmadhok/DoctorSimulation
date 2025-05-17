@@ -39,6 +39,7 @@ def generate_speech_audio(text, voice_id="Fritz-PlayAI"):
             "voice": voice_id,
             "input": text,
             "response_format": "wav"
+
         }
         
         # Make the API request
