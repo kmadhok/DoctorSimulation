@@ -231,14 +231,17 @@ def process_audio():
     
     try:
         # Check if a conversation is active
+        logger.debug("Starting audio processing")
         if not current_conversation_id:
             # Create a new conversation if none exists
+            logger.debug("No active conversation, creating new one")
             title = f"New Conversation - {datetime.now().strftime('%Y-%m-%d %H:%M')}"
             current_conversation_id = create_conversation(title, None)
             conversation_history = []
         
         # Check if audio file was sent
         if 'audio' not in request.files:
+            logger.error("No audio file provided in the request")
             return jsonify({
                 'status': 'error',
                 'message': 'No audio file provided'
@@ -246,17 +249,23 @@ def process_audio():
         
         # Get audio file
         audio_file = request.files['audio']
+        logger.debug(f"Received audio file: {audio_file.filename}, size: {audio_file.content_length}")
         
         # Transcribe audio
         audio_bytes = audio_file.read()
+        logger.debug(f"Read {len(audio_bytes)} bytes from audio file")
+        logger.debug("Attempting to transcribe audio...")
         transcription = transcribe_audio_data(audio_bytes)
         
         # If transcription failed, return error
         if not transcription:
+            logger.error("Transcription failed - no text returned from transcribe_audio_data")
             return jsonify({
                 'status': 'error',
                 'message': 'Failed to transcribe audio. Please try again.'
             }), 500
+        
+        logger.debug(f"Transcription successful: '{transcription}'")
         
         # Check for termination commands
         if "exit" in transcription.lower() or "quit" in transcription.lower():
@@ -309,14 +318,16 @@ def process_audio():
                 update_conversation_title(current_conversation_id, title_text)
         
         # Generate speech audio from response
+        logger.debug("Generating speech audio from response...")
         speech_audio_bytes = generate_speech_audio(response_text)
         
         # Convert audio bytes to base64 for transmission
         if speech_audio_bytes:
+            logger.debug(f"Speech audio generated successfully: {len(speech_audio_bytes)} bytes")
             base64_audio = base64.b64encode(speech_audio_bytes).decode('utf-8')
         else:
-            base64_audio = ""  # Empty string if audio generation failed
-            print("Warning: Speech audio generation failed, returning empty audio")
+            base64_audio = ""
+            logger.error("Speech audio generation failed, returning empty audio")
         
         return jsonify({
             'status': 'success',
@@ -326,7 +337,7 @@ def process_audio():
         })
         
     except Exception as e:
-        print(f"Error processing audio: {str(e)}")
+        logger.error(f"Error processing audio: {str(e)}", exc_info=True)
         return jsonify({
             'status': 'error',
             'message': f"Error processing request: {str(e)}"
@@ -436,6 +447,30 @@ def test_route():
         'status': 'success',
         'message': 'Flask server is running correctly'
     }) 
+
+@app.route('/api/diagnose', methods=['GET'])
+def diagnose_api():
+    """Test API connections and functionality"""
+    results = {
+        "environment": {},
+        "tests": {}
+    }
+    
+    # Check environment
+    for key in ['GROQ_API_KEY', 'PORT']:
+        results["environment"][key] = "SET" if os.environ.get(key) else "NOT SET"
+    
+    # Test Groq API connection
+    try:
+        # Simple test that doesn't require audio
+        test_response = get_groq_response("Hello, this is a test.", model="llama3-8b-8192")
+        results["tests"]["groq_text_api"] = "SUCCESS" if test_response else "FAILED"
+    except Exception as e:
+        results["tests"]["groq_text_api"] = f"ERROR: {str(e)}"
+    
+    # Add more component tests as needed
+    
+    return jsonify(results)
 
 # Keep the if __name__ == '__main__' block for running the app
 if __name__ == '__main__':
