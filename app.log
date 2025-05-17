@@ -1,0 +1,256 @@
+2025-05-17 10:07:19,791 - werkzeug - WARNING -  * Debugger is active!
+2025-05-17 10:07:19,797 - werkzeug - INFO -  * Debugger PIN: 794-346-367
+2025-05-17 10:07:24,007 - werkzeug - INFO -  * Detected change in 'C:\\Users\\Kanu\\Desktop\\DoctorSimulation\\app.py', reloading
+2025-05-17 10:07:24,719 - werkzeug - WARNING -  * Debugger is active!
+2025-05-17 10:07:24,724 - werkzeug - INFO -  * Debugger PIN: 794-346-367
+2025-05-17 10:07:26,869 - werkzeug - INFO -  * Detected change in 'C:\\Users\\Kanu\\Desktop\\DoctorSimulation\\app.py', reloading
+2025-05-17 10:07:27,601 - werkzeug - WARNING -  * Debugger is active!
+2025-05-17 10:07:27,606 - werkzeug - INFO -  * Debugger PIN: 794-346-367
+2025-05-17 10:07:40,107 - werkzeug - INFO -  * Detected change in 'C:\\Users\\Kanu\\Desktop\\DoctorSimulation\\app.py', reloading
+2025-05-17 10:07:40,851 - werkzeug - WARNING -  * Debugger is active!
+2025-05-17 10:07:40,856 - werkzeug - INFO -  * Debugger PIN: 794-346-367
+2025-05-17 10:07:59,568 - werkzeug - INFO -  * Detected change in 'C:\\Users\\Kanu\\Desktop\\DoctorSimulation\\app.py', reloading
+2025-05-17 10:08:00,363 - werkzeug - WARNING -  * Debugger is active!
+2025-05-17 10:08:00,369 - werkzeug - INFO -  * Debugger PIN: 794-346-367
+2025-05-17 10:08:15,964 - werkzeug - INFO -  * Detected change in 'C:\\Users\\Kanu\\Desktop\\DoctorSimulation\\app.py', reloading
+2025-05-17 10:08:16,703 - __main__ - INFO - GROQ_API_KEY found - length: 56
+2025-05-17 10:08:16,703 - __main__ - INFO - Starting Flask app on 127.0.0.1:5000
+2025-05-17 10:08:16,718 - werkzeug - WARNING -  * Debugger is active!
+2025-05-17 10:08:16,723 - werkzeug - INFO -  * Debugger PIN: 794-346-367
+2025-05-17 10:08:32,336 - werkzeug - INFO -  * Detected change in 'C:\\Users\\Kanu\\Desktop\\DoctorSimulation\\app.py', reloading
+2025-05-17 10:08:33,027 - __main__ - INFO - GROQ_API_KEY found - length: 56
+2025-05-17 10:08:33,027 - __main__ - INFO - Starting Flask app on 127.0.0.1:5000
+2025-05-17 10:08:33,040 - werkzeug - WARNING -  * Debugger is active!
+2025-05-17 10:08:33,046 - werkzeug - INFO -  * Debugger PIN: 794-346-367
+2025-05-17 10:08:43,958 - __main__ - INFO - GROQ_API_KEY found - length: 56
+2025-05-17 10:08:43,958 - __main__ - INFO - Starting Flask app on 127.0.0.1:5000
+2025-05-17 10:08:43,978 - werkzeug - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5000
+2025-05-17 10:08:43,979 - werkzeug - INFO - [33mPress CTRL+C to quit[0m
+2025-05-17 10:08:43,980 - werkzeug - INFO -  * Restarting with stat
+2025-05-17 10:08:44,629 - __main__ - INFO - GROQ_API_KEY found - length: 56
+2025-05-17 10:08:44,630 - __main__ - INFO - Starting Flask app on 127.0.0.1:5000
+2025-05-17 10:08:44,643 - werkzeug - WARNING -  * Debugger is active!
+2025-05-17 10:08:44,650 - werkzeug - INFO -  * Debugger PIN: 794-346-367
+2025-05-17 10:08:51,806 - __main__ - DEBUG - Request: GET /debug
+2025-05-17 10:08:51,806 - __main__ - DEBUG - Headers: Host: 127.0.0.1:5000
+Connection: keep-alive
+Cache-Control: max-age=0
+Sec-Ch-Ua: "Chromium";v="136", "Brave";v="136", "Not.A/Brand";v="99"
+Sec-Ch-Ua-Mobile: ?0
+Sec-Ch-Ua-Platform: "Windows"
+Upgrade-Insecure-Requests: 1
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8
+Sec-Gpc: 1
+Accept-Language: en-US,en;q=0.7
+Sec-Fetch-Site: none
+Sec-Fetch-Mode: navigate
+Sec-Fetch-User: ?1
+Sec-Fetch-Dest: document
+Accept-Encoding: gzip, deflate, br, zstd
+
+
+2025-05-17 10:08:51,807 - __main__ - DEBUG - Body: b''
+2025-05-17 10:08:51,808 - __main__ - WARNING - 404 error: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again. - Path: /debug, Method: GET
+2025-05-17 10:08:51,808 - werkzeug - INFO - 127.0.0.1 - - [17/May/2025 10:08:51] "[33mGET /debug HTTP/1.1[0m" 404 -
+2025-05-17 10:08:53,815 - __main__ - DEBUG - Request: GET /
+2025-05-17 10:08:53,816 - __main__ - DEBUG - Headers: Host: 127.0.0.1:5000
+Connection: keep-alive
+Cache-Control: max-age=0
+Sec-Ch-Ua: "Chromium";v="136", "Brave";v="136", "Not.A/Brand";v="99"
+Sec-Ch-Ua-Mobile: ?0
+Sec-Ch-Ua-Platform: "Windows"
+Upgrade-Insecure-Requests: 1
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8
+Sec-Gpc: 1
+Accept-Language: en-US,en;q=0.7
+Sec-Fetch-Site: none
+Sec-Fetch-Mode: navigate
+Sec-Fetch-User: ?1
+Sec-Fetch-Dest: document
+Accept-Encoding: gzip, deflate, br, zstd
+
+
+2025-05-17 10:08:53,817 - __main__ - DEBUG - Body: b''
+2025-05-17 10:08:53,817 - __main__ - WARNING - 404 error: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again. - Path: /, Method: GET
+2025-05-17 10:08:53,818 - werkzeug - INFO - 127.0.0.1 - - [17/May/2025 10:08:53] "[33mGET / HTTP/1.1[0m" 404 -
+2025-05-17 10:10:45,976 - werkzeug - INFO -  * Detected change in 'C:\\Users\\Kanu\\Desktop\\DoctorSimulation\\app.py', reloading
+2025-05-17 10:10:46,129 - werkzeug - INFO -  * Restarting with stat
+2025-05-17 10:10:46,781 - __main__ - INFO - GROQ_API_KEY found - length: 56
+2025-05-17 10:10:46,782 - __main__ - INFO - Starting Flask app on 127.0.0.1:5000
+2025-05-17 10:10:46,795 - werkzeug - WARNING -  * Debugger is active!
+2025-05-17 10:10:46,800 - werkzeug - INFO -  * Debugger PIN: 794-346-367
+2025-05-17 10:10:48,937 - werkzeug - INFO -  * Detected change in 'C:\\Users\\Kanu\\Desktop\\DoctorSimulation\\app.py', reloading
+2025-05-17 10:10:49,027 - werkzeug - INFO -  * Restarting with stat
+2025-05-17 10:10:49,606 - __main__ - INFO - GROQ_API_KEY found - length: 56
+2025-05-17 10:10:49,607 - __main__ - INFO - Starting Flask app on 127.0.0.1:5000
+2025-05-17 10:10:49,619 - werkzeug - WARNING -  * Debugger is active!
+2025-05-17 10:10:49,625 - werkzeug - INFO -  * Debugger PIN: 794-346-367
+2025-05-17 10:11:05,241 - werkzeug - INFO -  * Detected change in 'C:\\Users\\Kanu\\Desktop\\DoctorSimulation\\app.py', reloading
+2025-05-17 10:11:05,323 - werkzeug - INFO -  * Restarting with stat
+2025-05-17 10:11:05,923 - __main__ - INFO - GROQ_API_KEY found - length: 56
+2025-05-17 10:11:05,923 - __main__ - INFO - Starting Flask app on 127.0.0.1:5000
+2025-05-17 10:11:05,936 - werkzeug - WARNING -  * Debugger is active!
+2025-05-17 10:11:05,941 - werkzeug - INFO -  * Debugger PIN: 794-346-367
+2025-05-17 10:11:24,683 - werkzeug - INFO -  * Detected change in 'C:\\Users\\Kanu\\Desktop\\DoctorSimulation\\app.py', reloading
+2025-05-17 10:11:24,813 - werkzeug - INFO -  * Restarting with stat
+2025-05-17 10:11:25,598 - __main__ - INFO - GROQ_API_KEY found - length: 56
+2025-05-17 10:11:25,599 - __main__ - INFO - Starting Flask app on 127.0.0.1:5000
+2025-05-17 10:11:25,619 - werkzeug - WARNING -  * Debugger is active!
+2025-05-17 10:11:25,628 - werkzeug - INFO -  * Debugger PIN: 794-346-367
+2025-05-17 10:11:32,975 - werkzeug - INFO -  * Detected change in 'C:\\Users\\Kanu\\Desktop\\DoctorSimulation\\app.py', reloading
+2025-05-17 10:11:33,067 - werkzeug - INFO -  * Restarting with stat
+2025-05-17 10:11:33,705 - __main__ - INFO - GROQ_API_KEY found - length: 56
+2025-05-17 10:11:33,705 - __main__ - INFO - Starting Flask app on 127.0.0.1:5000
+2025-05-17 10:11:33,718 - werkzeug - WARNING -  * Debugger is active!
+2025-05-17 10:11:33,723 - werkzeug - INFO -  * Debugger PIN: 794-346-367
+2025-05-17 10:12:03,822 - werkzeug - INFO -  * Detected change in 'C:\\Users\\Kanu\\Desktop\\DoctorSimulation\\app.py', reloading
+2025-05-17 10:12:03,906 - werkzeug - INFO -  * Restarting with stat
+2025-05-17 10:12:04,517 - __main__ - INFO - GROQ_API_KEY found - length: 56
+2025-05-17 10:12:04,518 - __main__ - INFO - Starting Flask app on 127.0.0.1:5000
+2025-05-17 10:12:04,531 - werkzeug - WARNING -  * Debugger is active!
+2025-05-17 10:12:04,537 - werkzeug - INFO -  * Debugger PIN: 794-346-367
+2025-05-17 10:12:31,543 - werkzeug - INFO -  * Detected change in 'C:\\Users\\Kanu\\Desktop\\DoctorSimulation\\app.py', reloading
+2025-05-17 10:12:31,642 - werkzeug - INFO -  * Restarting with stat
+2025-05-17 10:12:32,262 - __main__ - INFO - GROQ_API_KEY found - length: 56
+2025-05-17 10:12:32,263 - __main__ - INFO - Starting Flask app on 127.0.0.1:5000
+2025-05-17 10:12:32,276 - werkzeug - WARNING -  * Debugger is active!
+2025-05-17 10:12:32,282 - werkzeug - INFO -  * Debugger PIN: 794-346-367
+2025-05-17 10:12:36,499 - werkzeug - INFO -  * Detected change in 'C:\\Users\\Kanu\\Desktop\\DoctorSimulation\\app.py', reloading
+2025-05-17 10:12:36,603 - werkzeug - INFO -  * Restarting with stat
+2025-05-17 10:12:37,229 - __main__ - INFO - GROQ_API_KEY found - length: 56
+2025-05-17 10:12:37,229 - __main__ - INFO - Starting Flask app on 127.0.0.1:5000
+2025-05-17 10:12:37,242 - werkzeug - WARNING -  * Debugger is active!
+2025-05-17 10:12:37,247 - werkzeug - INFO -  * Debugger PIN: 794-346-367
+2025-05-17 10:12:50,780 - werkzeug - INFO -  * Detected change in 'C:\\Users\\Kanu\\Desktop\\DoctorSimulation\\app.py', reloading
+2025-05-17 10:12:50,888 - werkzeug - INFO -  * Restarting with stat
+2025-05-17 10:12:51,526 - __main__ - INFO - GROQ_API_KEY found - length: 56
+2025-05-17 10:12:51,527 - __main__ - INFO - Starting Flask app on 127.0.0.1:5000
+2025-05-17 10:12:51,540 - werkzeug - WARNING -  * Debugger is active!
+2025-05-17 10:12:51,546 - werkzeug - INFO -  * Debugger PIN: 794-346-367
+2025-05-17 10:12:52,657 - werkzeug - INFO -  * Detected change in 'C:\\Users\\Kanu\\Desktop\\DoctorSimulation\\app.py', reloading
+2025-05-17 10:12:52,755 - werkzeug - INFO -  * Restarting with stat
+2025-05-17 10:12:53,362 - __main__ - INFO - GROQ_API_KEY found - length: 56
+2025-05-17 10:12:53,362 - __main__ - INFO - Starting Flask app on 127.0.0.1:5000
+2025-05-17 10:12:53,375 - werkzeug - WARNING -  * Debugger is active!
+2025-05-17 10:12:53,381 - werkzeug - INFO -  * Debugger PIN: 794-346-367
+2025-05-17 10:12:55,418 - __main__ - INFO - Registered URL Rules:
+2025-05-17 10:12:55,419 - __main__ - INFO - Route: /static/<path:filename>, Endpoint: static
+2025-05-17 10:12:55,419 - __main__ - INFO - Route: /api/debug, Endpoint: debug_routes
+2025-05-17 10:12:59,550 - __main__ - INFO - GROQ_API_KEY found - length: 56
+2025-05-17 10:12:59,551 - __main__ - INFO - Starting Flask app on 127.0.0.1:5000
+2025-05-17 10:12:59,569 - werkzeug - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5000
+2025-05-17 10:12:59,569 - werkzeug - INFO - [33mPress CTRL+C to quit[0m
+2025-05-17 10:12:59,571 - werkzeug - INFO -  * Restarting with stat
+2025-05-17 10:13:00,185 - __main__ - INFO - GROQ_API_KEY found - length: 56
+2025-05-17 10:13:00,186 - __main__ - INFO - Starting Flask app on 127.0.0.1:5000
+2025-05-17 10:13:00,198 - werkzeug - WARNING -  * Debugger is active!
+2025-05-17 10:13:00,203 - werkzeug - INFO -  * Debugger PIN: 794-346-367
+2025-05-17 10:13:03,210 - __main__ - DEBUG - Request: GET /
+2025-05-17 10:13:03,211 - __main__ - DEBUG - Headers: Host: 127.0.0.1:5000
+Connection: keep-alive
+Cache-Control: max-age=0
+Sec-Ch-Ua: "Chromium";v="136", "Brave";v="136", "Not.A/Brand";v="99"
+Sec-Ch-Ua-Mobile: ?0
+Sec-Ch-Ua-Platform: "Windows"
+Upgrade-Insecure-Requests: 1
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8
+Sec-Gpc: 1
+Accept-Language: en-US,en;q=0.7
+Sec-Fetch-Site: none
+Sec-Fetch-Mode: navigate
+Sec-Fetch-User: ?1
+Sec-Fetch-Dest: document
+Accept-Encoding: gzip, deflate, br, zstd
+
+
+2025-05-17 10:13:03,213 - __main__ - DEBUG - Body: b''
+2025-05-17 10:13:03,213 - __main__ - WARNING - 404 error: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again. - Path: /, Method: GET
+2025-05-17 10:13:03,214 - werkzeug - INFO - 127.0.0.1 - - [17/May/2025 10:13:03] "[33mGET / HTTP/1.1[0m" 404 -
+2025-05-17 10:13:05,452 - __main__ - DEBUG - Request: GET /
+2025-05-17 10:13:05,452 - __main__ - DEBUG - Headers: Host: 127.0.0.1:5000
+Connection: keep-alive
+Cache-Control: max-age=0
+Sec-Ch-Ua: "Chromium";v="136", "Brave";v="136", "Not.A/Brand";v="99"
+Sec-Ch-Ua-Mobile: ?0
+Sec-Ch-Ua-Platform: "Windows"
+Upgrade-Insecure-Requests: 1
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8
+Sec-Gpc: 1
+Accept-Language: en-US,en;q=0.7
+Sec-Fetch-Site: none
+Sec-Fetch-Mode: navigate
+Sec-Fetch-User: ?1
+Sec-Fetch-Dest: document
+Accept-Encoding: gzip, deflate, br, zstd
+
+
+2025-05-17 10:13:05,453 - __main__ - DEBUG - Body: b''
+2025-05-17 10:13:05,453 - __main__ - WARNING - 404 error: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again. - Path: /, Method: GET
+2025-05-17 10:13:05,454 - werkzeug - INFO - 127.0.0.1 - - [17/May/2025 10:13:05] "[33mGET / HTTP/1.1[0m" 404 -
+2025-05-17 10:13:29,545 - __main__ - INFO - Registered URL Rules:
+2025-05-17 10:13:29,547 - __main__ - INFO - Route: /static/<path:filename>, Endpoint: static
+2025-05-17 10:13:29,547 - __main__ - INFO - Route: /api/debug, Endpoint: debug_routes
+2025-05-17 10:13:29,899 - __main__ - INFO - Registered URL Rules:
+2025-05-17 10:13:29,900 - __main__ - INFO - Route: /static/<path:filename>, Endpoint: static
+2025-05-17 10:13:29,900 - __main__ - INFO - Route: /api/debug, Endpoint: debug_routes
+2025-05-17 10:13:32,944 - __main__ - INFO - GROQ_API_KEY found - length: 56
+2025-05-17 10:13:32,945 - __main__ - INFO - Starting Flask app on 127.0.0.1:5000
+2025-05-17 10:13:32,997 - werkzeug - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5000
+2025-05-17 10:13:32,998 - werkzeug - INFO - [33mPress CTRL+C to quit[0m
+2025-05-17 10:13:33,002 - werkzeug - INFO -  * Restarting with stat
+2025-05-17 10:13:34,327 - __main__ - INFO - GROQ_API_KEY found - length: 56
+2025-05-17 10:13:34,328 - __main__ - INFO - Starting Flask app on 127.0.0.1:5000
+2025-05-17 10:13:34,350 - werkzeug - WARNING -  * Debugger is active!
+2025-05-17 10:13:34,361 - werkzeug - INFO -  * Debugger PIN: 794-346-367
+2025-05-17 10:13:45,932 - __main__ - DEBUG - Request: GET /
+2025-05-17 10:13:45,933 - __main__ - DEBUG - Headers: Host: 127.0.0.1:5000
+Connection: keep-alive
+Sec-Ch-Ua: "Chromium";v="136", "Google Chrome";v="136", "Not.A/Brand";v="99"
+Sec-Ch-Ua-Mobile: ?0
+Sec-Ch-Ua-Platform: "Windows"
+Upgrade-Insecure-Requests: 1
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7
+Sec-Fetch-Site: none
+Sec-Fetch-Mode: navigate
+Sec-Fetch-User: ?1
+Sec-Fetch-Dest: document
+Accept-Encoding: gzip, deflate, br, zstd
+Accept-Language: en-US,en;q=0.9
+
+
+2025-05-17 10:13:45,934 - __main__ - DEBUG - Body: b''
+2025-05-17 10:13:45,934 - __main__ - WARNING - 404 error: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again. - Path: /, Method: GET
+2025-05-17 10:13:45,935 - werkzeug - INFO - 127.0.0.1 - - [17/May/2025 10:13:45] "[33mGET / HTTP/1.1[0m" 404 -
+2025-05-17 10:13:47,331 - __main__ - DEBUG - Request: GET /favicon.ico
+2025-05-17 10:13:47,331 - __main__ - DEBUG - Headers: Host: 127.0.0.1:5000
+Connection: keep-alive
+Sec-Ch-Ua-Platform: "Windows"
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36
+Sec-Ch-Ua: "Chromium";v="136", "Google Chrome";v="136", "Not.A/Brand";v="99"
+Sec-Ch-Ua-Mobile: ?0
+Accept: image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8
+Sec-Fetch-Site: same-origin
+Sec-Fetch-Mode: no-cors
+Sec-Fetch-Dest: image
+Referer: http://127.0.0.1:5000/
+Accept-Encoding: gzip, deflate, br, zstd
+Accept-Language: en-US,en;q=0.9
+
+
+2025-05-17 10:13:47,333 - __main__ - DEBUG - Body: b''
+2025-05-17 10:13:47,334 - __main__ - WARNING - 404 error: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again. - Path: /favicon.ico, Method: GET
+2025-05-17 10:13:47,334 - werkzeug - INFO - 127.0.0.1 - - [17/May/2025 10:13:47] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2025-05-17 10:16:49,438 - __main__ - INFO - Registered URL Rules:
+2025-05-17 10:16:49,438 - __main__ - INFO - Route: /static/<path:filename>, Endpoint: static
+2025-05-17 10:16:49,439 - __main__ - INFO - Route: /api/debug, Endpoint: debug_routes
+2025-05-17 10:16:49,569 - __main__ - INFO - Registered URL Rules:
+2025-05-17 10:16:49,570 - __main__ - INFO - Route: /static/<path:filename>, Endpoint: static
+2025-05-17 10:16:49,570 - __main__ - INFO - Route: /api/debug, Endpoint: debug_routes

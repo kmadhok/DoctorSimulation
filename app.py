@@ -5,11 +5,23 @@ import sys
 import argparse
 import json
 import glob
+import logging
 from datetime import datetime
 
 # Load environment variables first
 from dotenv import load_dotenv
 load_dotenv()
+
+# Configure logging
+logging.basicConfig(
+    level=logging.DEBUG,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.StreamHandler(),
+        logging.FileHandler('app.log')
+    ]
+)
+logger = logging.getLogger(__name__)
 
 # Apply patch to Groq client before importing any Groq modules
 print("Applying Groq client patch...")
@@ -30,8 +42,34 @@ from utils.groq_tts_speech import generate_speech_audio
 from utils.patient_simulation import load_patient_simulation, get_patient_system_prompt
 from utils.database import init_db, create_conversation, add_message, get_conversations, get_conversation, delete_conversation, update_conversation_title
 
-# Initialize Flask app
-app = Flask(__name__)
+# Add template folder check before app creation
+template_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates')
+if not os.path.exists(template_dir):
+    os.makedirs(template_dir, exist_ok=True)
+    # Create a simple index.html if it doesn't exist
+    with open(os.path.join(template_dir, 'index.html'), 'w') as f:
+        f.write('<html><body><h1>Doctor Simulation</h1><p>Welcome to the Doctor Simulation app.</p></body></html>')
+    logger.info(f"Created templates directory and basic index.html at {template_dir}")
+
+# Initialize Flask app with explicit template folder
+app = Flask(__name__, template_folder=template_dir)
+
+# Add request logging
+@app.before_request
+def log_request_info():
+    logger.debug('Request: %s %s', request.method, request.path)
+    logger.debug('Headers: %s', request.headers)
+    logger.debug('Body: %s', request.get_data())
+
+# Add error handlers
+@app.errorhandler(404)
+def handle_404(e):
+    logger.warning('404 error: %s - Path: %s, Method: %s', 
+                  e, request.path, request.method)
+    return jsonify({
+        'status': 'error',
+        'message': f'Not Found: The requested URL {request.path} was not found on the server.'
+    }), 404
 
 # Initialize database
 init_db()
@@ -65,7 +103,23 @@ def initialize_patient_data(patient_file=None):
 # Use this global variable instead of the one dependent on args
 patient_data = initialize_patient_data()
 
-# Move the argument parsing inside the if __name__ == '__main__' block
+# Move this debug route outside of the if __name__ == '__main__' block
+@app.route('/api/debug', methods=['GET'])
+def debug_routes():
+    """List all available routes for debugging"""
+    routes = []
+    for rule in app.url_map.iter_rules():
+        routes.append({
+            'endpoint': rule.endpoint,
+            'methods': list(rule.methods),
+            'path': str(rule)
+        })
+    return jsonify({
+        'status': 'success',
+        'routes': routes
+    })
+
+# Keep the if __name__ == '__main__' block for running the app
 if __name__ == '__main__':
     # Parse command line arguments only when running directly with Python
     parser = argparse.ArgumentParser(description='Run the voice conversation app')
@@ -76,6 +130,7 @@ if __name__ == '__main__':
     # Load patient simulation data if provided
     if args.patient_file:
         patient_data = initialize_patient_data(args.patient_file)
+        logger.info('Loaded patient data from %s', args.patient_file)
     
     # Create utils directory if it doesn't exist
     os.makedirs('utils', exist_ok=True)
@@ -83,26 +138,34 @@ if __name__ == '__main__':
     # Print API key status (without revealing the key)
     api_key = os.environ.get('GROQ_API_KEY')
     if api_key:
-        print(f"GROQ_API_KEY found - length: {len(api_key)}")
+        logger.info('GROQ_API_KEY found - length: %d', len(api_key))
     else:
-        print("WARNING: GROQ_API_KEY not found in environment!")
+        logger.warning('GROQ_API_KEY not found in environment!')
     
     # Get port from environment variable (Heroku sets this) or use default
     port = int(os.environ.get('PORT', args.port))
-    host = '0.0.0.0'
+    host = '127.0.0.1'
     
-    print(f"Starting Flask app on {host}:{port}")
-    app.run(host=host, port=port, debug=False)
+    logger.info('Starting Flask app on %s:%d', host, port)
+    app.run(host=host, port=port, debug=True)
+
+    # Add this before app.run()
+    logger.info("Registered URL Rules:")
+    for rule in app.url_map.iter_rules():
+        logger.info(f"Route: {rule}, Endpoint: {rule.endpoint}")
 
 @app.route('/')
 def index():
     """Render the main page"""
+    logger.info('Serving index page')
     return render_template('index.html')
 
 @app.route('/api/patient-simulations', methods=['GET'])
 def list_patient_simulations():
     """List available patient simulations"""
+    logger.info('Listing patient simulations')
     simulations = get_available_patient_simulations()
+    logger.debug('Found simulations: %s', simulations)
     return jsonify({
         'status': 'success',
         'simulations': simulations,
@@ -397,4 +460,13 @@ def load_conversation_by_id(conversation_id):
         return jsonify({
             'status': 'error',
             'message': f'Error loading conversation: {str(e)}'
-        }), 500 
+        }), 500
+
+@app.route('/test', methods=['GET'])
+def test_route():
+    """Simple test route to verify Flask is working"""
+    logger.info('Test route accessed')
+    return jsonify({
+        'status': 'success',
+        'message': 'Flask server is running correctly'
+    }) 
