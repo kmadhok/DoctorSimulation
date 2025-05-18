@@ -8,6 +8,7 @@
     "illness": "Appendicitis",
     "recent_exposure": "Recent food poisoning episode 2 weeks ago"
   },
+  "voice_id": "Cillian-PlayAI",
   "doctor_question": "Can you describe what you're feeling?",
   "patient_response": "\"I've been experiencing a dull, gnawing sensation in my lower abdomen, kind of like a pressure that won't go away. It's been there for a few days, and it seems to be getting worse. When I eat, it feels like it's moving around a bit, like the discomfort is shifting. Lying down or sitting comfortably makes it feel a bit better, but when I move around or exert myself, the sensation gets worse.\"",
   "model": "llama3-8b-8192"

@@ -319,7 +319,10 @@ def process_audio():
         
         # Generate speech audio from response
         logger.debug("Generating speech audio from response...")
-        speech_audio_bytes = generate_speech_audio(response_text)
+        # Get voice from patient data or use default
+        voice_id = patient_data.get('voice_id', 'Fritz-PlayAI')
+        logger.debug(f"Using voice: {voice_id}")
+        speech_audio_bytes = generate_speech_audio(response_text, voice_id)
         
         # Convert audio bytes to base64 for transmission
         if speech_audio_bytes:
@@ -471,6 +474,26 @@ def diagnose_api():
     # Add more component tests as needed
     
     return jsonify(results)
+
+@app.route('/api/current-patient-details', methods=['GET'])
+def get_current_patient_details():
+    """Get details of the currently selected patient simulation"""
+    if not patient_data or not patient_data.get('patient_details'):
+        return jsonify({
+            'status': 'error',
+            'message': 'No patient simulation selected or invalid simulation data'
+        }), 404
+        
+    # Get patient details, excluding the 'illness' field
+    details = patient_data.get('patient_details', {}).copy()
+    if 'illness' in details:
+        del details['illness']  # Remove illness field
+        
+    return jsonify({
+        'status': 'success',
+        'patient_details': details,
+        'simulation_file': current_patient_simulation
+    })
 
 # Keep the if __name__ == '__main__' block for running the app
 if __name__ == '__main__':

@@ -8,6 +8,7 @@
     "illness": "Gout",
     "recent_exposure": "Attended a wedding with rich food and alcohol"
   },
+  "voice_id": "Mason-PlayAI",
   "doctor_question": "Where does it hurt and when did it start?",
   "patient_response": "Patient: \"It's in my big toe, particularly the joint, and it started about a day and a half ago, maybe two days. I think it was after that wedding I attended over the weekend. We had a huge feast and I had a few drinks afterwards. Ever since then, I've been feeling this sharp pain and stiffness in my toe, especially when I put my weight on it or dress my foot.\"",
   "model": "llama3-8b-8192"

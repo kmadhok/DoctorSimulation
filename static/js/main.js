@@ -8,6 +8,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     const refreshConversationsBtn = document.getElementById('refreshConversationsBtn');
     const newConversationBtn = document.getElementById('newConversationBtn');
     
+    // New DOM element for patient details
+    const patientDetailsPanel = document.createElement('div');
+    patientDetailsPanel.id = 'patientDetailsPanel';
+    patientDetailsPanel.className = 'patient-details-panel';
+    document.querySelector('.main-content').appendChild(patientDetailsPanel);
+    
     // Audio recording variables
     let mediaRecorder = null;
     let audioChunks = [];
@@ -242,6 +248,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                     addMessage(message.role, message.content);
                 });
                 
+                // If the conversation has an associated simulation, load the patient details
+                if (data.conversation.simulation_file) {
+                    await loadPatientDetails();
+                } else {
+                    // Clear patient details panel if no simulation
+                    patientDetailsPanel.innerHTML = '';
+                }
+                
                 // Update UI
                 updateStatus('Ready');
                 recordButton.disabled = false;
@@ -325,6 +339,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                 recordButton.disabled = false;
                 conversationElement.innerHTML = ''; // Clear conversation
                 
+                // Load patient details if a simulation is selected
+                if (selectedSimulation) {
+                    await loadPatientDetails();
+                } else {
+                    // Clear patient details panel if no simulation selected
+                    patientDetailsPanel.innerHTML = '';
+                }
+                
                 // Refresh conversation list
                 await loadConversationHistory();
             } else {
@@ -335,6 +357,54 @@ document.addEventListener('DOMContentLoaded', async () => {
             statusElement.textContent = 'Error selecting simulation';
             recordButton.disabled = true;
         }
+    }
+    
+    // New function to load patient details
+    async function loadPatientDetails() {
+        try {
+            const response = await fetch('/api/current-patient-details');
+            const data = await response.json();
+            
+            if (data.status === 'success') {
+                displayPatientDetails(data.patient_details);
+            } else {
+                throw new Error(data.message || 'Failed to load patient details');
+            }
+        } catch (error) {
+            console.error('Error loading patient details:', error);
+            patientDetailsPanel.innerHTML = '<p class="error">Error loading patient details</p>';
+        }
+    }
+    
+    // New function to display patient details
+    function displayPatientDetails(details) {
+        patientDetailsPanel.innerHTML = '<h3>Patient Details</h3>';
+        
+        if (!details || Object.keys(details).length === 0) {
+            patientDetailsPanel.innerHTML += '<p>No patient details available</p>';
+            return;
+        }
+        
+        const detailsList = document.createElement('ul');
+        
+        // Display each field except 'illness'
+        const fieldsToDisplay = {
+            'age': 'Age',
+            'gender': 'Gender',
+            'occupation': 'Occupation',
+            'medical_history': 'Medical History',
+            'recent_exposure': 'Recent Exposure'
+        };
+        
+        for (const [key, label] of Object.entries(fieldsToDisplay)) {
+            if (details[key]) {
+                const item = document.createElement('li');
+                item.innerHTML = `<strong>${label}:</strong> ${details[key]}`;
+                detailsList.appendChild(item);
+            }
+        }
+        
+        patientDetailsPanel.appendChild(detailsList);
     }
     
     // Setup microphone access
@@ -554,6 +624,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Play audio response
     async function playAudioResponse(base64Audio) {
         try {
+            console.log('playAudioResponse: Called');
+
             initAudioContext();
 
 
@@ -561,6 +633,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                 console.log('playAudioResponse: AudioContext is suspended, attempting to resume...');
                 await audioContext.resume();
                 console.log('playAudioResponse: AudioContext resumed. New state:', audioContext.state);
+            }
+            if (audioContext.state !== 'running') {
+                console.warn('playAudioResponse: AudioContext is NOT running after attempt to resume. State:', audioContext.state);
+                // Potentially alert the user or handle this state
+                // return; // Maybe don't even try to play
             }
             
             // Stop any currently playing audio

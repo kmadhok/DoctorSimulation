@@ -4,3 +4,4 @@ newllm_env/
 venv/
 env/
 llm_doctor/
+debug_tts_output.mp3
