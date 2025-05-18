@@ -14,7 +14,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     let isRecording = false;
     let currentSimulation = null;
     let currentConversationId = null;
-    
+    let recordedMimeType = '';
     // Audio context for playback
     let audioContext;
     let currentAudioSource = null; // Track current audio source for interruption
@@ -23,6 +23,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     function initAudioContext() {
         if (!audioContext) {
             audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            console.log('AudioContext initialized. Initial state:', audioContext.state);
+
         }
     }
     
@@ -349,28 +351,57 @@ document.addEventListener('DOMContentLoaded', async () => {
             return false;
         }
     }
-    
-    // Start recording
     async function startRecording() {
         try {
-            // Initialize microphone if not already done
-            if (!await setupMicrophone()) {
+            // 1. Initialize and Resume AudioContext (if needed)
+            // This should be done as early as possible upon user interaction.
+            // 'startRecording' is triggered by mousedown/touchstart, which is a user interaction.
+            initAudioContext(); // Make sure audioContext is created
+    
+            if (audioContext && audioContext.state === 'suspended') {
+                console.log('startRecording: AudioContext is suspended, attempting to resume...');
+                await audioContext.resume(); // Asynchronous, wait for it
+                console.log('startRecording: AudioContext resumed. New state:', audioContext.state);
+            }
+    
+            // 2. Setup Microphone (your existing logic)
+            if (!await setupMicrophone()) { // setupMicrophone also good place to initAudioContext if not already
                 return;
             }
             
-            // Create a new conversation if none exists
+            // 3. Create a new conversation if none exists (your existing logic)
             if (!currentConversationId) {
                 await createNewConversation();
             }
             
-            // Stop any currently playing audio
+            // 4. Stop any currently playing audio (your existing logic, with onended fix)
             if (currentAudioSource) {
+                console.log('startRecording: Stopping previous audio source before recording.');
                 currentAudioSource.stop();
+                if (currentAudioSource.onended) { // Check if onended was set
+                    currentAudioSource.onended = null; // Clear handler to prevent old logic firing
+                }
                 currentAudioSource = null;
             }
             
+            // 5. Get User Media Stream (your existing logic)
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            mediaRecorder = new MediaRecorder(stream);
+            
+            // 6. MediaRecorder Setup with MIME Type (your existing good logic)
+            const options = { mimeType: 'audio/webm; codecs=opus' };
+            if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+                console.warn(`${options.mimeType} is not Supported, trying audio/webm`);
+                options.mimeType = 'audio/webm'; 
+                if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+                    console.warn(`${options.mimeType} is not Supported, browser default will be used.`);
+                    delete options.mimeType; 
+                }
+            }
+            
+            mediaRecorder = new MediaRecorder(stream, options);
+            recordedMimeType = mediaRecorder.mimeType; // Store the actual MIME type
+            console.log('Recording with MIME type:', recordedMimeType);
+    
             audioChunks = [];
             
             mediaRecorder.ondataavailable = (event) => {
@@ -378,18 +409,80 @@ document.addEventListener('DOMContentLoaded', async () => {
             };
             
             mediaRecorder.onstop = async () => {
-                await processAudio(new Blob(audioChunks, { type: 'audio/wav' }));
+                // Use the stored, correct MIME type here
+                await processAudio(new Blob(audioChunks, { type: recordedMimeType || 'audio/webm' }));
             };
             
             mediaRecorder.start();
             isRecording = true;
             statusElement.textContent = 'Recording...';
             recordButton.classList.add('recording');
+    
         } catch (error) {
             console.error('Error starting recording:', error);
-            statusElement.textContent = 'Error starting recording';
+            // Provide more specific error message to the user if possible
+            if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
+                statusElement.textContent = 'Microphone access denied.';
+            } else if (error.name === 'NotFoundError') {
+                statusElement.textContent = 'No microphone found.';
+            } else {
+                statusElement.textContent = 'Error starting recording.';
+            }
         }
-    }
+    } 
+    // // Start recording
+    // async function startRecording() {
+    //     try {
+    //         // Initialize microphone if not already done
+    //         if (!await setupMicrophone()) {
+    //             return;
+    //         }
+            
+    //         // Create a new conversation if none exists
+    //         if (!currentConversationId) {
+    //             await createNewConversation();
+    //         }
+            
+    //         // Stop any currently playing audio
+    //         if (currentAudioSource) {
+    //             currentAudioSource.stop();
+    //             currentAudioSource = null;
+    //         }
+            
+    //         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    //    // Try to get a preferred MIME type, fallback if not supported
+    //         const options = { mimeType: 'audio/webm; codecs=opus' }; // Prefer WebM Opus
+    //         if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+    //             console.warn(`${options.mimeType} is not Supported, trying audio/webm`);
+    //             options.mimeType = 'audio/webm'; // Fallback to generic WebM
+    //             if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+    //                 console.warn(`${options.mimeType} is not Supported, browser default will be used.`);
+    //                 delete options.mimeType; // Let browser decide
+    //             }
+    //         }
+    //         mediaRecorder = new MediaRecorder(stream, options);
+            
+    //         recordedMimeType=mediaRecorder.mimeType;
+
+    //         audioChunks = [];
+            
+    //         mediaRecorder.ondataavailable = (event) => {
+    //             audioChunks.push(event.data);
+    //         };
+            
+    //         mediaRecorder.onstop = async () => {
+    //             await processAudio(new Blob(audioChunks, { type: 'audio/webm' }));
+    //         };
+            
+    //         mediaRecorder.start();
+    //         isRecording = true;
+    //         statusElement.textContent = 'Recording...';
+    //         recordButton.classList.add('recording');
+    //     } catch (error) {
+    //         console.error('Error starting recording:', error);
+    //         statusElement.textContent = 'Error starting recording';
+    //     }
+    // }
     
     // Stop recording
     function stopRecording() {
@@ -462,6 +555,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     async function playAudioResponse(base64Audio) {
         try {
             initAudioContext();
+
+
+            if (audioContext && audioContext.state === 'suspended') {
+                console.log('playAudioResponse: AudioContext is suspended, attempting to resume...');
+                await audioContext.resume();
+                console.log('playAudioResponse: AudioContext resumed. New state:', audioContext.state);
+            }
             
             // Stop any currently playing audio
             if (currentAudioSource) {
