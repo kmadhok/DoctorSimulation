@@ -8,11 +8,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     const refreshConversationsBtn = document.getElementById('refreshConversationsBtn');
     const newConversationBtn = document.getElementById('newConversationBtn');
     
-    // New DOM element for patient details
+    // New DOM element for patient details - reposition it within main content
     const patientDetailsPanel = document.createElement('div');
     patientDetailsPanel.id = 'patientDetailsPanel';
     patientDetailsPanel.className = 'patient-details-panel';
-    document.querySelector('.main-content').appendChild(patientDetailsPanel);
+
+    // Create this after DOM is fully loaded
+    const mainContent = document.querySelector('.main-content');
+    mainContent.appendChild(patientDetailsPanel);
     
     // Audio recording variables
     let mediaRecorder = null;
@@ -89,6 +92,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Update status message
     function updateStatus(message) {
         statusElement.textContent = message;
+        
+        // Clear all status classes
+        statusElement.classList.remove('recording', 'processing', 'error');
+        
+        // Add appropriate class based on status message
+        if (message.includes('Recording')) {
+            statusElement.classList.add('recording');
+        } else if (message.includes('Processing')) {
+            statusElement.classList.add('processing');
+        } else if (message.includes('Error')) {
+            statusElement.classList.add('error');
+        }
     }
     
     // Load available simulations
@@ -421,6 +436,54 @@ document.addEventListener('DOMContentLoaded', async () => {
             return false;
         }
     }
+    
+    // Add a simple audio level visualization during recording
+    function setupVisualization(stream) {
+        if (!audioContext) return;
+        
+        // Create a visualization container
+        const visualizer = document.createElement('div');
+        visualizer.className = 'audio-visualizer';
+        recordButton.appendChild(visualizer);
+        
+        // Create analyzer
+        const analyser = audioContext.createAnalyser();
+        const source = audioContext.createMediaStreamSource(stream);
+        source.connect(analyser);
+        
+        analyser.fftSize = 32;
+        const bufferLength = analyser.frequencyBinCount;
+        const dataArray = new Uint8Array(bufferLength);
+        
+        // Create visualization bars
+        for (let i = 0; i < bufferLength; i++) {
+            const bar = document.createElement('div');
+            bar.className = 'visualizer-bar';
+            visualizer.appendChild(bar);
+        }
+        
+        // Update visualization
+        function updateVisualization() {
+            if (!isRecording) {
+                visualizer.remove();
+                return;
+            }
+            
+            analyser.getByteFrequencyData(dataArray);
+            const bars = visualizer.querySelectorAll('.visualizer-bar');
+            
+            for (let i = 0; i < bars.length; i++) {
+                const barHeight = dataArray[i] / 255 * 100;
+                bars[i].style.height = barHeight + '%';
+            }
+            
+            requestAnimationFrame(updateVisualization);
+        }
+        
+        updateVisualization();
+    }
+    
+    // Modify startRecording to include visualization
     async function startRecording() {
         try {
             // 1. Initialize and Resume AudioContext (if needed)
@@ -488,6 +551,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             statusElement.textContent = 'Recording...';
             recordButton.classList.add('recording');
     
+            // Add after mediaRecorder is created
+            setupVisualization(mediaRecorder.stream);
+    
         } catch (error) {
             console.error('Error starting recording:', error);
             // Provide more specific error message to the user if possible
@@ -499,60 +565,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 statusElement.textContent = 'Error starting recording.';
             }
         }
-    } 
-    // // Start recording
-    // async function startRecording() {
-    //     try {
-    //         // Initialize microphone if not already done
-    //         if (!await setupMicrophone()) {
-    //             return;
-    //         }
-            
-    //         // Create a new conversation if none exists
-    //         if (!currentConversationId) {
-    //             await createNewConversation();
-    //         }
-            
-    //         // Stop any currently playing audio
-    //         if (currentAudioSource) {
-    //             currentAudioSource.stop();
-    //             currentAudioSource = null;
-    //         }
-            
-    //         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    //    // Try to get a preferred MIME type, fallback if not supported
-    //         const options = { mimeType: 'audio/webm; codecs=opus' }; // Prefer WebM Opus
-    //         if (!MediaRecorder.isTypeSupported(options.mimeType)) {
-    //             console.warn(`${options.mimeType} is not Supported, trying audio/webm`);
-    //             options.mimeType = 'audio/webm'; // Fallback to generic WebM
-    //             if (!MediaRecorder.isTypeSupported(options.mimeType)) {
-    //                 console.warn(`${options.mimeType} is not Supported, browser default will be used.`);
-    //                 delete options.mimeType; // Let browser decide
-    //             }
-    //         }
-    //         mediaRecorder = new MediaRecorder(stream, options);
-            
-    //         recordedMimeType=mediaRecorder.mimeType;
-
-    //         audioChunks = [];
-            
-    //         mediaRecorder.ondataavailable = (event) => {
-    //             audioChunks.push(event.data);
-    //         };
-            
-    //         mediaRecorder.onstop = async () => {
-    //             await processAudio(new Blob(audioChunks, { type: 'audio/webm' }));
-    //         };
-            
-    //         mediaRecorder.start();
-    //         isRecording = true;
-    //         statusElement.textContent = 'Recording...';
-    //         recordButton.classList.add('recording');
-    //     } catch (error) {
-    //         console.error('Error starting recording:', error);
-    //         statusElement.textContent = 'Error starting recording';
-    //     }
-    // }
+    }
     
     // Stop recording
     function stopRecording() {
@@ -691,4 +704,27 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     // Initialize the app
     updateStatus('Ready');
+
+    // Add this after creating recordButton constant
+    function styleRecordButton() {
+        recordButton.innerHTML = `
+            <div class="record-button-inner">
+                <div class="record-icon"></div>
+                <span>Hold to Speak</span>
+            </div>
+        `;
+    }
+    styleRecordButton();
+
+    // Update DOM structure to fix layout
+    function updateLayoutStructure() {
+        const mainContent = document.querySelector('.main-content');
+        const main = document.querySelector('main');
+        
+        // Move patient details panel before main
+        mainContent.insertBefore(patientDetailsPanel, main);
+    }
+
+    // Call this after initializing the patient details panel
+    updateLayoutStructure();
 }); 

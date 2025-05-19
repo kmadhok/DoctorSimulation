@@ -9,7 +9,7 @@ import logging
 
 logger = logging.getLogger(__name__) # Use __name__ for module-specific logger
 
-def generate_speech_audio(text, voice_id="Fritz-PlayAI"):
+def generate_speech_audio(text, voice_id):
     logger.debug(f"generate_speech_audio called for text: '{text[:50]}...'")
     api_key = os.environ.get("GROQ_API_KEY")
     
