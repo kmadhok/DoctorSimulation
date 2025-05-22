@@ -179,23 +179,34 @@ def select_simulation():
             }), 400
             
         simulation_file = data['simulation_file']
+        logger.info(f"Selecting simulation file: {simulation_file}")
         
         # Allow empty simulation file to clear the current simulation
         if simulation_file == "":
+            logger.info("Clearing current simulation and voice settings")
             current_patient_simulation = None
             patient_data = {}
         elif not os.path.exists(simulation_file):
+            logger.error(f"Simulation file not found: {simulation_file}")
             return jsonify({
                 'status': 'error',
                 'message': f'Simulation file {simulation_file} not found'
             }), 404
         else:
             # Load the selected simulation
+            logger.info(f"Loading simulation data from: {simulation_file}")
             patient_data = initialize_patient_data(simulation_file)
-            # Verify voice_id is present
-            if patient_data and 'voice_id' not in patient_data:
-                logger.warning(f"No voice_id found in simulation file: {simulation_file}")
-                patient_data['voice_id'] = 'Fritz-PlayAI'  # Set default if missing
+            
+            # Log voice ID information
+            if patient_data:
+                current_voice = patient_data.get('voice_id')
+                logger.info(f"Loaded voice_id from simulation: {current_voice}")
+                if 'voice_id' not in patient_data:
+                    logger.warning(f"No voice_id found in simulation file: {simulation_file}")
+                    patient_data['voice_id'] = 'Fritz-PlayAI'
+                    logger.info(f"Set default voice_id: {patient_data['voice_id']}")
+            else:
+                logger.warning("No patient data loaded from simulation file")
         
         # Clear conversation history when changing simulations
         conversation_history = []
@@ -234,6 +245,11 @@ def process_audio():
     global conversation_history, current_conversation_id, patient_data
     
     try:
+        # Log current state at start of processing
+        logger.info("=== Starting audio processing ===")
+        logger.info(f"Current patient_data: {patient_data}")
+        logger.info(f"Current simulation file: {current_patient_simulation}")
+        
         # Check if a conversation is active
         logger.debug("Starting audio processing")
         if not current_conversation_id:
@@ -322,18 +338,20 @@ def process_audio():
                 update_conversation_title(current_conversation_id, title_text)
         
         # Generate speech audio from response
-        logger.debug("Generating speech audio from response...")
-        # Get voice from patient data or use default
+        logger.info("=== Voice selection process ===")
         voice_id = None
         if patient_data and isinstance(patient_data, dict):
             voice_id = patient_data.get('voice_id')
+            logger.info(f"Retrieved voice_id from patient_data: {voice_id}")
+        else:
+            logger.warning("patient_data is not a valid dictionary or is None")
         
         # Fallback to default voice if not found
         if not voice_id:
             voice_id = 'Fritz-PlayAI'
             logger.warning(f"No voice_id found in patient_data, using default: {voice_id}")
         
-        logger.debug(f"Using voice: {voice_id}")
+        logger.info(f"Final voice_id selected for TTS: {voice_id}")
         speech_audio_bytes = generate_speech_audio(response_text, voice_id)
         
         # Convert audio bytes to base64 for transmission
