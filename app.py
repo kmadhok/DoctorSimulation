@@ -212,26 +212,34 @@ def select_simulation():
         conversation_history = []
         
         # Create a new conversation in the database with a generic title
-        # The title will be updated with actual content after the first message
         title = "New Conversation"
         if simulation_file:
             title = f"Conversation with {os.path.basename(simulation_file)}"
         
-        # Store the patient_data in the database along with the conversation
-        # This will require modifying your database.py file to store simulation data
+        # Create the conversation
         current_conversation_id = create_conversation(title, simulation_file)
+        logger.info(f"Created new conversation with ID: {current_conversation_id}")
         
-        # Store the actual patient data in the database (add this function to database.py)
-        if patient_data:
-            # This should be implemented in database.py
-            logger.info("Storing patient data in database for conversation")
-            store_conversation_data(current_conversation_id, 'patient_data', patient_data)
+        # Store the patient data in the database if available
+        storage_result = False
+        if patient_data and isinstance(patient_data, dict):
+            from utils.database import store_conversation_data
+            try:
+                logger.info(f"Attempting to store patient_data for conversation {current_conversation_id}")
+                logger.debug(f"Patient data to store: {json.dumps(patient_data)[:200]}...")
+                storage_result = store_conversation_data(current_conversation_id, 'patient_data', patient_data)
+                logger.info(f"Storage result: {'Success' if storage_result else 'Failed'}")
+            except Exception as storage_e:
+                logger.error(f"Error storing patient data: {str(storage_e)}", exc_info=True)
+        else:
+            logger.warning(f"No valid patient data to store for conversation {current_conversation_id}")
         
         return jsonify({
             'status': 'success',
             'message': f'Selected simulation: {simulation_file}',
             'current_simulation': current_patient_simulation,
-            'conversation_id': current_conversation_id
+            'conversation_id': current_conversation_id,
+            'patient_data_stored': storage_result
         })
         
     except Exception as e:
@@ -540,6 +548,63 @@ def get_current_patient_details():
         'patient_details': details,
         'simulation_file': current_patient_simulation
     })
+
+# Add this diagnostic route to check database state
+@app.route('/api/debug/database', methods=['GET'])
+def debug_database():
+    """Check database tables and contents for debugging"""
+    conn = None
+    try:
+        # Import get_db_connection from your database module
+        from utils.database import get_db_connection
+        conn = get_db_connection()
+        
+        # Check if conversation_data table exists
+        cursor = conn.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='conversation_data'")
+        table_exists = cursor.fetchone() is not None
+        
+        result = {
+            "conversation_data_table_exists": table_exists,
+            "tables": [],
+            "data_samples": {}
+        }
+        
+        # Get all tables
+        cursor = conn.execute("SELECT name FROM sqlite_master WHERE type='table'")
+        tables = [row[0] for row in cursor.fetchall()]
+        result["tables"] = tables
+        
+        # If conversation_data exists, get some sample data
+        if table_exists:
+            cursor = conn.execute("SELECT conversation_id, data_key, data_value FROM conversation_data LIMIT 10")
+            rows = cursor.fetchall()
+            result["data_samples"]["conversation_data"] = [
+                {"conversation_id": row[0], "data_key": row[1], "data_value_preview": row[2][:100] + "..." if row[2] and len(row[2]) > 100 else row[2]}
+                for row in rows
+            ]
+            
+            # Count by conversation ID
+            cursor = conn.execute("SELECT conversation_id, COUNT(*) FROM conversation_data GROUP BY conversation_id")
+            counts = cursor.fetchall()
+            result["data_samples"]["counts_by_conversation"] = {row[0]: row[1] for row in counts}
+        
+        # Get conversations
+        cursor = conn.execute("SELECT id, title, simulation_file FROM conversations LIMIT 10")
+        rows = cursor.fetchall()
+        result["data_samples"]["conversations"] = [
+            {"id": row[0], "title": row[1], "simulation_file": row[2]}
+            for row in rows
+        ]
+        
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({
+            "status": "error",
+            "message": str(e)
+        }), 500
+    finally:
+        if conn:
+            conn.close()
 
 # Keep the if __name__ == '__main__' block for running the app
 if __name__ == '__main__':
