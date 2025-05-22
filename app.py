@@ -197,7 +197,10 @@ def select_simulation():
             logger.info(f"Loading simulation data from: {simulation_file}")
             patient_data = initialize_patient_data(simulation_file)
             
-            # Log voice ID information
+            # Explicitly log the loaded data for debugging
+            logger.info(f"Loaded patient_data: {patient_data}")
+            
+            # Ensure voice_id is present
             if patient_data:
                 current_voice = patient_data.get('voice_id')
                 logger.info(f"Loaded voice_id from simulation: {current_voice}")
@@ -207,6 +210,7 @@ def select_simulation():
                     logger.info(f"Set default voice_id: {patient_data['voice_id']}")
             else:
                 logger.warning("No patient data loaded from simulation file")
+                patient_data = {}
         
         # Clear conversation history when changing simulations
         conversation_history = []
@@ -265,11 +269,13 @@ def process_audio():
             patient_data = {}  # Default empty patient data
             logger.info(f"Created new conversation with ID: {current_conversation_id}")
         else:
-            # Retrieve patient data from database instead of relying on global variable
-            # This function should be added to database.py
+            # Retrieve patient data from database with enhanced logging
             logger.info(f"Retrieving patient data for conversation: {current_conversation_id}")
-            patient_data = get_conversation_data(current_conversation_id, 'patient_data')
-            if not patient_data:
+            retrieved_data = get_conversation_data(current_conversation_id, 'patient_data')
+            if retrieved_data:
+                patient_data = retrieved_data
+                logger.info(f"Successfully retrieved patient_data: {patient_data}")
+            else:
                 patient_data = {}
                 logger.warning(f"No patient data found for conversation {current_conversation_id}")
             

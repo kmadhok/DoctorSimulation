@@ -1,7 +1,11 @@
 import sqlite3
 import os
 import json
+import logging
 from datetime import datetime
+
+# Initialize logger
+logger = logging.getLogger(__name__)
 
 # Database file path
 DB_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'conversations.db')
