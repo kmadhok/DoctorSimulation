@@ -233,8 +233,11 @@ def process_audio():
             db.add_message(current_conversation_id, "user", transcription)
             db.add_message(current_conversation_id, "assistant", response_text)
         
-        # Generate speech audio from response
-        speech_audio_bytes = generate_speech_audio(response_text)
+        # Get preferred voice ID from database or use default
+        voice_id = db.get_setting('voice_id', 'Fritz-PlayAI')
+        
+        # Generate speech audio from response using the stored voice ID
+        speech_audio_bytes = generate_speech_audio(response_text, voice_id)
         
         # Convert audio bytes to base64 for transmission
         if speech_audio_bytes:
@@ -291,4 +294,37 @@ def get_conversation(conversation_id):
         return jsonify({
             'status': 'error',
             'message': f'Error getting conversation: {str(e)}'
+        }), 500
+
+@app.route('/api/voice-preference', methods=['POST', 'GET'])
+def voice_preference():
+    """Get or set voice preference"""
+    try:
+        if request.method == 'POST':
+            data = request.get_json()
+            if not data or 'voice_id' not in data:
+                return jsonify({
+                    'status': 'error',
+                    'message': 'No voice_id specified'
+                }), 400
+                
+            voice_id = data['voice_id']
+            db.set_setting('voice_id', voice_id)
+            
+            return jsonify({
+                'status': 'success',
+                'message': f'Voice preference set to: {voice_id}'
+            })
+        else:  # GET
+            voice_id = db.get_setting('voice_id', 'Fritz-PlayAI')  # Default if not set
+            
+            return jsonify({
+                'status': 'success',
+                'voice_id': voice_id
+            })
+            
+    except Exception as e:
+        return jsonify({
+            'status': 'error',
+            'message': f'Error managing voice preference: {str(e)}'
         }), 500 

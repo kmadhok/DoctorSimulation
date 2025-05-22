@@ -37,6 +37,16 @@ class ConversationDatabase:
                 )
             ''')
             
+            # Create settings table
+            cursor.execute('''
+                CREATE TABLE IF NOT EXISTS settings (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    key TEXT UNIQUE,
+                    value TEXT,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            ''')
+            
             conn.commit()
     
     def start_conversation(self, patient_simulation=None):
@@ -114,4 +124,27 @@ class ConversationDatabase:
             cursor = conn.cursor()
             cursor.execute('DELETE FROM messages WHERE conversation_id = ?', (conversation_id,))
             cursor.execute('DELETE FROM conversations WHERE id = ?', (conversation_id,))
-            conn.commit() 
+            conn.commit()
+            
+    def get_setting(self, key, default_value=None):
+        """Get a setting value by key"""
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+            cursor.execute('SELECT value FROM settings WHERE key = ?', (key,))
+            result = cursor.fetchone()
+            
+            if result:
+                return result[0]
+            return default_value
+    
+    def set_setting(self, key, value):
+        """Set a setting value by key"""
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                'INSERT INTO settings (key, value, updated_at) VALUES (?, ?, ?) '
+                'ON CONFLICT(key) DO UPDATE SET value = ?, updated_at = ?',
+                (key, value, datetime.now(), value, datetime.now())
+            )
+            conn.commit()
+            return True 

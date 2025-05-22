@@ -4,6 +4,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const statusElement = document.getElementById('status');
     const conversationElement = document.getElementById('conversation');
     const simulationSelect = document.getElementById('simulationSelect');
+    const voiceSelect = document.getElementById('voiceSelect');
     
     // Audio recording variables
     let mediaRecorder = null;
@@ -25,11 +26,57 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Load available simulations
     await loadSimulations();
     
+    // Load voice preference
+    await loadVoicePreference();
+    
     // Set up event listeners
     recordButton.addEventListener('mousedown', startRecording);
     recordButton.addEventListener('mouseup', stopRecording);
     recordButton.addEventListener('mouseleave', stopRecording);
     simulationSelect.addEventListener('change', handleSimulationChange);
+    voiceSelect.addEventListener('change', handleVoiceChange);
+    
+    // Load voice preference from the server
+    async function loadVoicePreference() {
+        try {
+            const response = await fetch('/api/voice-preference');
+            const data = await response.json();
+            
+            if (data.status === 'success' && data.voice_id) {
+                voiceSelect.value = data.voice_id;
+            }
+        } catch (error) {
+            console.error('Error loading voice preference:', error);
+        }
+    }
+    
+    // Handle voice selection change
+    async function handleVoiceChange(event) {
+        const selectedVoice = event.target.value;
+        if (!selectedVoice) return;
+        
+        try {
+            const response = await fetch('/api/voice-preference', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    voice_id: selectedVoice
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (data.status === 'success') {
+                console.log('Voice preference saved successfully');
+            } else {
+                throw new Error(data.message || 'Failed to save voice preference');
+            }
+        } catch (error) {
+            console.error('Error saving voice preference:', error);
+        }
+    }
     
     // Request microphone access
     async function setupMicrophone() {
