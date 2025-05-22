@@ -528,4 +528,41 @@ button, select, .conversation-item {
 
 .message {
     animation: messageAppear 0.3s ease-out;
+}
+
+/* Add voice selector styling similar to simulation selector */
+.voice-selector {
+    margin-top: 10px;
+    margin-bottom: 15px;
+}
+
+.voice-selector select {
+    padding: 8px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+    background-color: #fff;
+    font-size: 14px;
+    width: 100%;
+    max-width: 300px;
+}
+
+/* Ensure consistent styling between both selectors */
+.simulation-selector,
+.voice-selector {
+    display: flex;
+    flex-direction: column;
+}
+
+@media (min-width: 768px) {
+    .simulation-selector,
+    .voice-selector {
+        flex-direction: row;
+        align-items: center;
+    }
+    
+    .simulation-selector label,
+    .voice-selector label {
+        margin-right: 10px;
+        min-width: 150px;
+    }
 } 

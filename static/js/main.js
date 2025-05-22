@@ -4,6 +4,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const statusElement = document.getElementById('status');
     const conversationElement = document.getElementById('conversation');
     const simulationSelect = document.getElementById('simulationSelect');
+    const voiceSelect = document.getElementById('voiceSelect');
     const conversationListElement = document.getElementById('conversationList');
     const refreshConversationsBtn = document.getElementById('refreshConversationsBtn');
     const newConversationBtn = document.getElementById('newConversationBtn');
@@ -22,6 +23,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     let audioChunks = [];
     let isRecording = false;
     let currentSimulation = null;
+    let currentVoiceId = 'Fritz-PlayAI'; // Default voice
     let currentConversationId = null;
     let recordedMimeType = '';
     // Audio context for playback
@@ -48,6 +50,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     recordButton.addEventListener('mouseup', stopRecording);
     recordButton.addEventListener('mouseleave', stopRecording);
     simulationSelect.addEventListener('change', handleSimulationChange);
+    voiceSelect.addEventListener('change', handleVoiceChange);
     refreshConversationsBtn.addEventListener('click', loadConversationHistory);
     newConversationBtn.addEventListener('click', createNewConversation);
     
@@ -63,6 +66,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             simulationSelect.value = '';
             currentSimulation = null;
             
+            // Get current voice selection
+            currentVoiceId = voiceSelect.value;
+            
             const response = await fetch('/api/conversations/new', {
                 method: 'POST'
             });
@@ -72,6 +78,18 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (data.status === 'success') {
                 currentConversationId = data.conversation_id;
                 conversationElement.innerHTML = ''; // Clear conversation display
+                
+                // Save voice preference for this conversation
+                await fetch('/api/update-voice', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        voice_id: currentVoiceId,
+                        conversation_id: currentConversationId
+                    })
+                });
                 
                 // Enable recording button
                 recordButton.disabled = false;
@@ -255,6 +273,16 @@ document.addEventListener('DOMContentLoaded', async () => {
                     simulationSelect.value = '';
                 }
                 
+                // Set the voice if available
+                if (data.voice_id) {
+                    currentVoiceId = data.voice_id;
+                    voiceSelect.value = currentVoiceId;
+                } else {
+                    // Set to default voice
+                    currentVoiceId = 'Fritz-PlayAI';
+                    voiceSelect.value = currentVoiceId;
+                }
+                
                 // Clear the conversation display
                 conversationElement.innerHTML = '';
                 
@@ -335,6 +363,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             statusElement.textContent = 'Loading simulation...';
             recordButton.disabled = true;
             
+            // Keep track of current voice selection
+            currentVoiceId = voiceSelect.value;
+            
             const response = await fetch('/api/select-simulation', {
                 method: 'POST',
                 headers: {
@@ -354,6 +385,20 @@ document.addEventListener('DOMContentLoaded', async () => {
                 recordButton.disabled = false;
                 conversationElement.innerHTML = ''; // Clear conversation
                 
+                // Update voice preference for this conversation
+                if (currentConversationId) {
+                    await fetch('/api/update-voice', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            voice_id: currentVoiceId,
+                            conversation_id: currentConversationId
+                        })
+                    });
+                }
+                
                 // Load patient details if a simulation is selected
                 if (selectedSimulation) {
                     await loadPatientDetails();
@@ -371,6 +416,37 @@ document.addEventListener('DOMContentLoaded', async () => {
             console.error('Error selecting simulation:', error);
             statusElement.textContent = 'Error selecting simulation';
             recordButton.disabled = true;
+        }
+    }
+    
+    // Add voice change handler
+    async function handleVoiceChange(event) {
+        currentVoiceId = event.target.value;
+        
+        try {
+            updateStatus('Updating voice...');
+            
+            const response = await fetch('/api/update-voice', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    voice_id: currentVoiceId,
+                    conversation_id: currentConversationId
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (data.status === 'success') {
+                updateStatus('Voice updated');
+            } else {
+                throw new Error(data.message || 'Failed to update voice');
+            }
+        } catch (error) {
+            console.error('Error updating voice:', error);
+            updateStatus('Error updating voice');
         }
     }
     
@@ -585,6 +661,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         try {
             const formData = new FormData();
             formData.append('audio', audioBlob);
+            formData.append('voice_id', currentVoiceId);
             
             const response = await fetch('/process_audio', {
                 method: 'POST',

@@ -191,7 +191,7 @@ def store_conversation_data(conversation_id, data_key, data_value):
         conn.commit()
         return True
     except Exception as e:
-        logger.error(f"Error storing conversation data: {e}", exc_info=True)
+        logger.error(f"Error storing conversation data: {e}")
         return False
     finally:
         conn.close()
@@ -217,7 +217,7 @@ def get_conversation_data(conversation_id, data_key):
                 return data_value
         return None
     except Exception as e:
-        logger.error(f"Error retrieving conversation data: {e}", exc_info=True)
+        logger.error(f"Error retrieving conversation data: {e}")
         return None
     finally:
         conn.close() 

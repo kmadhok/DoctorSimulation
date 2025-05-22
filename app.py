@@ -245,6 +245,45 @@ def select_simulation():
             'message': f'Error selecting simulation: {str(e)}'
         }), 500
 
+@app.route('/api/update-voice', methods=['POST'])
+def update_voice():
+    """Update the voice ID for a conversation"""
+    global current_conversation_id
+    
+    try:
+        data = request.get_json()
+        if not data or 'voice_id' not in data:
+            return jsonify({
+                'status': 'error',
+                'message': 'No voice ID specified'
+            }), 400
+        
+        voice_id = data.get('voice_id')
+        conversation_id = data.get('conversation_id') or current_conversation_id
+        
+        if not conversation_id:
+            return jsonify({
+                'status': 'error',
+                'message': 'No active conversation'
+            }), 400
+        
+        # Store the voice ID in the database
+        store_conversation_data(conversation_id, 'voice_id', voice_id)
+        
+        logger.info(f"Updated voice_id to {voice_id} for conversation {conversation_id}")
+        
+        return jsonify({
+            'status': 'success',
+            'message': f'Voice updated to {voice_id}'
+        })
+        
+    except Exception as e:
+        logger.error(f"Error updating voice: {str(e)}", exc_info=True)
+        return jsonify({
+            'status': 'error',
+            'message': f'Error updating voice: {str(e)}'
+        }), 500
+
 @app.route('/process_audio', methods=['POST'])
 def process_audio():
     """
@@ -269,7 +308,7 @@ def process_audio():
             patient_data = {}  # Default empty patient data
             logger.info(f"Created new conversation with ID: {current_conversation_id}")
         else:
-            # Retrieve patient data from database with enhanced logging
+            # Retrieve patient data from database
             logger.info(f"Retrieving patient data for conversation: {current_conversation_id}")
             retrieved_data = get_conversation_data(current_conversation_id, 'patient_data')
             if retrieved_data:
@@ -359,19 +398,27 @@ def process_audio():
                 title_text = transcription[:30] + "..." if len(transcription) > 30 else transcription
                 update_conversation_title(current_conversation_id, title_text)
         
-        # Generate speech audio from response
+        # Get voice ID from form data or database
         logger.info("=== Voice selection process ===")
-        voice_id = None
-        if patient_data and isinstance(patient_data, dict):
-            voice_id = patient_data.get('voice_id')
-            logger.info(f"Retrieved voice_id from patient_data: {voice_id}")
-        else:
-            logger.warning("patient_data is not a valid dictionary or is None")
+        voice_id = request.form.get('voice_id')
         
-        # Fallback to default voice if not found
-        if not voice_id:
-            voice_id = 'Fritz-PlayAI'
-            logger.warning(f"No voice_id found in patient_data, using default: {voice_id}")
+        if voice_id:
+            logger.info(f"Using voice_id from form data: {voice_id}")
+            # Store the selected voice ID in the database
+            if current_conversation_id:
+                store_conversation_data(current_conversation_id, 'voice_id', voice_id)
+        else:
+            # Try to get voice_id from the database
+            if current_conversation_id:
+                voice_id = get_conversation_data(current_conversation_id, 'voice_id')
+                if voice_id:
+                    logger.info(f"Retrieved voice_id from database: {voice_id}")
+                else:
+                    voice_id = 'Fritz-PlayAI'  # Default voice
+                    logger.warning(f"No voice_id found in database, using default: {voice_id}")
+            else:
+                voice_id = 'Fritz-PlayAI'  # Default voice
+                logger.warning(f"No active conversation, using default voice_id: {voice_id}")
         
         logger.info(f"Final voice_id selected for TTS: {voice_id}")
         speech_audio_bytes = generate_speech_audio(response_text, voice_id)
@@ -477,6 +524,9 @@ def load_conversation_by_id(conversation_id):
         if simulation_file and os.path.exists(simulation_file):
             patient_data = initialize_patient_data(simulation_file)
         
+        # Get the voice ID if available
+        voice_id = get_conversation_data(conversation_id, 'voice_id')
+        
         # Convert database messages to conversation history format
         conversation_history = [
             {"role": msg["role"], "content": msg["content"]}
@@ -486,9 +536,11 @@ def load_conversation_by_id(conversation_id):
         return jsonify({
             'status': 'success',
             'message': f'Conversation {conversation_id} loaded successfully',
-            'conversation': conversation
+            'conversation': conversation,
+            'voice_id': voice_id
         })
     except Exception as e:
+        logger.error(f"Error loading conversation: {str(e)}", exc_info=True)
         return jsonify({
             'status': 'error',
             'message': f'Error loading conversation: {str(e)}'
