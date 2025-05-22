@@ -144,3 +144,76 @@ def update_conversation_title(conversation_id, new_title):
     conn.close()
     
     return cursor.rowcount > 0  # Return True if a row was updated 
+
+def store_conversation_data(conversation_id, data_key, data_value):
+    """Store additional data for a conversation"""
+    conn = sqlite3.connect(DB_PATH)
+    try:
+        # Convert complex data types to JSON
+        if isinstance(data_value, (dict, list)):
+            data_value = json.dumps(data_value)
+            
+        # Check if the conversation_data table exists
+        conn.execute('''
+            CREATE TABLE IF NOT EXISTS conversation_data (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                conversation_id INTEGER,
+                data_key TEXT,
+                data_value TEXT,
+                FOREIGN KEY (conversation_id) REFERENCES conversations (id)
+            )
+        ''')
+        
+        # Check if data already exists
+        cursor = conn.execute(
+            'SELECT id FROM conversation_data WHERE conversation_id = ? AND data_key = ?',
+            (conversation_id, data_key)
+        )
+        row = cursor.fetchone()
+        
+        if row:
+            # Update existing data
+            conn.execute(
+                'UPDATE conversation_data SET data_value = ? WHERE id = ?',
+                (data_value, row[0])
+            )
+        else:
+            # Insert new data
+            conn.execute(
+                'INSERT INTO conversation_data (conversation_id, data_key, data_value) VALUES (?, ?, ?)',
+                (conversation_id, data_key, data_value)
+            )
+            
+        conn.commit()
+        return True
+    except Exception as e:
+        logger.error(f"Error storing conversation data: {e}", exc_info=True)
+        return False
+    finally:
+        conn.close()
+
+def get_conversation_data(conversation_id, data_key):
+    """Retrieve additional data for a conversation"""
+    conn = sqlite3.connect(DB_PATH)
+    try:
+        cursor = conn.execute(
+            'SELECT data_value FROM conversation_data WHERE conversation_id = ? AND data_key = ?',
+            (conversation_id, data_key)
+        )
+        row = cursor.fetchone()
+        
+        if row:
+            data_value = row[0]
+            # Try to parse as JSON if it looks like JSON
+            try:
+                if data_value.startswith('{') or data_value.startswith('['):
+                    return json.loads(data_value)
+                return data_value
+            except (json.JSONDecodeError, AttributeError):
+                return data_value
+        return None
+    except Exception as e:
+        logger.error(f"Error retrieving conversation data: {e}", exc_info=True)
+        return None
+    finally:
+        conn.close() 

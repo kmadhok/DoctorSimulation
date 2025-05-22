@@ -40,7 +40,7 @@ from utils.groq_integration import get_groq_response
 from utils.groq_transcribe import transcribe_audio_data
 from utils.groq_tts_speech import generate_speech_audio
 from utils.patient_simulation import load_patient_simulation, get_patient_system_prompt
-from utils.database import init_db, create_conversation, add_message, get_conversations, get_conversation, delete_conversation, update_conversation_title
+from utils.database import init_db, create_conversation, add_message, get_conversations, get_conversation, delete_conversation, update_conversation_title, store_conversation_data, get_conversation_data
 
 # Add template folder check before app creation
 template_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates')
@@ -217,7 +217,15 @@ def select_simulation():
         if simulation_file:
             title = f"Conversation with {os.path.basename(simulation_file)}"
         
+        # Store the patient_data in the database along with the conversation
+        # This will require modifying your database.py file to store simulation data
         current_conversation_id = create_conversation(title, simulation_file)
+        
+        # Store the actual patient data in the database (add this function to database.py)
+        if patient_data:
+            # This should be implemented in database.py
+            logger.info("Storing patient data in database for conversation")
+            store_conversation_data(current_conversation_id, 'patient_data', patient_data)
         
         return jsonify({
             'status': 'success',
@@ -227,6 +235,7 @@ def select_simulation():
         })
         
     except Exception as e:
+        logger.error(f"Error selecting simulation: {str(e)}", exc_info=True)
         return jsonify({
             'status': 'error',
             'message': f'Error selecting simulation: {str(e)}'
@@ -242,22 +251,29 @@ def process_audio():
     4. Generate speech audio from response
     5. Return all results to client
     """
-    global conversation_history, current_conversation_id, patient_data
+    global conversation_history, current_conversation_id
     
     try:
-        # Log current state at start of processing
         logger.info("=== Starting audio processing ===")
-        logger.info(f"Current patient_data: {patient_data}")
-        logger.info(f"Current simulation file: {current_patient_simulation}")
         
         # Check if a conversation is active
-        logger.debug("Starting audio processing")
         if not current_conversation_id:
-            # Create a new conversation if none exists
             logger.debug("No active conversation, creating new one")
             title = f"New Conversation - {datetime.now().strftime('%Y-%m-%d %H:%M')}"
             current_conversation_id = create_conversation(title, None)
             conversation_history = []
+            patient_data = {}  # Default empty patient data
+            logger.info(f"Created new conversation with ID: {current_conversation_id}")
+        else:
+            # Retrieve patient data from database instead of relying on global variable
+            # This function should be added to database.py
+            logger.info(f"Retrieving patient data for conversation: {current_conversation_id}")
+            patient_data = get_conversation_data(current_conversation_id, 'patient_data')
+            if not patient_data:
+                patient_data = {}
+                logger.warning(f"No patient data found for conversation {current_conversation_id}")
+            
+        logger.info(f"Using patient_data: {patient_data}")
         
         # Check if audio file was sent
         if 'audio' not in request.files:
