@@ -7,57 +7,44 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
-    <div class="container with-sidebar">
-        <!-- Sidebar for Conversation History -->
-        <aside class="sidebar">
-            <div class="sidebar-header">
-                <h2>Conversation History</h2>
-                <div class="sidebar-actions">
-                    <button id="newConversationBtn" class="action-button" title="New Conversation">
-                        <span class="action-icon">+</span>
-                    </button>
-                    <button id="refreshConversationsBtn" class="action-button" title="Refresh conversations">
-                        <span class="action-icon">↻</span>
-                    </button>
-                </div>
+    <div class="container">
+        <header>
+            <h1>Voice Conversation App</h1>
+            <div class="simulation-selector">
+                <label for="simulationSelect">Select Patient Simulation:</label>
+                <select id="simulationSelect">
+                    <option value="">Loading simulations...</option>
+                </select>
             </div>
-            <div class="conversation-list" id="conversationList">
-                <!-- Conversation history will be loaded here -->
-                <div class="empty-state">No saved conversations</div>
+            <div class="voice-selector">
+                <label for="voiceSelect">Select Voice:</label>
+                <select id="voiceSelect">
+                    <option value="Fritz-PlayAI">Fritz (Default)</option>
+                    <option value="Daniel-PlayAI">Daniel</option>
+                    <option value="Luciana-PlayAI">Luciana</option>
+                    <option value="Aurora-PlayAI">Aurora</option>
+                    <option value="Ethan-PlayAI">Ethan</option>
+                </select>
             </div>
-        </aside>
-
-        <!-- Main Content -->
-        <div class="main-content">
-            <header>
-                <h1>Can you guess what's wrong with me?</h1>
-                <div class="simulation-selector">
-                    <label for="simulationSelect">Select Patient Simulation (Optional):</label>
-                    <select id="simulationSelect">
-                        <option value="">No simulation</option>
-                        <option value="" disabled>Loading simulations...</option>
-                    </select>
-                </div>
-                <p class="status" id="status">Ready</p>
-            </header>
+            <p class="status" id="status">Ready</p>
+        </header>
+        
+        <main>
+            <div class="conversation" id="conversation">
+                <!-- Conversation messages will be displayed here -->
+            </div>
             
-            <main>
-                <div class="conversation" id="conversation">
-                    <!-- Conversation messages will be displayed here -->
-                </div>
-                
-                <div class="controls">
-                    <button id="recordButton" class="record-button">
-                        <span class="record-icon"></span>
-                        Hold to Speak
-                    </button>
-                </div>
-            </main>
-            
-            <footer>
-                <p>Powered by Groq API</p>
-            </footer>
-        </div>
+            <div class="controls">
+                <button id="recordButton" class="record-button" disabled>
+                    <span class="record-icon"></span>
+                    Hold to Speak
+                </button>
+            </div>
+        </main>
+        
+        <footer>
+            <p>Powered by Groq API</p>
+        </footer>
     </div>
     
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>

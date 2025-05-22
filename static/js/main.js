@@ -4,26 +4,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     const statusElement = document.getElementById('status');
     const conversationElement = document.getElementById('conversation');
     const simulationSelect = document.getElementById('simulationSelect');
-    const conversationListElement = document.getElementById('conversationList');
-    const refreshConversationsBtn = document.getElementById('refreshConversationsBtn');
-    const newConversationBtn = document.getElementById('newConversationBtn');
-    
-    // New DOM element for patient details - reposition it within main content
-    const patientDetailsPanel = document.createElement('div');
-    patientDetailsPanel.id = 'patientDetailsPanel';
-    patientDetailsPanel.className = 'patient-details-panel';
-
-    // Create this after DOM is fully loaded
-    const mainContent = document.querySelector('.main-content');
-    mainContent.appendChild(patientDetailsPanel);
+    const voiceSelect = document.getElementById('voiceSelect');
     
     // Audio recording variables
     let mediaRecorder = null;
     let audioChunks = [];
     let isRecording = false;
     let currentSimulation = null;
-    let currentConversationId = null;
-    let recordedMimeType = '';
+    
     // Audio context for playback
     let audioContext;
     let currentAudioSource = null; // Track current audio source for interruption
@@ -32,78 +20,95 @@ document.addEventListener('DOMContentLoaded', async () => {
     function initAudioContext() {
         if (!audioContext) {
             audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            console.log('AudioContext initialized. Initial state:', audioContext.state);
-
         }
     }
     
     // Load available simulations
     await loadSimulations();
     
-    // Load conversation history
-    await loadConversationHistory();
+    // Load voice preference
+    await loadVoicePreference();
     
     // Set up event listeners
     recordButton.addEventListener('mousedown', startRecording);
     recordButton.addEventListener('mouseup', stopRecording);
     recordButton.addEventListener('mouseleave', stopRecording);
     simulationSelect.addEventListener('change', handleSimulationChange);
-    refreshConversationsBtn.addEventListener('click', loadConversationHistory);
-    newConversationBtn.addEventListener('click', createNewConversation);
+    voiceSelect.addEventListener('change', handleVoiceChange);
     
-    // Request microphone access on first recording attempt rather than on page load
-    let microphoneSetup = false;
-    
-    // Create a new empty conversation
-    async function createNewConversation() {
+    // Load voice preference from the server
+    async function loadVoicePreference() {
         try {
-            updateStatus('Creating new conversation...');
+            const response = await fetch('/api/voice-preference');
+            const data = await response.json();
             
-            // Clear simulation selection
-            simulationSelect.value = '';
-            currentSimulation = null;
-            
-            const response = await fetch('/api/conversations/new', {
-                method: 'POST'
+            if (data.status === 'success' && data.voice_id) {
+                voiceSelect.value = data.voice_id;
+            }
+        } catch (error) {
+            console.error('Error loading voice preference:', error);
+        }
+    }
+    
+    // Handle voice selection change
+    async function handleVoiceChange(event) {
+        const selectedVoice = event.target.value;
+        if (!selectedVoice) return;
+        
+        try {
+            const response = await fetch('/api/voice-preference', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    voice_id: selectedVoice
+                })
             });
             
             const data = await response.json();
             
             if (data.status === 'success') {
-                currentConversationId = data.conversation_id;
-                conversationElement.innerHTML = ''; // Clear conversation display
-                
-                // Enable recording button
-                recordButton.disabled = false;
-                
-                // Refresh the conversation list
-                await loadConversationHistory();
-                
-                updateStatus('Ready');
+                console.log('Voice preference saved successfully');
             } else {
-                throw new Error(data.message || 'Failed to create new conversation');
+                throw new Error(data.message || 'Failed to save voice preference');
             }
         } catch (error) {
-            console.error('Error creating new conversation:', error);
-            updateStatus('Error creating new conversation');
+            console.error('Error saving voice preference:', error);
+        }
+    }
+    
+    // Request microphone access
+    async function setupMicrophone() {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            
+            // Create media recorder
+            mediaRecorder = new MediaRecorder(stream);
+            
+            // Handle data available event
+            mediaRecorder.ondataavailable = (event) => {
+                if (event.data.size > 0) {
+                    audioChunks.push(event.data);
+                }
+            };
+            
+            // Handle recording stop event
+            mediaRecorder.onstop = async () => {
+                await processAudio(new Blob(audioChunks, { type: 'audio/wav' }));
+            };
+            
+            return true;
+        } catch (error) {
+            updateStatus(`Error accessing microphone: ${error.message}`);
+            console.error('Error accessing microphone:', error);
+            return false;
         }
     }
     
     // Update status message
     function updateStatus(message) {
         statusElement.textContent = message;
-        
-        // Clear all status classes
-        statusElement.classList.remove('recording', 'processing', 'error');
-        
-        // Add appropriate class based on status message
-        if (message.includes('Recording')) {
-            statusElement.classList.add('recording');
-        } else if (message.includes('Processing')) {
-            statusElement.classList.add('processing');
-        } else if (message.includes('Error')) {
-            statusElement.classList.add('error');
-        }
     }
     
     // Load available simulations
@@ -114,10 +119,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             
             if (data.status === 'success') {
                 // Clear loading option
-                // Keep the "No simulation" option and remove all others
-                while (simulationSelect.options.length > 1) {
-                    simulationSelect.remove(1);
-                }
+                simulationSelect.innerHTML = '';
                 
                 // Add simulations to select
                 data.simulations.forEach(simulation => {
@@ -131,6 +133,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if (data.current_simulation) {
                     simulationSelect.value = data.current_simulation;
                     currentSimulation = data.current_simulation;
+                    recordButton.disabled = false;
                 }
             } else {
                 throw new Error(data.message || 'Failed to load simulations');
@@ -141,195 +144,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
     
-    // Load conversation history from the server
-    async function loadConversationHistory() {
-        try {
-            updateStatus('Loading conversations...');
-            
-            const response = await fetch('/api/conversations');
-            const data = await response.json();
-            
-            if (data.status === 'success') {
-                renderConversationList(data.conversations);
-                updateStatus('Ready');
-            } else {
-                throw new Error(data.message || 'Failed to load conversations');
-            }
-        } catch (error) {
-            console.error('Error loading conversations:', error);
-            updateStatus('Error loading conversations');
-        }
-    }
-    
-    // Render the conversation list in the sidebar
-    function renderConversationList(conversations) {
-        // Clear the list
-        conversationListElement.innerHTML = '';
-        
-        if (conversations.length === 0) {
-            const emptyState = document.createElement('div');
-            emptyState.className = 'empty-state';
-            emptyState.textContent = 'No saved conversations';
-            conversationListElement.appendChild(emptyState);
-            return;
-        }
-        
-        // Add each conversation to the list
-        conversations.forEach(conversation => {
-            const item = document.createElement('div');
-            item.className = 'conversation-item';
-            if (conversation.id === currentConversationId) {
-                item.classList.add('active');
-            }
-            
-            // Create conversation title
-            const title = document.createElement('div');
-            title.className = 'conversation-title';
-            title.textContent = conversation.title;
-            
-            // Create date element
-            const date = document.createElement('div');
-            date.className = 'conversation-date';
-            date.textContent = formatDate(conversation.updated_at);
-            
-            // Create action buttons
-            const actions = document.createElement('div');
-            actions.className = 'conversation-actions';
-            
-            const loadBtn = document.createElement('button');
-            loadBtn.className = 'conversation-action-btn load';
-            loadBtn.textContent = 'Load';
-            loadBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                loadConversation(conversation.id);
-            });
-            
-            const deleteBtn = document.createElement('button');
-            deleteBtn.className = 'conversation-action-btn delete';
-            deleteBtn.textContent = 'Delete';
-            deleteBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                deleteConversation(conversation.id);
-            });
-            
-            actions.appendChild(loadBtn);
-            actions.appendChild(deleteBtn);
-            
-            // Add elements to the item
-            item.appendChild(title);
-            item.appendChild(date);
-            item.appendChild(actions);
-            
-            // Add item to the list
-            conversationListElement.appendChild(item);
-        });
-    }
-    
-    // Format a date string
-    function formatDate(dateString) {
-        const date = new Date(dateString);
-        return date.toLocaleString();
-    }
-    
-    // Load a conversation
-    async function loadConversation(conversationId) {
-        try {
-            updateStatus('Loading conversation...');
-            
-            const response = await fetch(`/api/conversations/${conversationId}/load`, {
-                method: 'POST'
-            });
-            
-            const data = await response.json();
-            
-            if (data.status === 'success') {
-                currentConversationId = conversationId;
-                
-                // Set the simulation if available
-                if (data.conversation.simulation_file) {
-                    currentSimulation = data.conversation.simulation_file;
-                    simulationSelect.value = currentSimulation;
-                } else {
-                    // Clear simulation if none is associated
-                    currentSimulation = null;
-                    simulationSelect.value = '';
-                }
-                
-                // Clear the conversation display
-                conversationElement.innerHTML = '';
-                
-                // Add messages to conversation display
-                data.conversation.messages.forEach(message => {
-                    addMessage(message.role, message.content);
-                });
-                
-                // If the conversation has an associated simulation, load the patient details
-                if (data.conversation.simulation_file) {
-                    await loadPatientDetails();
-                } else {
-                    // Clear patient details panel if no simulation
-                    patientDetailsPanel.innerHTML = '';
-                }
-                
-                // Update UI
-                updateStatus('Ready');
-                recordButton.disabled = false;
-                
-                // Update active conversation in sidebar
-                const items = conversationListElement.querySelectorAll('.conversation-item');
-                items.forEach(item => item.classList.remove('active'));
-                const activeItem = Array.from(items).find(item => {
-                    return item.querySelector('.load').addEventListener('click', () => loadConversation(conversationId));
-                });
-                if (activeItem) {
-                    activeItem.classList.add('active');
-                }
-            } else {
-                throw new Error(data.message || 'Failed to load conversation');
-            }
-        } catch (error) {
-            console.error('Error loading conversation:', error);
-            updateStatus('Error loading conversation');
-        }
-    }
-    
-    // Delete a conversation
-    async function deleteConversation(conversationId) {
-        if (!confirm('Are you sure you want to delete this conversation? This action cannot be undone.')) {
-            return;
-        }
-        
-        try {
-            updateStatus('Deleting conversation...');
-            
-            const response = await fetch(`/api/conversations/${conversationId}`, {
-                method: 'DELETE'
-            });
-            
-            const data = await response.json();
-            
-            if (data.status === 'success') {
-                // If the deleted conversation was the current one, reset
-                if (currentConversationId === conversationId) {
-                    currentConversationId = null;
-                    conversationElement.innerHTML = '';
-                }
-                
-                // Reload the conversation list
-                await loadConversationHistory();
-                updateStatus('Conversation deleted');
-            } else {
-                throw new Error(data.message || 'Failed to delete conversation');
-            }
-        } catch (error) {
-            console.error('Error deleting conversation:', error);
-            updateStatus('Error deleting conversation');
-        }
-    }
-    
     // Handle simulation change
     async function handleSimulationChange(event) {
         const selectedSimulation = event.target.value;
+        if (!selectedSimulation) return;
         
         try {
             statusElement.textContent = 'Loading simulation...';
@@ -349,21 +167,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             
             if (data.status === 'success') {
                 currentSimulation = data.current_simulation;
-                currentConversationId = data.conversation_id;
                 statusElement.textContent = 'Ready';
                 recordButton.disabled = false;
                 conversationElement.innerHTML = ''; // Clear conversation
-                
-                // Load patient details if a simulation is selected
-                if (selectedSimulation) {
-                    await loadPatientDetails();
-                } else {
-                    // Clear patient details panel if no simulation selected
-                    patientDetailsPanel.innerHTML = '';
-                }
-                
-                // Refresh conversation list
-                await loadConversationHistory();
             } else {
                 throw new Error(data.message || 'Failed to select simulation');
             }
@@ -374,167 +180,22 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
     
-    // New function to load patient details
-    async function loadPatientDetails() {
-        try {
-            const response = await fetch('/api/current-patient-details');
-            const data = await response.json();
-            
-            if (data.status === 'success') {
-                displayPatientDetails(data.patient_details);
-            } else {
-                throw new Error(data.message || 'Failed to load patient details');
-            }
-        } catch (error) {
-            console.error('Error loading patient details:', error);
-            patientDetailsPanel.innerHTML = '<p class="error">Error loading patient details</p>';
-        }
-    }
-    
-    // New function to display patient details
-    function displayPatientDetails(details) {
-        patientDetailsPanel.innerHTML = '<h3>Patient Details</h3>';
-        
-        if (!details || Object.keys(details).length === 0) {
-            patientDetailsPanel.innerHTML += '<p>No patient details available</p>';
+    // Start recording
+    async function startRecording() {
+        if (!currentSimulation) {
+            statusElement.textContent = 'Please select a simulation first';
             return;
         }
         
-        const detailsList = document.createElement('ul');
-        
-        // Display each field except 'illness'
-        const fieldsToDisplay = {
-            'age': 'Age',
-            'gender': 'Gender',
-            'occupation': 'Occupation',
-            'medical_history': 'Medical History',
-            'recent_exposure': 'Recent Exposure'
-        };
-        
-        for (const [key, label] of Object.entries(fieldsToDisplay)) {
-            if (details[key]) {
-                const item = document.createElement('li');
-                item.innerHTML = `<strong>${label}:</strong> ${details[key]}`;
-                detailsList.appendChild(item);
-            }
-        }
-        
-        patientDetailsPanel.appendChild(detailsList);
-    }
-    
-    // Setup microphone access
-    async function setupMicrophone() {
-        if (microphoneSetup) return true;
-        
         try {
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            microphoneSetup = true;
-            return true;
-        } catch (error) {
-            updateStatus(`Error accessing microphone: ${error.message}`);
-            console.error('Error accessing microphone:', error);
-            return false;
-        }
-    }
-    
-    // Add a simple audio level visualization during recording
-    function setupVisualization(stream) {
-        if (!audioContext) return;
-        
-        // Create a visualization container
-        const visualizer = document.createElement('div');
-        visualizer.className = 'audio-visualizer';
-        recordButton.appendChild(visualizer);
-        
-        // Create analyzer
-        const analyser = audioContext.createAnalyser();
-        const source = audioContext.createMediaStreamSource(stream);
-        source.connect(analyser);
-        
-        analyser.fftSize = 32;
-        const bufferLength = analyser.frequencyBinCount;
-        const dataArray = new Uint8Array(bufferLength);
-        
-        // Create visualization bars
-        for (let i = 0; i < bufferLength; i++) {
-            const bar = document.createElement('div');
-            bar.className = 'visualizer-bar';
-            visualizer.appendChild(bar);
-        }
-        
-        // Update visualization
-        function updateVisualization() {
-            if (!isRecording) {
-                visualizer.remove();
-                return;
-            }
-            
-            analyser.getByteFrequencyData(dataArray);
-            const bars = visualizer.querySelectorAll('.visualizer-bar');
-            
-            for (let i = 0; i < bars.length; i++) {
-                const barHeight = dataArray[i] / 255 * 100;
-                bars[i].style.height = barHeight + '%';
-            }
-            
-            requestAnimationFrame(updateVisualization);
-        }
-        
-        updateVisualization();
-    }
-    
-    // Modify startRecording to include visualization
-    async function startRecording() {
-        try {
-            // 1. Initialize and Resume AudioContext (if needed)
-            // This should be done as early as possible upon user interaction.
-            // 'startRecording' is triggered by mousedown/touchstart, which is a user interaction.
-            initAudioContext(); // Make sure audioContext is created
-    
-            if (audioContext && audioContext.state === 'suspended') {
-                console.log('startRecording: AudioContext is suspended, attempting to resume...');
-                await audioContext.resume(); // Asynchronous, wait for it
-                console.log('startRecording: AudioContext resumed. New state:', audioContext.state);
-            }
-    
-            // 2. Setup Microphone (your existing logic)
-            if (!await setupMicrophone()) { // setupMicrophone also good place to initAudioContext if not already
-                return;
-            }
-            
-            // 3. Create a new conversation if none exists (your existing logic)
-            if (!currentConversationId) {
-                await createNewConversation();
-            }
-            
-            // 4. Stop any currently playing audio (your existing logic, with onended fix)
+            // Stop any currently playing audio
             if (currentAudioSource) {
-                console.log('startRecording: Stopping previous audio source before recording.');
                 currentAudioSource.stop();
-                if (currentAudioSource.onended) { // Check if onended was set
-                    currentAudioSource.onended = null; // Clear handler to prevent old logic firing
-                }
                 currentAudioSource = null;
             }
             
-            // 5. Get User Media Stream (your existing logic)
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            
-            // 6. MediaRecorder Setup with MIME Type (your existing good logic)
-            const options = { mimeType: 'audio/webm; codecs=opus' };
-            if (!MediaRecorder.isTypeSupported(options.mimeType)) {
-                console.warn(`${options.mimeType} is not Supported, trying audio/webm`);
-                options.mimeType = 'audio/webm'; 
-                if (!MediaRecorder.isTypeSupported(options.mimeType)) {
-                    console.warn(`${options.mimeType} is not Supported, browser default will be used.`);
-                    delete options.mimeType; 
-                }
-            }
-            
-            mediaRecorder = new MediaRecorder(stream, options);
-            recordedMimeType = mediaRecorder.mimeType; // Store the actual MIME type
-            console.log('Recording with MIME type:', recordedMimeType);
-    
+            mediaRecorder = new MediaRecorder(stream);
             audioChunks = [];
             
             mediaRecorder.ondataavailable = (event) => {
@@ -542,28 +203,16 @@ document.addEventListener('DOMContentLoaded', async () => {
             };
             
             mediaRecorder.onstop = async () => {
-                // Use the stored, correct MIME type here
-                await processAudio(new Blob(audioChunks, { type: recordedMimeType || 'audio/webm' }));
+                await processAudio(new Blob(audioChunks, { type: 'audio/wav' }));
             };
             
             mediaRecorder.start();
             isRecording = true;
             statusElement.textContent = 'Recording...';
             recordButton.classList.add('recording');
-    
-            // Add after mediaRecorder is created
-            setupVisualization(mediaRecorder.stream);
-    
         } catch (error) {
             console.error('Error starting recording:', error);
-            // Provide more specific error message to the user if possible
-            if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
-                statusElement.textContent = 'Microphone access denied.';
-            } else if (error.name === 'NotFoundError') {
-                statusElement.textContent = 'No microphone found.';
-            } else {
-                statusElement.textContent = 'Error starting recording.';
-            }
+            statusElement.textContent = 'Error starting recording';
         }
     }
     
@@ -605,17 +254,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                     playAudioResponse(data.assistant_response_audio);
                 }
                 
-                // Refresh conversation list to show the updated conversation
-                await loadConversationHistory();
-                
                 statusElement.textContent = 'Ready';
             } else if (data.status === 'exit') {
                 addMessage('assistant', data.assistant_response_text);
                 statusElement.textContent = 'Conversation ended';
                 recordButton.disabled = true;
-                
-                // Refresh conversation list
-                await loadConversationHistory();
             } else {
                 throw new Error(data.message || 'Failed to process audio');
             }
@@ -637,21 +280,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Play audio response
     async function playAudioResponse(base64Audio) {
         try {
-            console.log('playAudioResponse: Called');
-
             initAudioContext();
-
-
-            if (audioContext && audioContext.state === 'suspended') {
-                console.log('playAudioResponse: AudioContext is suspended, attempting to resume...');
-                await audioContext.resume();
-                console.log('playAudioResponse: AudioContext resumed. New state:', audioContext.state);
-            }
-            if (audioContext.state !== 'running') {
-                console.warn('playAudioResponse: AudioContext is NOT running after attempt to resume. State:', audioContext.state);
-                // Potentially alert the user or handle this state
-                // return; // Maybe don't even try to play
-            }
             
             // Stop any currently playing audio
             if (currentAudioSource) {
@@ -671,29 +300,95 @@ document.addEventListener('DOMContentLoaded', async () => {
             // Decode audio data
             const audioBuffer = await audioContext.decodeAudioData(bytes.buffer);
             
-            // Create and play audio source
+            // Create source node
             const source = audioContext.createBufferSource();
             source.buffer = audioBuffer;
             source.connect(audioContext.destination);
             
-            // Save reference to current source for potential interruption
+            // Store current source for potential interruption
             currentAudioSource = source;
             
             // Play audio
             source.start(0);
             
-            // Clear reference when playback completes
-            source.onended = () => {
-                currentAudioSource = null;
-            };
+            // Return a promise that resolves when audio finishes playing
+            return new Promise(resolve => {
+                source.onended = () => {
+                    currentAudioSource = null;
+                    resolve();
+                };
+            });
         } catch (error) {
             console.error('Error playing audio:', error);
+            throw error;
+        }
+    }
+    
+    // Play audio from base64 string
+    async function playAudio(base64Audio) {
+        if (!base64Audio || base64Audio.length === 0) {
+            console.error('Empty base64 audio data');
+            return Promise.resolve(); // Resolve immediately for empty audio
+        }
+        
+        try {
+            initAudioContext();
+            
+            // Stop any currently playing audio
+            if (currentAudioSource) {
+                currentAudioSource.stop();
+                currentAudioSource = null;
+            }
+            
+            // Convert base64 to ArrayBuffer
+            const binaryString = atob(base64Audio);
+            const len = binaryString.length;
+            const bytes = new Uint8Array(len);
+            
+            for (let i = 0; i < len; i++) {
+                bytes[i] = binaryString.charCodeAt(i);
+            }
+            
+            // Decode audio data
+            const audioBuffer = await audioContext.decodeAudioData(bytes.buffer);
+            
+            // Create source node
+            const source = audioContext.createBufferSource();
+            source.buffer = audioBuffer;
+            source.connect(audioContext.destination);
+            
+            // Store current source for potential interruption
+            currentAudioSource = source;
+            
+            // Play audio
+            source.start(0);
+            
+            // Return a promise that resolves when audio finishes playing
+            return new Promise(resolve => {
+                source.onended = () => {
+                    currentAudioSource = null;
+                    resolve();
+                };
+            });
+        } catch (error) {
+            console.error('Error playing audio:', error);
+            throw error;
         }
     }
     
     // Add touch support for mobile devices
     recordButton.addEventListener('touchstart', async function(e) {
         e.preventDefault(); // Prevent default touch behavior
+        
+        // Initialize audio context on first interaction
+        initAudioContext();
+        
+        // Ensure microphone is set up
+        if (!mediaRecorder) {
+            const setupSuccess = await setupMicrophone();
+            if (!setupSuccess) return;
+        }
+        
         startRecording();
     });
     
@@ -704,27 +399,4 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     // Initialize the app
     updateStatus('Ready');
-
-    // Add this after creating recordButton constant
-    function styleRecordButton() {
-        recordButton.innerHTML = `
-            <div class="record-button-inner">
-                <div class="record-icon"></div>
-                <span>Hold to Speak</span>
-            </div>
-        `;
-    }
-    styleRecordButton();
-
-    // Update DOM structure to fix layout
-    function updateLayoutStructure() {
-        const mainContent = document.querySelector('.main-content');
-        const main = document.querySelector('main');
-        
-        // Move patient details panel before main
-        mainContent.insertBefore(patientDetailsPanel, main);
-    }
-
-    // Call this after initializing the patient details panel
-    updateLayoutStructure();
 }); 

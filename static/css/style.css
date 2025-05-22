@@ -13,163 +13,18 @@ body {
 }
 
 .container {
-    max-width: 1200px;
+    max-width: 800px;
     margin: 0 auto;
-    display: flex;
-    min-height: 100vh;
-}
-
-/* Sidebar layout */
-.container.with-sidebar {
-    max-width: 1200px;
-    flex-direction: row;
-    gap: 2rem;
-    padding: 1rem;
-}
-
-.main-content {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-    padding: 16px;
-}
-
-.sidebar {
-    width: 300px;
-    background-color: white;
-    border-radius: 0.5rem;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-}
-
-.sidebar-header {
-    padding: 1rem;
-    background-color: #f0f0f0;
-    border-bottom: 1px solid #e0e0e0;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.sidebar-header h2 {
-    font-size: 1.2rem;
-    margin: 0;
-}
-
-.sidebar-actions {
-    display: flex;
-    gap: 0.5rem;
-}
-
-.action-button {
-    background: none;
-    border: none;
-    cursor: pointer;
-    font-size: 1.2rem;
-    color: #777;
-    padding: 0.2rem;
-    border-radius: 50%;
-    width: 28px;
-    height: 28px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.2s ease;
-}
-
-.action-button:hover {
-    background-color: #e0e0e0;
-    color: #333;
-}
-
-.action-icon {
-    display: inline-block;
-}
-
-.conversation-list {
-    flex: 1;
-    overflow-y: auto;
-    padding: 0.5rem;
-}
-
-.conversation-item {
-    border-radius: 8px;
-    margin: 8px;
-    padding: 12px;
-    background: white;
-    border-left: 3px solid transparent;
-    transition: all 0.2s ease;
-    cursor: pointer;
-}
-
-.conversation-item:hover {
-    background: #f5f9ff;
-}
-
-.conversation-item.active {
-    border-left-color: #4285f4;
-    background: #e8f0fe;
-}
-
-.conversation-title {
-    font-weight: 500;
-    margin-bottom: 4px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.conversation-date {
-    font-size: 0.8rem;
-    color: #666;
-}
-
-.conversation-actions {
-    margin-top: 8px;
-    opacity: 0.6;
-    transition: opacity 0.2s;
-}
-
-.conversation-item:hover .conversation-actions {
-    opacity: 1;
-}
-
-.empty-state {
-    text-align: center;
     padding: 2rem;
-    color: #777;
-    font-style: italic;
-}
-
-.conversation-action-btn {
-    background: none;
-    border: none;
-    font-size: 0.8rem;
-    color: #777;
-    cursor: pointer;
-    padding: 0.2rem 0.5rem;
-    border-radius: 0.3rem;
-}
-
-.conversation-action-btn:hover {
-    background-color: #e0e0e0;
-    color: #333;
-}
-
-.conversation-action-btn.delete {
-    color: #e74c3c;
-}
-
-.conversation-action-btn.delete:hover {
-    background-color: #fee;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
 }
 
 /* Header styles */
 header {
     text-align: center;
-    margin-bottom: 16px;
+    margin-bottom: 2rem;
 }
 
 h1 {
@@ -178,67 +33,40 @@ h1 {
 }
 
 .status {
-    position: relative;
-    padding-left: 24px;
+    display: inline-block;
+    padding: 0.5rem 1rem;
+    background-color: #e0e0e0;
+    border-radius: 1rem;
+    font-size: 0.9rem;
     font-weight: 500;
-}
-
-.status:before {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-    background: #4caf50;
-}
-
-.status.recording:before {
-    background: #f44336;
-}
-
-.status.processing:before {
-    background: #ff9800;
-    animation: pulse 1.5s infinite;
-}
-
-@keyframes pulse {
-    0% { opacity: 1; }
-    50% { opacity: 0.4; }
-    100% { opacity: 1; }
 }
 
 /* Main content styles */
 main {
-    flex: 0 auto;
+    flex: 1;
     display: flex;
     flex-direction: column;
     background-color: white;
     border-radius: 0.5rem;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
     overflow: hidden;
-    margin-bottom: 20px;
 }
 
 /* Conversation area */
 .conversation {
-    min-height: 100px;
-    max-height: 300px;
+    flex: 1;
+    padding: 1.5rem;
     overflow-y: auto;
-    padding: 15px;
-    background: #fafafa;
-    border-radius: 8px 8px 0 0;
-    margin-bottom: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
 }
 
 .message {
-    border-radius: 12px;
-    padding: 12px 16px;
-    margin: 8px 0;
     max-width: 80%;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+    padding: 1rem;
+    border-radius: 0.8rem;
+    position: relative;
 }
 
 .message p {
@@ -248,119 +76,96 @@ main {
 
 /* User message styles */
 .message.user {
-    background-color: #e1f5fe;
     align-self: flex-end;
-    margin-left: auto;
+    background-color: #3498db;
+    color: white;
+    border-bottom-right-radius: 0.2rem;
 }
 
 /* Assistant message styles */
 .message.assistant {
-    background-color: #f5f5f5;
     align-self: flex-start;
+    background-color: #f0f0f0;
+    color: #333;
+    border-bottom-left-radius: 0.2rem;
 }
 
 /* Controls area */
 .controls {
-    padding: 1rem;
+    padding: 1.5rem;
     border-top: 1px solid #e0e0e0;
     display: flex;
     justify-content: center;
-    background-color: #f9f9f9;
 }
 
 /* Record button */
 .record-button {
-    border-radius: 50px;
-    width: auto;
-    min-width: 120px;
-    height: auto;
-    padding: 12px 24px;
-    background: #007bff;
-    color: white;
-    border: none;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-    transition: all 0.2s ease;
-    position: relative;
-    margin: 12px auto;
-    cursor: pointer;
-    font-size: 1rem;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
+    gap: 0.5rem;
+    padding: 1rem 2rem;
+    background-color: #e74c3c;
+    color: white;
+    border: none;
+    border-radius: 2rem;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
 }
 
 .record-button:hover {
+    background-color: #c0392b;
     transform: translateY(-2px);
-    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.18);
-    background-color: #0069d9;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.record-button:active {
+    transform: translateY(1px);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
 .record-button.recording {
-    background: #ff4444;
-    box-shadow: 0 4px 12px rgba(255, 68, 68, 0.3);
-}
-
-.record-button-inner {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
+    background-color: #c0392b;
+    animation: pulse 1.5s infinite;
 }
 
 .record-icon {
-    width: 12px;
-    height: 12px;
-    background: white;
-    border-radius: 50%;
     display: inline-block;
-}
-
-.recording .record-icon {
-    background: white;
-    animation: pulse 1.5s infinite;
+    width: 1rem;
+    height: 1rem;
+    background-color: white;
+    border-radius: 50%;
 }
 
 /* Footer styles */
 footer {
     text-align: center;
-    margin-top: 0;
-    padding-top: 8px;
+    padding-top: 1.5rem;
     font-size: 0.9rem;
     color: #7f8c8d;
 }
 
-/* Media queries for responsiveness */
-@media (max-width: 900px) {
-    .container.with-sidebar {
-        flex-direction: column;
+/* Animations */
+@keyframes pulse {
+    0% {
+        transform: scale(1);
     }
-    
-    .sidebar {
-        width: 100%;
-        margin-bottom: 1rem;
-        max-height: 300px;
+    50% {
+        transform: scale(1.05);
+    }
+    100% {
+        transform: scale(1);
     }
 }
 
+/* Media queries for responsiveness */
 @media (max-width: 768px) {
-    .container.with-sidebar {
-        flex-direction: column;
-    }
-    
-    .sidebar {
-        width: 100%;
-        max-height: 200px;
-        overflow-y: auto;
-    }
-    
-    .main-content {
-        width: 100%;
-    }
-    
-    .patient-details-panel {
-        max-height: 150px;
-        overflow-y: auto;
+    .container {
+        padding: 1rem;
+        height: 100vh;
     }
     
     .message {
@@ -402,6 +207,33 @@ footer {
     outline: none;
     border-color: #007bff;
     box-shadow: 0 0 0 2px rgba(0,123,255,0.25);
+}
+
+/* Voice selector styles */
+.voice-selector {
+    margin: 1rem 0;
+    text-align: center;
+}
+
+.voice-selector label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: bold;
+}
+
+.voice-selector select {
+    padding: 0.5rem;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+    font-size: 1rem;
+    min-width: 200px;
+    background-color: #f8f9fa;
+}
+
+.voice-selector select:focus {
+    outline: none;
+    border-color: #28a745;
+    box-shadow: 0 0 0 2px rgba(40,167,69,0.25);
 }
 
 /* Existing styles */
@@ -468,64 +300,4 @@ footer {
     text-align: center;
     margin-top: 2rem;
     color: #666;
-}
-
-/* Patient Details Panel */
-.patient-details-panel {
-    background-color: #f8f9fa;
-    border-radius: 8px;
-    padding: 12px 16px;
-    margin-bottom: 16px;
-    border-left: 4px solid #4285f4;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
-    max-height: 200px;
-    overflow-y: auto;
-}
-
-.patient-details-panel h3 {
-    margin-top: 0;
-    margin-bottom: 8px;
-    color: #4285f4;
-    font-size: 1.1rem;
-    border-bottom: 1px solid #e0e0e0;
-    padding-bottom: 6px;
-}
-
-.patient-details-panel ul {
-    list-style-type: none;
-    padding: 0;
-    margin: 0;
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-    gap: 8px;
-}
-
-.patient-details-panel li {
-    margin-bottom: 6px;
-    line-height: 1.3;
-    padding: 4px;
-}
-
-.patient-details-panel li:hover {
-    background-color: rgba(66, 133, 244, 0.05);
-    border-radius: 4px;
-}
-
-.patient-details-panel .error {
-    color: #e74c3c;
-}
-
-/* Add smooth transitions to all interactive elements */
-button, select, .conversation-item {
-    transition: all 0.2s ease;
-}
-
-/* Add animation for new messages */
-@keyframes messageAppear {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-.message {
-    animation: messageAppear 0.3s ease-out;
 } 
