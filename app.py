@@ -299,6 +299,13 @@ def process_audio():
     try:
         logger.info("=== Starting audio processing ===")
         
+        # Log all form data keys for debugging
+        logger.info(f"Form data keys: {list(request.form.keys())}")
+        
+        # Get voice ID from form data early in the process
+        voice_id = request.form.get('voice_id')
+        logger.info(f"Received voice_id from form: {voice_id}")
+        
         # Check if a conversation is active
         if not current_conversation_id:
             logger.debug("No active conversation, creating new one")
@@ -319,6 +326,11 @@ def process_audio():
                 logger.warning(f"No patient data found for conversation {current_conversation_id}")
             
         logger.info(f"Using patient_data: {patient_data}")
+
+        # If voice_id was received from form data, store it in the database right away
+        if voice_id and current_conversation_id:
+            logger.info(f"Storing voice_id from form data: {voice_id}")
+            store_conversation_data(current_conversation_id, 'voice_id', voice_id)
         
         # Check if audio file was sent
         if 'audio' not in request.files:
@@ -400,13 +412,10 @@ def process_audio():
         
         # Get voice ID from form data or database
         logger.info("=== Voice selection process ===")
-        voice_id = request.form.get('voice_id')
-        
+        # We already retrieved voice_id at the beginning
         if voice_id:
             logger.info(f"Using voice_id from form data: {voice_id}")
-            # Store the selected voice ID in the database
-            if current_conversation_id:
-                store_conversation_data(current_conversation_id, 'voice_id', voice_id)
+            # Already stored above
         else:
             # Try to get voice_id from the database
             if current_conversation_id:
@@ -416,6 +425,8 @@ def process_audio():
                 else:
                     voice_id = 'Fritz-PlayAI'  # Default voice
                     logger.warning(f"No voice_id found in database, using default: {voice_id}")
+                    # Store the default voice_id
+                    store_conversation_data(current_conversation_id, 'voice_id', voice_id)
             else:
                 voice_id = 'Fritz-PlayAI'  # Default voice
                 logger.warning(f"No active conversation, using default voice_id: {voice_id}")
@@ -423,10 +434,11 @@ def process_audio():
         logger.info(f"Final voice_id selected for TTS: {voice_id}")
         speech_audio_bytes = generate_speech_audio(response_text, voice_id)
         
-        # Convert audio bytes to base64 for transmission
+        # Log speech generation result
         if speech_audio_bytes:
             logger.debug(f"Speech audio generated successfully: {len(speech_audio_bytes)} bytes")
             base64_audio = base64.b64encode(speech_audio_bytes).decode('utf-8')
+            logger.debug(f"Base64 audio size: {len(base64_audio)}")
         else:
             base64_audio = ""
             logger.error("Speech audio generation failed, returning empty audio")

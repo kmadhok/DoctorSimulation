@@ -562,41 +562,61 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Modify startRecording to include visualization
     async function startRecording() {
         try {
-            // 1. Initialize and Resume AudioContext (if needed)
-            // This should be done as early as possible upon user interaction.
-            // 'startRecording' is triggered by mousedown/touchstart, which is a user interaction.
-            initAudioContext(); // Make sure audioContext is created
+            console.log('startRecording: Starting recording process');
+            
+            // Initialize AudioContext as early as possible upon user interaction
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                console.log('startRecording: AudioContext initialized with state:', audioContext.state);
+            }
     
             if (audioContext && audioContext.state === 'suspended') {
                 console.log('startRecording: AudioContext is suspended, attempting to resume...');
-                await audioContext.resume(); // Asynchronous, wait for it
-                console.log('startRecording: AudioContext resumed. New state:', audioContext.state);
+                try {
+                    await audioContext.resume();
+                    console.log('startRecording: AudioContext resumed. New state:', audioContext.state);
+                } catch (resumeError) {
+                    console.error('startRecording: Error resuming AudioContext:', resumeError);
+                }
             }
     
-            // 2. Setup Microphone (your existing logic)
-            if (!await setupMicrophone()) { // setupMicrophone also good place to initAudioContext if not already
+            // Setup Microphone
+            if (!await setupMicrophone()) {
+                console.error('startRecording: Failed to set up microphone');
                 return;
             }
+            console.log('startRecording: Microphone setup complete');
             
-            // 3. Create a new conversation if none exists (your existing logic)
+            // Create a new conversation if none exists
             if (!currentConversationId) {
+                console.log('startRecording: No active conversation, creating new one');
                 await createNewConversation();
             }
             
-            // 4. Stop any currently playing audio (your existing logic, with onended fix)
+            // Stop any currently playing audio
             if (currentAudioSource) {
-                console.log('startRecording: Stopping previous audio source before recording.');
+                console.log('startRecording: Stopping previous audio before recording');
                 currentAudioSource.stop();
-                if (currentAudioSource.onended) { // Check if onended was set
-                    currentAudioSource.onended = null; // Clear handler to prevent old logic firing
+                if (currentAudioSource.onended) {
+                    currentAudioSource.onended = null; // Clear handler
                 }
                 currentAudioSource = null;
             }
             
-            // 5. Get User Media Stream (your existing logic)
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            // Get User Media Stream with explicit constraints for audio quality
+            console.log('startRecording: Requesting media stream');
+            const stream = await navigator.mediaDevices.getUserMedia({
+                audio: {
+                    echoCancellation: true,
+                    noiseSuppression: true,
+                    autoGainControl: true,
+                    sampleRate: 44100,
+                }
+            });
+            console.log('startRecording: Media stream obtained successfully');
             
-            // 6. MediaRecorder Setup with MIME Type (your existing good logic)
+            // MediaRecorder Setup with MIME Type
+            console.log('startRecording: Setting up MediaRecorder');
             const options = { mimeType: 'audio/webm; codecs=opus' };
             if (!MediaRecorder.isTypeSupported(options.mimeType)) {
                 console.warn(`${options.mimeType} is not Supported, trying audio/webm`);
@@ -609,29 +629,32 @@ document.addEventListener('DOMContentLoaded', async () => {
             
             mediaRecorder = new MediaRecorder(stream, options);
             recordedMimeType = mediaRecorder.mimeType; // Store the actual MIME type
-            console.log('Recording with MIME type:', recordedMimeType);
+            console.log('startRecording: MediaRecorder initialized with MIME type:', recordedMimeType);
     
             audioChunks = [];
             
             mediaRecorder.ondataavailable = (event) => {
                 audioChunks.push(event.data);
+                console.log(`startRecording: Audio chunk received, size: ${event.data.size} bytes`);
             };
             
             mediaRecorder.onstop = async () => {
+                console.log(`startRecording: MediaRecorder stopped, processing ${audioChunks.length} chunks`);
                 // Use the stored, correct MIME type here
                 await processAudio(new Blob(audioChunks, { type: recordedMimeType || 'audio/webm' }));
             };
             
             mediaRecorder.start();
+            console.log('startRecording: MediaRecorder started');
             isRecording = true;
             statusElement.textContent = 'Recording...';
             recordButton.classList.add('recording');
     
-            // Add after mediaRecorder is created
+            // Add visualization for audio feedback
             setupVisualization(mediaRecorder.stream);
     
         } catch (error) {
-            console.error('Error starting recording:', error);
+            console.error('startRecording: Error starting recording:', error);
             // Provide more specific error message to the user if possible
             if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
                 statusElement.textContent = 'Microphone access denied.';
@@ -659,16 +682,31 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Process audio
     async function processAudio(audioBlob) {
         try {
+            console.log(`processAudio: Processing audio blob of size: ${audioBlob.size} bytes, type: ${audioBlob.type}`);
+            statusElement.textContent = 'Processing...';
+            
             const formData = new FormData();
             formData.append('audio', audioBlob);
             formData.append('voice_id', currentVoiceId);
+            console.log(`processAudio: Using voice_id: ${currentVoiceId}`);
             
+            console.log('processAudio: Sending audio to server...');
             const response = await fetch('/process_audio', {
                 method: 'POST',
                 body: formData
             });
             
+            if (!response.ok) {
+                throw new Error(`Server returned status: ${response.status}`);
+            }
+            
             const data = await response.json();
+            console.log('processAudio: Server response received', {
+                status: data.status,
+                transcription_length: data.user_transcription?.length,
+                response_length: data.assistant_response_text?.length,
+                audio_received: !!data.assistant_response_audio
+            });
             
             if (data.status === 'success') {
                 // Add user message
@@ -679,7 +717,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                 
                 // Play audio response if available
                 if (data.assistant_response_audio) {
+                    console.log(`processAudio: Audio response received, length: ${data.assistant_response_audio.length}`);
                     playAudioResponse(data.assistant_response_audio);
+                } else {
+                    console.warn('processAudio: No audio response received from server');
                 }
                 
                 // Refresh conversation list to show the updated conversation
@@ -687,6 +728,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 
                 statusElement.textContent = 'Ready';
             } else if (data.status === 'exit') {
+                console.log('processAudio: Exit command detected');
                 addMessage('assistant', data.assistant_response_text);
                 statusElement.textContent = 'Conversation ended';
                 recordButton.disabled = true;
@@ -697,8 +739,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                 throw new Error(data.message || 'Failed to process audio');
             }
         } catch (error) {
-            console.error('Error processing audio:', error);
-            statusElement.textContent = 'Error processing audio';
+            console.error('processAudio: Error processing audio:', error);
+            statusElement.textContent = `Error: ${error.message || 'Failed to process audio'}`;
+            
+            // Enable the record button again so users can retry
+            recordButton.disabled = false;
+            recordButton.classList.remove('recording');
         }
     }
     
@@ -714,29 +760,45 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Play audio response
     async function playAudioResponse(base64Audio) {
         try {
-            console.log('playAudioResponse: Called');
+            console.log('playAudioResponse: Called with audio length:', base64Audio ? base64Audio.length : 0);
+            
+            if (!base64Audio || base64Audio.length === 0) {
+                console.error('playAudioResponse: Empty audio data received');
+                return;
+            }
 
-            initAudioContext();
+            // Initialize audio context if not already done
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                console.log('playAudioResponse: AudioContext initialized with state:', audioContext.state);
+            }
 
-
-            if (audioContext && audioContext.state === 'suspended') {
+            // Resume AudioContext - this is critical for browsers that suspend by default
+            if (audioContext.state === 'suspended') {
                 console.log('playAudioResponse: AudioContext is suspended, attempting to resume...');
                 await audioContext.resume();
-                console.log('playAudioResponse: AudioContext resumed. New state:', audioContext.state);
+                console.log('playAudioResponse: AudioContext resume attempt completed. New state:', audioContext.state);
             }
+            
             if (audioContext.state !== 'running') {
                 console.warn('playAudioResponse: AudioContext is NOT running after attempt to resume. State:', audioContext.state);
-                // Potentially alert the user or handle this state
-                // return; // Maybe don't even try to play
+                // Try to create a fresh audio context as a fallback
+                console.log('playAudioResponse: Attempting to create new AudioContext as fallback');
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                await audioContext.resume();
+                console.log('playAudioResponse: New AudioContext state:', audioContext.state);
             }
             
             // Stop any currently playing audio
             if (currentAudioSource) {
+                console.log('playAudioResponse: Stopping existing audio source');
                 currentAudioSource.stop();
+                currentAudioSource.onended = null; // Clear previous handler
                 currentAudioSource = null;
             }
             
             // Convert base64 to ArrayBuffer
+            console.log('playAudioResponse: Converting base64 to ArrayBuffer');
             const binaryString = atob(base64Audio);
             const len = binaryString.length;
             const bytes = new Uint8Array(len);
@@ -745,10 +807,29 @@ document.addEventListener('DOMContentLoaded', async () => {
                 bytes[i] = binaryString.charCodeAt(i);
             }
             
+            console.log(`playAudioResponse: Created bytes array of length ${bytes.length}`);
+            
             // Decode audio data
-            const audioBuffer = await audioContext.decodeAudioData(bytes.buffer);
+            console.log('playAudioResponse: Decoding audio data...');
+            let audioBuffer;
+            try {
+                audioBuffer = await audioContext.decodeAudioData(bytes.buffer);
+                console.log(`playAudioResponse: Audio successfully decoded, duration: ${audioBuffer.duration}s, channels: ${audioBuffer.numberOfChannels}`);
+            } catch (decodeError) {
+                console.error('playAudioResponse: Failed to decode audio:', decodeError);
+                // Try playing as a regular HTML5 audio element as fallback
+                console.log('playAudioResponse: Attempting HTML5 Audio fallback');
+                const audioElement = new Audio(`data:audio/mp3;base64,${base64Audio}`);
+                audioElement.play().then(() => {
+                    console.log('playAudioResponse: HTML5 Audio fallback successful');
+                }).catch(htmlAudioError => {
+                    console.error('playAudioResponse: HTML5 Audio fallback failed:', htmlAudioError);
+                });
+                return;
+            }
             
             // Create and play audio source
+            console.log('playAudioResponse: Creating audio source');
             const source = audioContext.createBufferSource();
             source.buffer = audioBuffer;
             source.connect(audioContext.destination);
@@ -756,15 +837,33 @@ document.addEventListener('DOMContentLoaded', async () => {
             // Save reference to current source for potential interruption
             currentAudioSource = source;
             
-            // Play audio
-            source.start(0);
-            
-            // Clear reference when playback completes
+            // Add event handlers
             source.onended = () => {
+                console.log('playAudioResponse: Audio playback completed naturally');
                 currentAudioSource = null;
             };
+            
+            // Actually play the audio
+            console.log('playAudioResponse: Starting audio playback');
+            source.start(0);
+            console.log('playAudioResponse: Audio playback started');
+            
         } catch (error) {
-            console.error('Error playing audio:', error);
+            console.error('playAudioResponse: Error playing audio:', error);
+            // Try one more fallback approach with vanilla HTML audio
+            try {
+                console.log('playAudioResponse: Attempting final HTML5 Audio fallback');
+                const audioBlob = new Blob(
+                    [Uint8Array.from(atob(base64Audio), c => c.charCodeAt(0))], 
+                    {type: 'audio/mp3'}
+                );
+                const audioUrl = URL.createObjectURL(audioBlob);
+                const audio = new Audio(audioUrl);
+                audio.play();
+                console.log('playAudioResponse: Final HTML5 Audio fallback attempted');
+            } catch (fallbackError) {
+                console.error('playAudioResponse: All audio playback attempts failed:', fallbackError);
+            }
         }
     }
     
@@ -779,8 +878,95 @@ document.addEventListener('DOMContentLoaded', async () => {
         stopRecording();
     });
     
+    // Add diagnostic function to test audio system
+    async function testAudioSystem() {
+        console.log('==== AUDIO SYSTEM DIAGNOSTIC ====');
+        
+        // Check if browser supports necessary audio APIs
+        console.log('1. Browser capability check:');
+        console.log(' - AudioContext supported:', typeof AudioContext !== 'undefined' || typeof webkitAudioContext !== 'undefined');
+        console.log(' - MediaRecorder supported:', typeof MediaRecorder !== 'undefined');
+        console.log(' - getUserMedia supported:', navigator.mediaDevices && typeof navigator.mediaDevices.getUserMedia !== 'undefined');
+        console.log(' - Supported MIME types for recording:');
+        
+        const testMimeTypes = [
+            'audio/webm', 
+            'audio/webm;codecs=opus', 
+            'audio/mp4',
+            'audio/wav',
+            'audio/ogg'
+        ];
+        
+        testMimeTypes.forEach(type => {
+            if (typeof MediaRecorder !== 'undefined') {
+                console.log(`   - ${type}: ${MediaRecorder.isTypeSupported(type)}`);
+            }
+        });
+        
+        // Test AudioContext creation
+        console.log('2. AudioContext creation test:');
+        try {
+            const testContext = new (window.AudioContext || window.webkitAudioContext)();
+            console.log(' - AudioContext created successfully');
+            console.log(' - Sample rate:', testContext.sampleRate);
+            console.log(' - Initial state:', testContext.state);
+            
+            // Test resume capability
+            if (testContext.state === 'suspended') {
+                try {
+                    console.log(' - Attempting to resume AudioContext...');
+                    await testContext.resume();
+                    console.log(' - Resume successful, new state:', testContext.state);
+                } catch (resumeError) {
+                    console.error(' - Error resuming AudioContext:', resumeError);
+                }
+            }
+            
+            // Clean up
+            testContext.close();
+        } catch (contextError) {
+            console.error(' - Error creating AudioContext:', contextError);
+        }
+        
+        // Test audio decoding with a minimal audio
+        console.log('3. Audio decoding capability test:');
+        try {
+            // Create a minimal silent MP3 (1 frame)
+            const silentMp3Base64 = 'SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA//tAwAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAACAAABGADbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tb29vb29vb29vb29vb29vb29vb29vb29vb29vb29v///////////////////////////////////////////8AAAAATGF2YzU4LjEzAAAAAAAAAAAAAAAAJAAAAAAAAAAAARiN6AYcAAAAAAAAAAAAAAAAAAAAAP/7kGQAAANkAEj0AAACPQCJHoAAEYwYSPmMADRBghk/MYAGvtm2YG7aBtvAAGxu3dMzdu8m5t7d1TM3b7Jx9suKKOOTkyDjNxcUcckUcbOTIONnJxRxw5I4uKOEIQhDjjk4o44QhMg4zYcIQhEIQhDanHJ28IQhD6nHHHCEIREIQhCanH1OPqcfU4444QhCEIQhCEIQhCEIQhCEIhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh/+5JkEI/0iGdH+ewANHkNCP89gAafCggQEDDCgIB4WIGAEMArhgZgwZkI2YFCBAAGDBRw4MIHAgAfW8b9f/1eN+v9fWtlMy8b8Hliz//Liz//Liz//4uNS4uNS4uP+NS4uP+NS5//8uP//+X//4AAAAMw13m22BTMzAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA';
+            
+            const binaryString = atob(silentMp3Base64);
+            const len = binaryString.length;
+            const bytes = new Uint8Array(len);
+            for (let i = 0; i < len; i++) {
+                bytes[i] = binaryString.charCodeAt(i);
+            }
+            
+            const testContext = new (window.AudioContext || window.webkitAudioContext)();
+            const result = await testContext.decodeAudioData(bytes.buffer);
+            console.log(' - Audio decoding successful');
+            console.log(' - Decoded audio duration:', result.duration);
+            console.log(' - Decoded audio channels:', result.numberOfChannels);
+            
+            // Test playback
+            console.log(' - Testing audio playback...');
+            const source = testContext.createBufferSource();
+            source.buffer = result;
+            source.connect(testContext.destination);
+            source.onended = () => console.log(' - Test playback completed');
+            source.start(0);
+            
+        } catch (decodeError) {
+            console.error(' - Audio decoding failed:', decodeError);
+        }
+        
+        console.log('==== DIAGNOSTIC COMPLETE ====');
+    }
+
     // Initialize the app
     updateStatus('Ready');
+    
+    // Run audio system diagnostic
+    testAudioSystem().catch(err => console.error('Audio diagnostic error:', err));
 
     // Add this after creating recordButton constant
     function styleRecordButton() {
