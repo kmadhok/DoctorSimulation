@@ -42,6 +42,18 @@ from utils.groq_tts_speech import generate_speech_audio
 from utils.patient_simulation import load_patient_simulation, get_patient_system_prompt
 from utils.database import init_db, create_conversation, add_message, get_conversations, get_conversation, delete_conversation, update_conversation_title, store_conversation_data, get_conversation_data
 
+# Import the VAD model downloader
+from download_vad_model import download_vad_model
+
+# Download VAD model if needed
+vad_model_path = os.path.join('static', 'models', 'vad', 'silero_vad.onnx')
+if not os.path.exists(vad_model_path):
+    logger.info("VAD model not found, downloading...")
+    if download_vad_model():
+        logger.info("VAD model downloaded successfully")
+    else:
+        logger.warning("Failed to download VAD model")
+
 # Add template folder check before app creation
 template_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates')
 if not os.path.exists(template_dir):
