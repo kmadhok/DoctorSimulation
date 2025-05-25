@@ -30,6 +30,17 @@ document.addEventListener('DOMContentLoaded', async () => {
     let audioContext;
     let currentAudioSource = null; // Track current audio source for interruption
     
+    // Voice activity detection variables
+    let vadActive = false;
+    let voiceDetected = false;
+    let silenceTimer = null;
+    let vadAnalyser = null;
+    let vadDataArray = null;
+    let vadAnimationFrame = null;
+    let vadStream = null;
+    const VAD_THRESHOLD = 15; // Voice detection threshold
+    const SILENCE_TIMEOUT = 1500; // Time of silence before stopping (ms)
+    
     // Initialize audio context on user interaction
     function initAudioContext() {
         if (!audioContext) {
@@ -45,10 +56,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Load conversation history
     await loadConversationHistory();
     
-    // Set up event listeners
-    recordButton.addEventListener('mousedown', startRecording);
-    recordButton.addEventListener('mouseup', stopRecording);
-    recordButton.addEventListener('mouseleave', stopRecording);
+    // Replace mouse events with toggle functionality for the record button
+    recordButton.removeEventListener('mousedown', startRecording);
+    recordButton.removeEventListener('mouseup', stopRecording);
+    recordButton.removeEventListener('mouseleave', stopRecording);
+    recordButton.addEventListener('click', toggleVoiceActivityDetection);
+    
     simulationSelect.addEventListener('change', handleSimulationChange);
     voiceSelect.addEventListener('change', handleVoiceChange);
     refreshConversationsBtn.addEventListener('click', loadConversationHistory);
@@ -56,6 +69,176 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     // Request microphone access on first recording attempt rather than on page load
     let microphoneSetup = false;
+    
+    // Toggle voice activity detection
+    async function toggleVoiceActivityDetection() {
+        if (!vadActive) {
+            // Start voice detection
+            recordButton.textContent = 'Voice Detection Active (Click to Stop)';
+            recordButton.classList.add('vad-active');
+            await setupVoiceActivityDetection();
+            vadActive = true;
+            updateStatus('Listening for voice...');
+        } else {
+            // Stop voice detection
+            recordButton.textContent = 'Start Voice Detection';
+            recordButton.classList.remove('vad-active');
+            stopVoiceActivityDetection();
+            vadActive = false;
+            updateStatus('Ready');
+        }
+    }
+    
+    // Setup voice activity detection
+    async function setupVoiceActivityDetection() {
+        try {
+            console.log('Setting up voice activity detection');
+            
+            // Initialize AudioContext
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                await audioContext.resume();
+            } else if (audioContext.state === 'suspended') {
+                await audioContext.resume();
+            }
+            
+            // Setup microphone access if not already done
+            if (!await setupMicrophone()) {
+                throw new Error('Failed to set up microphone');
+            }
+            
+            // Create a new conversation if none exists
+            if (!currentConversationId) {
+                await createNewConversation();
+            }
+            
+            // Get media stream with specific constraints
+            vadStream = await navigator.mediaDevices.getUserMedia({
+                audio: {
+                    echoCancellation: true,
+                    noiseSuppression: true,
+                    autoGainControl: true,
+                    sampleRate: 44100,
+                }
+            });
+            
+            // Set up analyzer for voice detection
+            vadAnalyser = audioContext.createAnalyser();
+            const source = audioContext.createMediaStreamSource(vadStream);
+            source.connect(vadAnalyser);
+            
+            vadAnalyser.fftSize = 256;
+            const bufferLength = vadAnalyser.frequencyBinCount;
+            vadDataArray = new Uint8Array(bufferLength);
+            
+            // Start monitoring audio levels
+            checkVoiceActivity();
+            
+            console.log('Voice activity detection setup complete');
+        } catch (error) {
+            console.error('Error setting up voice activity detection:', error);
+            updateStatus(`Error: ${error.message}`);
+            vadActive = false;
+            recordButton.classList.remove('vad-active');
+            recordButton.textContent = 'Start Voice Detection';
+        }
+    }
+    
+    // Check for voice activity
+    function checkVoiceActivity() {
+        if (!vadActive) return;
+        
+        vadAnalyser.getByteFrequencyData(vadDataArray);
+        let sum = 0;
+        for (let i = 0; i < vadDataArray.length; i++) {
+            sum += vadDataArray[i];
+        }
+        const average = sum / vadDataArray.length;
+        
+        // Visual feedback on voice level
+        updateVoiceActivityVisual(average);
+        
+        if (average > VAD_THRESHOLD) {
+            // Voice detected
+            if (!voiceDetected && !isRecording) {
+                console.log('Voice detected, starting recording');
+                voiceDetected = true;
+                startRecording();
+            }
+            
+            // Reset silence timer on voice activity
+            clearTimeout(silenceTimer);
+            silenceTimer = setTimeout(() => {
+                if (isRecording) {
+                    console.log('Silence detected, stopping recording');
+                    stopRecording();
+                    voiceDetected = false;
+                }
+            }, SILENCE_TIMEOUT);
+        }
+        
+        vadAnimationFrame = requestAnimationFrame(checkVoiceActivity);
+    }
+    
+    // Update visual feedback for voice activity
+    function updateVoiceActivityVisual(level) {
+        // Create or update visualization element
+        let visualizer = document.querySelector('.vad-visualizer');
+        if (!visualizer) {
+            visualizer = document.createElement('div');
+            visualizer.className = 'vad-visualizer';
+            recordButton.appendChild(visualizer);
+        }
+        
+        // Update visualization level
+        const height = Math.min(100, level * 3);
+        visualizer.style.height = `${height}%`;
+        
+        // Change color based on activity level
+        if (level > VAD_THRESHOLD) {
+            visualizer.style.backgroundColor = '#4CAF50'; // Green for active voice
+        } else {
+            visualizer.style.backgroundColor = '#9E9E9E'; // Gray for silence
+        }
+    }
+    
+    // Stop voice activity detection
+    function stopVoiceActivityDetection() {
+        console.log('Stopping voice activity detection');
+        
+        // Cancel animation frame
+        if (vadAnimationFrame) {
+            cancelAnimationFrame(vadAnimationFrame);
+            vadAnimationFrame = null;
+        }
+        
+        // Clear silence timer
+        if (silenceTimer) {
+            clearTimeout(silenceTimer);
+            silenceTimer = null;
+        }
+        
+        // Stop recording if active
+        if (isRecording) {
+            stopRecording();
+        }
+        
+        // Stop media stream tracks
+        if (vadStream) {
+            vadStream.getTracks().forEach(track => track.stop());
+            vadStream = null;
+        }
+        
+        // Remove visualizer
+        const visualizer = document.querySelector('.vad-visualizer');
+        if (visualizer) {
+            visualizer.remove();
+        }
+        
+        voiceDetected = false;
+        vadActive = false;
+        console.log('Voice activity detection stopped');
+    }
     
     // Create a new empty conversation
     async function createNewConversation() {
@@ -513,7 +696,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
     
-    // Add a simple audio level visualization during recording
+    // Function setupVisualization remains unchanged but is used differently now
     function setupVisualization(stream) {
         if (!audioContext) return;
         
@@ -559,7 +742,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         updateVisualization();
     }
     
-    // Modify startRecording to include visualization
+    // Modify startRecording to work with voice detection
     async function startRecording() {
         try {
             console.log('startRecording: Starting recording process');
@@ -578,6 +761,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                 } catch (resumeError) {
                     console.error('startRecording: Error resuming AudioContext:', resumeError);
                 }
+            }
+    
+            // If we're already recording, don't start a new recording
+            if (isRecording) {
+                console.log('startRecording: Already recording, ignoring start request');
+                return;
             }
     
             // Setup Microphone
@@ -603,17 +792,24 @@ document.addEventListener('DOMContentLoaded', async () => {
                 currentAudioSource = null;
             }
             
-            // Get User Media Stream with explicit constraints for audio quality
-            console.log('startRecording: Requesting media stream');
-            const stream = await navigator.mediaDevices.getUserMedia({
-                audio: {
-                    echoCancellation: true,
-                    noiseSuppression: true,
-                    autoGainControl: true,
-                    sampleRate: 44100,
-                }
-            });
-            console.log('startRecording: Media stream obtained successfully');
+            // Use the existing stream from VAD if available, otherwise get a new one
+            let stream;
+            if (vadActive && vadStream) {
+                stream = vadStream;
+                console.log('startRecording: Using existing VAD stream');
+            } else {
+                // Get User Media Stream with explicit constraints for audio quality
+                console.log('startRecording: Requesting media stream');
+                stream = await navigator.mediaDevices.getUserMedia({
+                    audio: {
+                        echoCancellation: true,
+                        noiseSuppression: true,
+                        autoGainControl: true,
+                        sampleRate: 44100,
+                    }
+                });
+                console.log('startRecording: Media stream obtained successfully');
+            }
             
             // MediaRecorder Setup with MIME Type
             console.log('startRecording: Setting up MediaRecorder');
@@ -640,18 +836,27 @@ document.addEventListener('DOMContentLoaded', async () => {
             
             mediaRecorder.onstop = async () => {
                 console.log(`startRecording: MediaRecorder stopped, processing ${audioChunks.length} chunks`);
-                // Use the stored, correct MIME type here
-                await processAudio(new Blob(audioChunks, { type: recordedMimeType || 'audio/webm' }));
+                
+                // Only process audio if we have actual content
+                if (audioChunks.length > 0 && audioChunks.some(chunk => chunk.size > 0)) {
+                    // Use the stored, correct MIME type here
+                    await processAudio(new Blob(audioChunks, { type: recordedMimeType || 'audio/webm' }));
+                } else {
+                    console.log('startRecording: No audio data to process');
+                    updateStatus(vadActive ? 'Listening for voice...' : 'Ready');
+                }
             };
             
             mediaRecorder.start();
             console.log('startRecording: MediaRecorder started');
             isRecording = true;
-            statusElement.textContent = 'Recording...';
+            updateStatus('Recording...');
             recordButton.classList.add('recording');
     
-            // Add visualization for audio feedback
-            setupVisualization(mediaRecorder.stream);
+            // Add visualization for audio feedback only in non-VAD mode
+            if (!vadActive) {
+                setupVisualization(mediaRecorder.stream);
+            }
     
         } catch (error) {
             console.error('startRecording: Error starting recording:', error);
@@ -674,8 +879,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             statusElement.textContent = 'Processing...';
             recordButton.classList.remove('recording');
             
-            // Stop all audio tracks
-            mediaRecorder.stream.getTracks().forEach(track => track.stop());
+            // Only stop tracks if not using VAD
+            if (!vadActive) {
+                // Stop all audio tracks
+                mediaRecorder.stream.getTracks().forEach(track => track.stop());
+            }
         }
     }
     
@@ -867,16 +1075,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
     
-    // Add touch support for mobile devices
-    recordButton.addEventListener('touchstart', async function(e) {
+    // Add touch support for mobile devices - convert to toggle for VAD
+    recordButton.addEventListener('touchstart', function(e) {
         e.preventDefault(); // Prevent default touch behavior
-        startRecording();
+        toggleVoiceActivityDetection();
     });
     
-    recordButton.addEventListener('touchend', function(e) {
-        e.preventDefault(); // Prevent default touch behavior
-        stopRecording();
-    });
+    // Remove touchend handler since we're using toggle now
+    recordButton.removeEventListener('touchend', stopRecording);
     
     // Add diagnostic function to test audio system
     async function testAudioSystem() {
@@ -965,15 +1171,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Initialize the app
     updateStatus('Ready');
     
+    // Update button text for new functionality
+    recordButton.textContent = 'Start Voice Detection';
+    
     // Run audio system diagnostic
     testAudioSystem().catch(err => console.error('Audio diagnostic error:', err));
 
-    // Add this after creating recordButton constant
+    // Style record button for new functionality
     function styleRecordButton() {
         recordButton.innerHTML = `
             <div class="record-button-inner">
                 <div class="record-icon"></div>
-                <span>Hold to Speak</span>
+                <span>Start Voice Detection</span>
             </div>
         `;
     }
