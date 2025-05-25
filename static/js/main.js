@@ -8,6 +8,43 @@ document.addEventListener('DOMContentLoaded', async () => {
     const conversationListElement = document.getElementById('conversationList');
     const refreshConversationsBtn = document.getElementById('refreshConversationsBtn');
     const newConversationBtn = document.getElementById('newConversationBtn');
+    const sensitivitySlider = document.getElementById('sensitivitySlider');
+    const sensitivityValue = document.getElementById('sensitivityValue');
+    
+    // Add debug overlay for monitoring voice levels
+    const debugOverlay = document.createElement('div');
+    debugOverlay.id = 'debugOverlay';
+    debugOverlay.style.position = 'fixed';
+    debugOverlay.style.bottom = '10px';
+    debugOverlay.style.right = '10px';
+    debugOverlay.style.backgroundColor = 'rgba(0,0,0,0.7)';
+    debugOverlay.style.color = 'white';
+    debugOverlay.style.padding = '10px';
+    debugOverlay.style.borderRadius = '5px';
+    debugOverlay.style.zIndex = '9999';
+    debugOverlay.style.fontSize = '12px';
+    debugOverlay.style.fontFamily = 'monospace';
+    debugOverlay.style.maxWidth = '300px';
+    debugOverlay.style.maxHeight = '200px';
+    debugOverlay.style.overflow = 'auto';
+    document.body.appendChild(debugOverlay);
+    
+    // Debug logging function
+    function debugLog(message) {
+        console.log(`[DEBUG] ${message}`);
+        const timestamp = new Date().toLocaleTimeString();
+        const logEntry = document.createElement('div');
+        logEntry.textContent = `${timestamp}: ${message}`;
+        debugOverlay.appendChild(logEntry);
+        
+        // Keep only last 20 messages
+        while (debugOverlay.childNodes.length > 20) {
+            debugOverlay.removeChild(debugOverlay.firstChild);
+        }
+        
+        // Auto-scroll to bottom
+        debugOverlay.scrollTop = debugOverlay.scrollHeight;
+    }
     
     // New DOM element for patient details - reposition it within main content
     const patientDetailsPanel = document.createElement('div');
@@ -38,15 +75,39 @@ document.addEventListener('DOMContentLoaded', async () => {
     let vadDataArray = null;
     let vadAnimationFrame = null;
     let vadStream = null;
-    const VAD_THRESHOLD = 15; // Voice detection threshold
+    let VAD_THRESHOLD = parseInt(sensitivitySlider.value); // Voice detection threshold - make this configurable
     const SILENCE_TIMEOUT = 1500; // Time of silence before stopping (ms)
+    let lastAudioLevel = 0;
+    
+    // Set up sensitivity slider handler
+    sensitivitySlider.addEventListener('input', function() {
+        VAD_THRESHOLD = parseInt(this.value);
+        sensitivityValue.textContent = VAD_THRESHOLD;
+        debugLog(`Voice detection threshold changed to ${VAD_THRESHOLD}`);
+    });
+    
+    // Add a debug toggle button
+    const debugToggle = document.createElement('button');
+    debugToggle.textContent = 'Toggle Debug';
+    debugToggle.style.position = 'fixed';
+    debugToggle.style.bottom = '10px';
+    debugToggle.style.left = '10px';
+    debugToggle.style.zIndex = '9999';
+    debugToggle.addEventListener('click', () => {
+        if (debugOverlay.style.display === 'none') {
+            debugOverlay.style.display = 'block';
+            debugLog('Debug overlay enabled');
+        } else {
+            debugOverlay.style.display = 'none';
+        }
+    });
+    document.body.appendChild(debugToggle);
     
     // Initialize audio context on user interaction
     function initAudioContext() {
         if (!audioContext) {
             audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            console.log('AudioContext initialized. Initial state:', audioContext.state);
-
+            debugLog(`AudioContext initialized. Initial state: ${audioContext.state}`);
         }
     }
     
@@ -72,47 +133,70 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     // Toggle voice activity detection
     async function toggleVoiceActivityDetection() {
+        debugLog(`Toggle VAD called. Current state: vadActive=${vadActive}`);
         if (!vadActive) {
             // Start voice detection
+            debugLog('Attempting to start voice detection');
             recordButton.textContent = 'Voice Detection Active (Click to Stop)';
             recordButton.classList.add('vad-active');
-            await setupVoiceActivityDetection();
-            vadActive = true;
-            updateStatus('Listening for voice...');
+            try {
+                await setupVoiceActivityDetection();
+                vadActive = true;
+                updateStatus('Listening for voice...');
+                debugLog('Voice detection activated successfully');
+            } catch (error) {
+                debugLog(`Failed to start voice detection: ${error.message}`);
+                recordButton.textContent = 'Start Voice Detection (Error)';
+                recordButton.classList.remove('vad-active');
+                updateStatus(`Error: ${error.message}`);
+            }
         } else {
             // Stop voice detection
+            debugLog('Stopping voice detection');
             recordButton.textContent = 'Start Voice Detection';
             recordButton.classList.remove('vad-active');
             stopVoiceActivityDetection();
             vadActive = false;
             updateStatus('Ready');
+            debugLog('Voice detection deactivated');
         }
     }
     
     // Setup voice activity detection
     async function setupVoiceActivityDetection() {
         try {
-            console.log('Setting up voice activity detection');
+            debugLog('Setting up voice activity detection');
             
             // Initialize AudioContext
             if (!audioContext) {
+                debugLog('Creating new AudioContext');
                 audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                debugLog(`New AudioContext created with state: ${audioContext.state}`);
                 await audioContext.resume();
+                debugLog(`AudioContext resumed with state: ${audioContext.state}`);
             } else if (audioContext.state === 'suspended') {
+                debugLog('Resuming suspended AudioContext');
                 await audioContext.resume();
+                debugLog(`AudioContext resumed with state: ${audioContext.state}`);
             }
             
             // Setup microphone access if not already done
+            debugLog('Setting up microphone');
             if (!await setupMicrophone()) {
+                debugLog('Failed to set up microphone');
                 throw new Error('Failed to set up microphone');
             }
+            debugLog('Microphone setup successful');
             
             // Create a new conversation if none exists
             if (!currentConversationId) {
+                debugLog('No active conversation, creating new one');
                 await createNewConversation();
+                debugLog(`New conversation created with ID: ${currentConversationId}`);
             }
             
             // Get media stream with specific constraints
+            debugLog('Requesting media stream with constraints');
             vadStream = await navigator.mediaDevices.getUserMedia({
                 audio: {
                     echoCancellation: true,
@@ -121,8 +205,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                     sampleRate: 44100,
                 }
             });
+            debugLog(`Media stream obtained: ${vadStream.id}`);
             
             // Set up analyzer for voice detection
+            debugLog('Setting up audio analyzer');
             vadAnalyser = audioContext.createAnalyser();
             const source = audioContext.createMediaStreamSource(vadStream);
             source.connect(vadAnalyser);
@@ -130,54 +216,72 @@ document.addEventListener('DOMContentLoaded', async () => {
             vadAnalyser.fftSize = 256;
             const bufferLength = vadAnalyser.frequencyBinCount;
             vadDataArray = new Uint8Array(bufferLength);
+            debugLog(`Analyzer setup complete: fftSize=${vadAnalyser.fftSize}, bufferLength=${bufferLength}`);
             
             // Start monitoring audio levels
+            debugLog('Starting voice activity monitoring');
             checkVoiceActivity();
             
-            console.log('Voice activity detection setup complete');
+            debugLog('Voice activity detection setup complete');
         } catch (error) {
+            debugLog(`Error setting up voice activity detection: ${error.message}`);
             console.error('Error setting up voice activity detection:', error);
             updateStatus(`Error: ${error.message}`);
             vadActive = false;
             recordButton.classList.remove('vad-active');
             recordButton.textContent = 'Start Voice Detection';
+            throw error; // Re-throw to handle in the caller
         }
     }
     
     // Check for voice activity
     function checkVoiceActivity() {
-        if (!vadActive) return;
-        
-        vadAnalyser.getByteFrequencyData(vadDataArray);
-        let sum = 0;
-        for (let i = 0; i < vadDataArray.length; i++) {
-            sum += vadDataArray[i];
+        if (!vadActive) {
+            debugLog('Voice activity check called but VAD not active');
+            return;
         }
-        const average = sum / vadDataArray.length;
         
-        // Visual feedback on voice level
-        updateVoiceActivityVisual(average);
-        
-        if (average > VAD_THRESHOLD) {
-            // Voice detected
-            if (!voiceDetected && !isRecording) {
-                console.log('Voice detected, starting recording');
-                voiceDetected = true;
-                startRecording();
+        try {
+            vadAnalyser.getByteFrequencyData(vadDataArray);
+            let sum = 0;
+            for (let i = 0; i < vadDataArray.length; i++) {
+                sum += vadDataArray[i];
+            }
+            const average = sum / vadDataArray.length;
+            lastAudioLevel = average;
+            
+            // Log audio level less frequently to avoid flooding
+            if (Math.random() < 0.1) { // Log roughly 10% of the time
+                debugLog(`Audio level: ${average.toFixed(2)} (threshold: ${VAD_THRESHOLD})`);
             }
             
-            // Reset silence timer on voice activity
-            clearTimeout(silenceTimer);
-            silenceTimer = setTimeout(() => {
-                if (isRecording) {
-                    console.log('Silence detected, stopping recording');
-                    stopRecording();
-                    voiceDetected = false;
+            // Visual feedback on voice level
+            updateVoiceActivityVisual(average);
+            
+            if (average > VAD_THRESHOLD) {
+                // Voice detected
+                if (!voiceDetected && !isRecording) {
+                    debugLog(`Voice detected (level: ${average.toFixed(2)}) - starting recording`);
+                    voiceDetected = true;
+                    startRecording();
                 }
-            }, SILENCE_TIMEOUT);
+                
+                // Reset silence timer on voice activity
+                clearTimeout(silenceTimer);
+                silenceTimer = setTimeout(() => {
+                    if (isRecording) {
+                        debugLog('Silence detected - stopping recording after timeout');
+                        stopRecording();
+                        voiceDetected = false;
+                    }
+                }, SILENCE_TIMEOUT);
+            }
+            
+            vadAnimationFrame = requestAnimationFrame(checkVoiceActivity);
+        } catch (error) {
+            debugLog(`Error in voice activity check: ${error.message}`);
+            console.error('Error in voice activity check:', error);
         }
-        
-        vadAnimationFrame = requestAnimationFrame(checkVoiceActivity);
     }
     
     // Update visual feedback for voice activity
@@ -188,6 +292,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             visualizer = document.createElement('div');
             visualizer.className = 'vad-visualizer';
             recordButton.appendChild(visualizer);
+            debugLog('Created voice activity visualizer');
         }
         
         // Update visualization level
@@ -204,28 +309,35 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     // Stop voice activity detection
     function stopVoiceActivityDetection() {
-        console.log('Stopping voice activity detection');
+        debugLog('Stopping voice activity detection');
         
         // Cancel animation frame
         if (vadAnimationFrame) {
             cancelAnimationFrame(vadAnimationFrame);
             vadAnimationFrame = null;
+            debugLog('Cancelled animation frame');
         }
         
         // Clear silence timer
         if (silenceTimer) {
             clearTimeout(silenceTimer);
             silenceTimer = null;
+            debugLog('Cleared silence timer');
         }
         
         // Stop recording if active
         if (isRecording) {
+            debugLog('Recording was active - stopping it');
             stopRecording();
         }
         
         // Stop media stream tracks
         if (vadStream) {
-            vadStream.getTracks().forEach(track => track.stop());
+            debugLog('Stopping media stream tracks');
+            vadStream.getTracks().forEach(track => {
+                track.stop();
+                debugLog(`Stopped track: ${track.kind}`);
+            });
             vadStream = null;
         }
         
@@ -233,11 +345,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         const visualizer = document.querySelector('.vad-visualizer');
         if (visualizer) {
             visualizer.remove();
+            debugLog('Removed visualizer');
         }
         
         voiceDetected = false;
         vadActive = false;
-        console.log('Voice activity detection stopped');
+        debugLog('Voice activity detection stopped completely');
     }
     
     // Create a new empty conversation
@@ -293,6 +406,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Update status message
     function updateStatus(message) {
         statusElement.textContent = message;
+        debugLog(`Status updated: ${message}`);
         
         // Clear all status classes
         statusElement.classList.remove('recording', 'processing', 'error');
@@ -683,13 +797,38 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     // Setup microphone access
     async function setupMicrophone() {
-        if (microphoneSetup) return true;
+        if (microphoneSetup) {
+            debugLog('Microphone already set up');
+            return true;
+        }
         
         try {
+            debugLog('Requesting microphone access');
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            debugLog('Microphone access granted');
+            
+            // Check if we actually got audio tracks
+            if (stream.getAudioTracks().length > 0) {
+                debugLog(`Got ${stream.getAudioTracks().length} audio tracks`);
+                const track = stream.getAudioTracks()[0];
+                debugLog(`Track details: enabled=${track.enabled}, muted=${track.muted}, readyState=${track.readyState}`);
+                
+                // Get capabilities if supported
+                if (track.getCapabilities) {
+                    const capabilities = track.getCapabilities();
+                    debugLog(`Microphone capabilities: ${JSON.stringify(capabilities)}`);
+                }
+            } else {
+                debugLog('WARNING: No audio tracks in stream!');
+            }
+            
+            // Stop this test stream since we'll create a new one for actual recording
+            stream.getTracks().forEach(track => track.stop());
+            
             microphoneSetup = true;
             return true;
         } catch (error) {
+            debugLog(`Error accessing microphone: ${error.name} - ${error.message}`);
             updateStatus(`Error accessing microphone: ${error.message}`);
             console.error('Error accessing microphone:', error);
             return false;
@@ -745,46 +884,48 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Modify startRecording to work with voice detection
     async function startRecording() {
         try {
-            console.log('startRecording: Starting recording process');
+            debugLog('==== START RECORDING CALLED ====');
             
             // Initialize AudioContext as early as possible upon user interaction
             if (!audioContext) {
+                debugLog('Creating new AudioContext in startRecording');
                 audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                console.log('startRecording: AudioContext initialized with state:', audioContext.state);
+                debugLog(`AudioContext initialized with state: ${audioContext.state}`);
             }
     
             if (audioContext && audioContext.state === 'suspended') {
-                console.log('startRecording: AudioContext is suspended, attempting to resume...');
+                debugLog('Resuming suspended AudioContext');
                 try {
                     await audioContext.resume();
-                    console.log('startRecording: AudioContext resumed. New state:', audioContext.state);
+                    debugLog(`AudioContext resumed. New state: ${audioContext.state}`);
                 } catch (resumeError) {
+                    debugLog(`Error resuming AudioContext: ${resumeError.message}`);
                     console.error('startRecording: Error resuming AudioContext:', resumeError);
                 }
             }
     
             // If we're already recording, don't start a new recording
             if (isRecording) {
-                console.log('startRecording: Already recording, ignoring start request');
+                debugLog('Already recording, ignoring start request');
                 return;
             }
     
             // Setup Microphone
             if (!await setupMicrophone()) {
-                console.error('startRecording: Failed to set up microphone');
+                debugLog('Failed to set up microphone');
                 return;
             }
-            console.log('startRecording: Microphone setup complete');
+            debugLog('Microphone setup complete');
             
             // Create a new conversation if none exists
             if (!currentConversationId) {
-                console.log('startRecording: No active conversation, creating new one');
+                debugLog('No active conversation, creating new one');
                 await createNewConversation();
             }
             
             // Stop any currently playing audio
             if (currentAudioSource) {
-                console.log('startRecording: Stopping previous audio before recording');
+                debugLog('Stopping previous audio before recording');
                 currentAudioSource.stop();
                 if (currentAudioSource.onended) {
                     currentAudioSource.onended = null; // Clear handler
@@ -796,10 +937,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             let stream;
             if (vadActive && vadStream) {
                 stream = vadStream;
-                console.log('startRecording: Using existing VAD stream');
+                debugLog('Using existing VAD stream for recording');
             } else {
                 // Get User Media Stream with explicit constraints for audio quality
-                console.log('startRecording: Requesting media stream');
+                debugLog('Requesting new media stream');
                 stream = await navigator.mediaDevices.getUserMedia({
                     audio: {
                         echoCancellation: true,
@@ -808,50 +949,75 @@ document.addEventListener('DOMContentLoaded', async () => {
                         sampleRate: 44100,
                     }
                 });
-                console.log('startRecording: Media stream obtained successfully');
+                debugLog(`Media stream obtained: ${stream.id}`);
+            }
+            
+            // Verify stream has audio tracks
+            if (stream.getAudioTracks().length === 0) {
+                debugLog('ERROR: Stream has no audio tracks!');
+                throw new Error('No audio tracks in stream');
+            } else {
+                const track = stream.getAudioTracks()[0];
+                debugLog(`Using audio track: enabled=${track.enabled}, muted=${track.muted}, readyState=${track.readyState}`);
             }
             
             // MediaRecorder Setup with MIME Type
-            console.log('startRecording: Setting up MediaRecorder');
+            debugLog('Setting up MediaRecorder');
             const options = { mimeType: 'audio/webm; codecs=opus' };
             if (!MediaRecorder.isTypeSupported(options.mimeType)) {
-                console.warn(`${options.mimeType} is not Supported, trying audio/webm`);
+                debugLog(`${options.mimeType} is not Supported, trying audio/webm`);
                 options.mimeType = 'audio/webm'; 
                 if (!MediaRecorder.isTypeSupported(options.mimeType)) {
-                    console.warn(`${options.mimeType} is not Supported, browser default will be used.`);
+                    debugLog(`${options.mimeType} is not Supported, browser default will be used`);
                     delete options.mimeType; 
                 }
             }
             
-            mediaRecorder = new MediaRecorder(stream, options);
-            recordedMimeType = mediaRecorder.mimeType; // Store the actual MIME type
-            console.log('startRecording: MediaRecorder initialized with MIME type:', recordedMimeType);
+            try {
+                mediaRecorder = new MediaRecorder(stream, options);
+                recordedMimeType = mediaRecorder.mimeType; // Store the actual MIME type
+                debugLog(`MediaRecorder initialized with MIME type: ${recordedMimeType}`);
+            } catch (recorderError) {
+                debugLog(`Error creating MediaRecorder: ${recorderError.message}`);
+                throw recorderError;
+            }
     
             audioChunks = [];
             
             mediaRecorder.ondataavailable = (event) => {
-                audioChunks.push(event.data);
-                console.log(`startRecording: Audio chunk received, size: ${event.data.size} bytes`);
+                if (event.data.size > 0) {
+                    audioChunks.push(event.data);
+                    debugLog(`Audio chunk received: ${event.data.size} bytes`);
+                } else {
+                    debugLog('Empty audio chunk received (ignoring)');
+                }
             };
             
             mediaRecorder.onstop = async () => {
-                console.log(`startRecording: MediaRecorder stopped, processing ${audioChunks.length} chunks`);
+                debugLog(`MediaRecorder stopped, processing ${audioChunks.length} chunks`);
                 
                 // Only process audio if we have actual content
                 if (audioChunks.length > 0 && audioChunks.some(chunk => chunk.size > 0)) {
+                    const totalBytes = audioChunks.reduce((sum, chunk) => sum + chunk.size, 0);
+                    debugLog(`Processing audio: ${totalBytes} total bytes`);
                     // Use the stored, correct MIME type here
                     await processAudio(new Blob(audioChunks, { type: recordedMimeType || 'audio/webm' }));
                 } else {
-                    console.log('startRecording: No audio data to process');
+                    debugLog('No audio data to process (empty chunks)');
                     updateStatus(vadActive ? 'Listening for voice...' : 'Ready');
                 }
             };
             
-            mediaRecorder.start();
-            console.log('startRecording: MediaRecorder started');
-            isRecording = true;
-            updateStatus('Recording...');
-            recordButton.classList.add('recording');
+            try {
+                mediaRecorder.start();
+                debugLog('MediaRecorder started successfully');
+                isRecording = true;
+                updateStatus('Recording...');
+                recordButton.classList.add('recording');
+            } catch (startError) {
+                debugLog(`Error starting MediaRecorder: ${startError.message}`);
+                throw startError;
+            }
     
             // Add visualization for audio feedback only in non-VAD mode
             if (!vadActive) {
@@ -859,6 +1025,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
     
         } catch (error) {
+            debugLog(`ERROR starting recording: ${error.name} - ${error.message}`);
             console.error('startRecording: Error starting recording:', error);
             // Provide more specific error message to the user if possible
             if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
@@ -866,55 +1033,74 @@ document.addEventListener('DOMContentLoaded', async () => {
             } else if (error.name === 'NotFoundError') {
                 statusElement.textContent = 'No microphone found.';
             } else {
-                statusElement.textContent = 'Error starting recording.';
+                statusElement.textContent = `Error starting recording: ${error.message}`;
             }
         }
     }
     
     // Stop recording
     function stopRecording() {
+        debugLog('==== STOP RECORDING CALLED ====');
         if (isRecording && mediaRecorder) {
-            mediaRecorder.stop();
-            isRecording = false;
-            statusElement.textContent = 'Processing...';
-            recordButton.classList.remove('recording');
-            
-            // Only stop tracks if not using VAD
-            if (!vadActive) {
-                // Stop all audio tracks
-                mediaRecorder.stream.getTracks().forEach(track => track.stop());
+            try {
+                debugLog(`Stopping MediaRecorder (state: ${mediaRecorder.state})`);
+                mediaRecorder.stop();
+                debugLog('MediaRecorder stopped');
+                isRecording = false;
+                updateStatus('Processing...');
+                recordButton.classList.remove('recording');
+                
+                // Only stop tracks if not using VAD
+                if (!vadActive) {
+                    debugLog('Stopping audio tracks (non-VAD mode)');
+                    mediaRecorder.stream.getTracks().forEach(track => {
+                        track.stop();
+                        debugLog(`Stopped track: ${track.kind}`);
+                    });
+                } else {
+                    debugLog('Keeping audio tracks active (VAD mode)');
+                }
+            } catch (error) {
+                debugLog(`Error stopping recording: ${error.message}`);
+                console.error('Error stopping recording:', error);
             }
+        } else {
+            debugLog(`Not recording or no mediaRecorder (isRecording=${isRecording})`);
         }
     }
     
     // Process audio
     async function processAudio(audioBlob) {
         try {
-            console.log(`processAudio: Processing audio blob of size: ${audioBlob.size} bytes, type: ${audioBlob.type}`);
-            statusElement.textContent = 'Processing...';
+            debugLog(`Processing audio blob: size=${audioBlob.size} bytes, type=${audioBlob.type}`);
+            updateStatus('Processing...');
             
             const formData = new FormData();
             formData.append('audio', audioBlob);
             formData.append('voice_id', currentVoiceId);
-            console.log(`processAudio: Using voice_id: ${currentVoiceId}`);
+            debugLog(`Using voice_id: ${currentVoiceId}`);
             
-            console.log('processAudio: Sending audio to server...');
+            debugLog('Sending audio to server...');
+            const startTime = performance.now();
             const response = await fetch('/process_audio', {
                 method: 'POST',
                 body: formData
             });
+            const elapsed = (performance.now() - startTime) / 1000;
+            debugLog(`Server response received in ${elapsed.toFixed(2)}s with status: ${response.status}`);
             
             if (!response.ok) {
+                debugLog(`Server error: ${response.status} ${response.statusText}`);
                 throw new Error(`Server returned status: ${response.status}`);
             }
             
             const data = await response.json();
-            console.log('processAudio: Server response received', {
-                status: data.status,
-                transcription_length: data.user_transcription?.length,
-                response_length: data.assistant_response_text?.length,
-                audio_received: !!data.assistant_response_audio
-            });
+            debugLog(`Response data received: status=${data.status}`);
+            if (data.user_transcription) {
+                debugLog(`Transcription: "${data.user_transcription.substring(0, 50)}${data.user_transcription.length > 50 ? '...' : ''}"`);
+            } else {
+                debugLog('No transcription received');
+            }
             
             if (data.status === 'success') {
                 // Add user message
@@ -925,20 +1111,20 @@ document.addEventListener('DOMContentLoaded', async () => {
                 
                 // Play audio response if available
                 if (data.assistant_response_audio) {
-                    console.log(`processAudio: Audio response received, length: ${data.assistant_response_audio.length}`);
+                    debugLog(`Audio response received: ${data.assistant_response_audio.length} bytes`);
                     playAudioResponse(data.assistant_response_audio);
                 } else {
-                    console.warn('processAudio: No audio response received from server');
+                    debugLog('No audio response received from server');
                 }
                 
                 // Refresh conversation list to show the updated conversation
                 await loadConversationHistory();
                 
-                statusElement.textContent = 'Ready';
+                updateStatus('Ready');
             } else if (data.status === 'exit') {
-                console.log('processAudio: Exit command detected');
+                debugLog('Exit command detected');
                 addMessage('assistant', data.assistant_response_text);
-                statusElement.textContent = 'Conversation ended';
+                updateStatus('Conversation ended');
                 recordButton.disabled = true;
                 
                 // Refresh conversation list
@@ -947,8 +1133,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                 throw new Error(data.message || 'Failed to process audio');
             }
         } catch (error) {
+            debugLog(`Error processing audio: ${error.message}`);
             console.error('processAudio: Error processing audio:', error);
-            statusElement.textContent = `Error: ${error.message || 'Failed to process audio'}`;
+            updateStatus(`Error: ${error.message || 'Failed to process audio'}`);
             
             // Enable the record button again so users can retry
             recordButton.disabled = false;
@@ -968,45 +1155,45 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Play audio response
     async function playAudioResponse(base64Audio) {
         try {
-            console.log('playAudioResponse: Called with audio length:', base64Audio ? base64Audio.length : 0);
+            debugLog('playAudioResponse: Called with audio length:', base64Audio ? base64Audio.length : 0);
             
             if (!base64Audio || base64Audio.length === 0) {
-                console.error('playAudioResponse: Empty audio data received');
+                debugLog('playAudioResponse: Empty audio data received');
                 return;
             }
 
             // Initialize audio context if not already done
             if (!audioContext) {
                 audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                console.log('playAudioResponse: AudioContext initialized with state:', audioContext.state);
+                debugLog('playAudioResponse: AudioContext initialized with state:', audioContext.state);
             }
 
             // Resume AudioContext - this is critical for browsers that suspend by default
             if (audioContext.state === 'suspended') {
-                console.log('playAudioResponse: AudioContext is suspended, attempting to resume...');
+                debugLog('playAudioResponse: AudioContext is suspended, attempting to resume...');
                 await audioContext.resume();
-                console.log('playAudioResponse: AudioContext resume attempt completed. New state:', audioContext.state);
+                debugLog('playAudioResponse: AudioContext resume attempt completed. New state:', audioContext.state);
             }
             
             if (audioContext.state !== 'running') {
-                console.warn('playAudioResponse: AudioContext is NOT running after attempt to resume. State:', audioContext.state);
+                debugLog('playAudioResponse: AudioContext is NOT running after attempt to resume. State:', audioContext.state);
                 // Try to create a fresh audio context as a fallback
-                console.log('playAudioResponse: Attempting to create new AudioContext as fallback');
+                debugLog('playAudioResponse: Attempting to create new AudioContext as fallback');
                 audioContext = new (window.AudioContext || window.webkitAudioContext)();
                 await audioContext.resume();
-                console.log('playAudioResponse: New AudioContext state:', audioContext.state);
+                debugLog('playAudioResponse: New AudioContext state:', audioContext.state);
             }
             
             // Stop any currently playing audio
             if (currentAudioSource) {
-                console.log('playAudioResponse: Stopping existing audio source');
+                debugLog('playAudioResponse: Stopping existing audio source');
                 currentAudioSource.stop();
                 currentAudioSource.onended = null; // Clear previous handler
                 currentAudioSource = null;
             }
             
             // Convert base64 to ArrayBuffer
-            console.log('playAudioResponse: Converting base64 to ArrayBuffer');
+            debugLog('playAudioResponse: Converting base64 to ArrayBuffer');
             const binaryString = atob(base64Audio);
             const len = binaryString.length;
             const bytes = new Uint8Array(len);
@@ -1015,29 +1202,31 @@ document.addEventListener('DOMContentLoaded', async () => {
                 bytes[i] = binaryString.charCodeAt(i);
             }
             
-            console.log(`playAudioResponse: Created bytes array of length ${bytes.length}`);
+            debugLog(`playAudioResponse: Created bytes array of length ${bytes.length}`);
             
             // Decode audio data
-            console.log('playAudioResponse: Decoding audio data...');
+            debugLog('playAudioResponse: Decoding audio data...');
             let audioBuffer;
             try {
                 audioBuffer = await audioContext.decodeAudioData(bytes.buffer);
-                console.log(`playAudioResponse: Audio successfully decoded, duration: ${audioBuffer.duration}s, channels: ${audioBuffer.numberOfChannels}`);
+                debugLog(`playAudioResponse: Audio successfully decoded, duration: ${audioBuffer.duration}s, channels: ${audioBuffer.numberOfChannels}`);
             } catch (decodeError) {
+                debugLog('playAudioResponse: Failed to decode audio:');
                 console.error('playAudioResponse: Failed to decode audio:', decodeError);
                 // Try playing as a regular HTML5 audio element as fallback
-                console.log('playAudioResponse: Attempting HTML5 Audio fallback');
+                debugLog('playAudioResponse: Attempting HTML5 Audio fallback');
                 const audioElement = new Audio(`data:audio/mp3;base64,${base64Audio}`);
                 audioElement.play().then(() => {
-                    console.log('playAudioResponse: HTML5 Audio fallback successful');
+                    debugLog('playAudioResponse: HTML5 Audio fallback successful');
                 }).catch(htmlAudioError => {
+                    debugLog('playAudioResponse: HTML5 Audio fallback failed:');
                     console.error('playAudioResponse: HTML5 Audio fallback failed:', htmlAudioError);
                 });
                 return;
             }
             
             // Create and play audio source
-            console.log('playAudioResponse: Creating audio source');
+            debugLog('playAudioResponse: Creating audio source');
             const source = audioContext.createBufferSource();
             source.buffer = audioBuffer;
             source.connect(audioContext.destination);
@@ -1047,20 +1236,21 @@ document.addEventListener('DOMContentLoaded', async () => {
             
             // Add event handlers
             source.onended = () => {
-                console.log('playAudioResponse: Audio playback completed naturally');
+                debugLog('playAudioResponse: Audio playback completed naturally');
                 currentAudioSource = null;
             };
             
             // Actually play the audio
-            console.log('playAudioResponse: Starting audio playback');
+            debugLog('playAudioResponse: Starting audio playback');
             source.start(0);
-            console.log('playAudioResponse: Audio playback started');
+            debugLog('playAudioResponse: Audio playback started');
             
         } catch (error) {
+            debugLog('playAudioResponse: Error playing audio:');
             console.error('playAudioResponse: Error playing audio:', error);
             // Try one more fallback approach with vanilla HTML audio
             try {
-                console.log('playAudioResponse: Attempting final HTML5 Audio fallback');
+                debugLog('playAudioResponse: Attempting final HTML5 Audio fallback');
                 const audioBlob = new Blob(
                     [Uint8Array.from(atob(base64Audio), c => c.charCodeAt(0))], 
                     {type: 'audio/mp3'}
@@ -1068,8 +1258,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const audioUrl = URL.createObjectURL(audioBlob);
                 const audio = new Audio(audioUrl);
                 audio.play();
-                console.log('playAudioResponse: Final HTML5 Audio fallback attempted');
+                debugLog('playAudioResponse: Final HTML5 Audio fallback attempted');
             } catch (fallbackError) {
+                debugLog('playAudioResponse: All audio playback attempts failed:');
                 console.error('playAudioResponse: All audio playback attempts failed:', fallbackError);
             }
         }
@@ -1086,14 +1277,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     // Add diagnostic function to test audio system
     async function testAudioSystem() {
-        console.log('==== AUDIO SYSTEM DIAGNOSTIC ====');
+        debugLog('==== AUDIO SYSTEM DIAGNOSTIC ====');
         
         // Check if browser supports necessary audio APIs
-        console.log('1. Browser capability check:');
-        console.log(' - AudioContext supported:', typeof AudioContext !== 'undefined' || typeof webkitAudioContext !== 'undefined');
-        console.log(' - MediaRecorder supported:', typeof MediaRecorder !== 'undefined');
-        console.log(' - getUserMedia supported:', navigator.mediaDevices && typeof navigator.mediaDevices.getUserMedia !== 'undefined');
-        console.log(' - Supported MIME types for recording:');
+        debugLog('1. Browser capability check:');
+        debugLog(` - AudioContext supported: ${typeof AudioContext !== 'undefined' || typeof webkitAudioContext !== 'undefined'}`);
+        debugLog(` - MediaRecorder supported: ${typeof MediaRecorder !== 'undefined'}`);
+        debugLog(` - getUserMedia supported: ${!!(navigator.mediaDevices && typeof navigator.mediaDevices.getUserMedia !== 'undefined')}`);
+        debugLog(' - Supported MIME types for recording:');
         
         const testMimeTypes = [
             'audio/webm', 
@@ -1105,37 +1296,37 @@ document.addEventListener('DOMContentLoaded', async () => {
         
         testMimeTypes.forEach(type => {
             if (typeof MediaRecorder !== 'undefined') {
-                console.log(`   - ${type}: ${MediaRecorder.isTypeSupported(type)}`);
+                debugLog(`   - ${type}: ${MediaRecorder.isTypeSupported(type)}`);
             }
         });
         
         // Test AudioContext creation
-        console.log('2. AudioContext creation test:');
+        debugLog('2. AudioContext creation test:');
         try {
             const testContext = new (window.AudioContext || window.webkitAudioContext)();
-            console.log(' - AudioContext created successfully');
-            console.log(' - Sample rate:', testContext.sampleRate);
-            console.log(' - Initial state:', testContext.state);
+            debugLog(' - AudioContext created successfully');
+            debugLog(` - Sample rate: ${testContext.sampleRate}`);
+            debugLog(` - Initial state: ${testContext.state}`);
             
             // Test resume capability
             if (testContext.state === 'suspended') {
                 try {
-                    console.log(' - Attempting to resume AudioContext...');
+                    debugLog(' - Attempting to resume AudioContext...');
                     await testContext.resume();
-                    console.log(' - Resume successful, new state:', testContext.state);
+                    debugLog(` - Resume successful, new state: ${testContext.state}`);
                 } catch (resumeError) {
-                    console.error(' - Error resuming AudioContext:', resumeError);
+                    debugLog(` - Error resuming AudioContext: ${resumeError.message}`);
                 }
             }
             
             // Clean up
             testContext.close();
         } catch (contextError) {
-            console.error(' - Error creating AudioContext:', contextError);
+            debugLog(` - Error creating AudioContext: ${contextError.message}`);
         }
         
         // Test audio decoding with a minimal audio
-        console.log('3. Audio decoding capability test:');
+        debugLog('3. Audio decoding capability test:');
         try {
             // Create a minimal silent MP3 (1 frame)
             const silentMp3Base64 = 'SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA//tAwAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAACAAABGADbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tb29vb29vb29vb29vb29vb29vb29vb29vb29vb29v///////////////////////////////////////////8AAAAATGF2YzU4LjEzAAAAAAAAAAAAAAAAJAAAAAAAAAAAARiN6AYcAAAAAAAAAAAAAAAAAAAAAP/7kGQAAANkAEj0AAACPQCJHoAAEYwYSPmMADRBghk/MYAGvtm2YG7aBtvAAGxu3dMzdu8m5t7d1TM3b7Jx9suKKOOTkyDjNxcUcckUcbOTIONnJxRxw5I4uKOEIQhDjjk4o44QhMg4zYcIQhEIQhDanHJ28IQhD6nHHHCEIREIQhCanH1OPqcfU4444QhCEIQhCEIQhCEIQhCEIhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh/+5JkEI/0iGdH+ewANHkNCP89gAafCggQEDDCgIB4WIGAEMArhgZgwZkI2YFCBAAGDBRw4MIHAgAfW8b9f/1eN+v9fWtlMy8b8Hliz//Liz//Liz//4uNS4uNS4uP+NS4uP+NS5//8uP//+X//4AAAAMw13m22BTMzAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA';
@@ -1149,27 +1340,20 @@ document.addEventListener('DOMContentLoaded', async () => {
             
             const testContext = new (window.AudioContext || window.webkitAudioContext)();
             const result = await testContext.decodeAudioData(bytes.buffer);
-            console.log(' - Audio decoding successful');
-            console.log(' - Decoded audio duration:', result.duration);
-            console.log(' - Decoded audio channels:', result.numberOfChannels);
-            
-            // Test playback
-            console.log(' - Testing audio playback...');
-            const source = testContext.createBufferSource();
-            source.buffer = result;
-            source.connect(testContext.destination);
-            source.onended = () => console.log(' - Test playback completed');
-            source.start(0);
+            debugLog(' - Audio decoding successful');
+            debugLog(` - Decoded audio duration: ${result.duration}`);
+            debugLog(` - Decoded audio channels: ${result.numberOfChannels}`);
             
         } catch (decodeError) {
-            console.error(' - Audio decoding failed:', decodeError);
+            debugLog(` - Audio decoding failed: ${decodeError.message}`);
         }
         
-        console.log('==== DIAGNOSTIC COMPLETE ====');
+        debugLog('==== DIAGNOSTIC COMPLETE ====');
     }
 
     // Initialize the app
     updateStatus('Ready');
+    debugLog('Application initialized');
     
     // Update button text for new functionality
     recordButton.textContent = 'Start Voice Detection';

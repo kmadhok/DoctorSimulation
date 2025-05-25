@@ -592,6 +592,31 @@ button, select, .conversation-item {
     z-index: 1;
 }
 
+/* Sensitivity control styles */
+.sensitivity-control {
+    margin-top: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    font-size: 14px;
+}
+
+.sensitivity-control label {
+    margin-right: 5px;
+}
+
+.sensitivity-control input[type="range"] {
+    width: 120px;
+    cursor: pointer;
+}
+
+#sensitivityValue {
+    min-width: 20px;
+    text-align: center;
+    font-weight: bold;
+}
+
 /* Change existing animation to be used by VAD button */
 @keyframes pulse {
     0% {
