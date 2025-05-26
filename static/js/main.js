@@ -64,9 +64,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     // })
     
     // .catch(console.error);
-    import("https://cdn.jsdelivr.net/npm/@ricky0123/vad-web@0.0.22/dist/index.js")
-    .then(({ MicVAD }) => (window.MicVAD = MicVAD))
-    .catch(console.error);
+    // import("https://cdn.jsdelivr.net/npm/@ricky0123/vad-web@0.0.22/dist/index.js")
+    // .then(({ MicVAD }) => (window.MicVAD = MicVAD))
+    // .catch(console.error);
     function float32ToWav(float32, sampleRate = 16000) {
         const buffer = new ArrayBuffer(44 + float32.length * 2);
         const view   = new DataView(buffer);
