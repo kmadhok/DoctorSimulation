@@ -57,14 +57,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     let audioContext;
     let currentAudioSource = null; // Track current audio source for interruption
 
-    // Dynamic import works in every browser that supports modules
-    import("https://cdn.jsdelivr.net/npm/@ricky0123/vad-web@0.0.22/dist/bundle.min.js")
-    .then((module) => {
-        window.MicVAD = module.MicVAD;   // MicVAD is exported at top level
-    })
+    // // Dynamic import works in every browser that supports modules
+    // import("https://cdn.jsdelivr.net/npm/@ricky0123/vad-web@0.0.22/dist/bundle.min.js")
+    // .then((module) => {
+    //     window.MicVAD = module.MicVAD;   // MicVAD is exported at top level
+    // })
     
+    // .catch(console.error);
+    import("https://cdn.jsdelivr.net/npm/@ricky0123/vad-web@0.0.22/dist/index.js")
+    .then(({ MicVAD }) => (window.MicVAD = MicVAD))
     .catch(console.error);
-
     function float32ToWav(float32, sampleRate = 16000) {
         const buffer = new ArrayBuffer(44 + float32.length * 2);
         const view   = new DataView(buffer);
