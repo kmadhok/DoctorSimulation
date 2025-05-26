@@ -121,15 +121,37 @@ document.addEventListener('DOMContentLoaded', async () => {
     voiceSelect.addEventListener('change', handleVoiceChange);
     refreshConversationsBtn.addEventListener('click', loadConversationHistory);
     newConversationBtn.addEventListener('click', createNewConversation);
+    // autoListenBtn.addEventListener('click', async () => {
+    //     if (!stopVAD) {
+    //       updateStatus("Listening…");
+    //       autoListenBtn.classList.add('recording');
+    //       stopVAD = await initAutoVAD();    // starts everything
+    //     } else {
+    //       stopVAD();                        // pauses VAD and closes mic
+    //       stopVAD = null;
+    //       updateStatus("Paused");
+    //       autoListenBtn.classList.remove('recording');
+    //     }
+    //   });
     autoListenBtn.addEventListener('click', async () => {
         if (!stopVAD) {
-          updateStatus("Listening…");
+          /* ── Ask for the mic while we’re still in the click-gesture ── */
+          try {
+            const tmpStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            tmpStream.getTracks().forEach(t => t.stop());   // release it immediately
+          } catch (err) {
+            console.error('Microphone permission error:', err);
+            updateStatus('Microphone permission required');
+            return;                                         // abort starting VAD
+          }
+      
+          updateStatus('Listening…');
           autoListenBtn.classList.add('recording');
-          stopVAD = await initAutoVAD();    // starts everything
+          stopVAD = await initAutoVAD();                    // starts VAD & keeps mic open
         } else {
-          stopVAD();                        // pauses VAD and closes mic
+          stopVAD();                                        // pauses VAD and closes mic
           stopVAD = null;
-          updateStatus("Paused");
+          updateStatus('Paused');
           autoListenBtn.classList.remove('recording');
         }
       });
