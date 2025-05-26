@@ -1,6 +1,33 @@
 document.addEventListener('DOMContentLoaded', async () => {
+
+    let stopVAD = null;        // will hold the cleanup fn
+
+    async function initAutoVAD() {
+    // Wait until the library has loaded
+    while (!window.MicVAD) await new Promise(r => setTimeout(r, 50));
+
+    const vad = await MicVAD.new({
+        positiveSpeechThreshold : 0.8,  // raise if background noise triggers
+        negativeSpeechThreshold : 0.5,
+        preSpeechPadFrames      : 8,    // ms before first speech frame
+        minSpeechFrames         : 3,    // 3 × 30 ms  = 90 ms
+        redemptionFrames        : 10,   // hysteresis for trailing silence
+
+        onSpeechEnd: async (float32Audio) => {
+        updateStatus("Processing…");
+        const wavBlob = float32ToWav(float32Audio);
+        await processAudio(wavBlob);  // <- your existing pipeline
+        updateStatus("Ready");
+        },
+    });
+
+    await vad.start();       // Mic opened, worklet running
+    return () => vad.pause();  // cleanup fn to stop VAD + mic
+    }
+
+
     // DOM elements
-    const recordButton = document.getElementById('recordButton');
+    const autoListenBtn = document.getElementById('autoListenBtn');  // ✅ new
     const statusElement = document.getElementById('status');
     const conversationElement = document.getElementById('conversation');
     const simulationSelect = document.getElementById('simulationSelect');
@@ -29,6 +56,45 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Audio context for playback
     let audioContext;
     let currentAudioSource = null; // Track current audio source for interruption
+
+    // Dynamic import works in every browser that supports modules
+    import("https://cdn.jsdelivr.net/npm/@ricky0123/vad-web@0.0.22/dist/bundle.min.js")
+    .then((module) => {
+        window.MicVAD = module.MicVAD;   // MicVAD is exported at top level
+    })
+    
+    .catch(console.error);
+
+    function float32ToWav(float32, sampleRate = 16000) {
+        const buffer = new ArrayBuffer(44 + float32.length * 2);
+        const view   = new DataView(buffer);
+      
+        // ----- RIFF header -----
+        const write = (offset, str) =>
+            str.split('').forEach((s, i) => view.setUint8(offset + i, s.charCodeAt(0)));
+      
+        write(0,  'RIFF');
+        view.setUint32(4, 36 + float32.length * 2, true);
+        write(8,  'WAVE');
+        write(12, 'fmt ');
+        view.setUint32(16, 16, true);   // Sub-chunk size
+        view.setUint16(20, 1,  true);   // PCM
+        view.setUint16(22, 1,  true);   // Mono
+        view.setUint32(24, sampleRate, true);
+        view.setUint32(28, sampleRate * 2, true); // Byte rate
+        view.setUint16(32, 2,  true);   // Block align
+        view.setUint16(34, 16, true);   // Bits / sample
+        write(36, 'data');
+        view.setUint32(40, float32.length * 2, true);
+      
+        // PCM samples
+        for (let i = 0; i < float32.length; i++) {
+          const s = Math.max(-1, Math.min(1, float32[i]));
+          view.setInt16(44 + i * 2, s < 0 ? s * 0x8000 : s * 0x7FFF, true);
+        }
+        return new Blob([view], { type: "audio/wav" });
+      }
+      
     
     // Initialize audio context on user interaction
     function initAudioContext() {
@@ -46,13 +112,26 @@ document.addEventListener('DOMContentLoaded', async () => {
     await loadConversationHistory();
     
     // Set up event listeners
-    recordButton.addEventListener('mousedown', startRecording);
-    recordButton.addEventListener('mouseup', stopRecording);
-    recordButton.addEventListener('mouseleave', stopRecording);
+    // recordButton.addEventListener('mousedown', startRecording);
+    // recordButton.addEventListener('mouseup', stopRecording);
+    // recordButton.addEventListener('mouseleave', stopRecording);
     simulationSelect.addEventListener('change', handleSimulationChange);
     voiceSelect.addEventListener('change', handleVoiceChange);
     refreshConversationsBtn.addEventListener('click', loadConversationHistory);
     newConversationBtn.addEventListener('click', createNewConversation);
+    autoListenBtn.addEventListener('click', async () => {
+        if (!stopVAD) {
+          updateStatus("Listening…");
+          autoListenBtn.classList.add('recording');
+          stopVAD = await initAutoVAD();    // starts everything
+        } else {
+          stopVAD();                        // pauses VAD and closes mic
+          stopVAD = null;
+          updateStatus("Paused");
+          autoListenBtn.classList.remove('recording');
+        }
+      });
+      
     
     // Request microphone access on first recording attempt rather than on page load
     let microphoneSetup = false;
@@ -92,7 +171,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 });
                 
                 // Enable recording button
-                recordButton.disabled = false;
+                // recordButton.disabled = false;
                 
                 // Refresh the conversation list
                 await loadConversationHistory();
@@ -301,7 +380,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 
                 // Update UI
                 updateStatus('Ready');
-                recordButton.disabled = false;
+                // recordButton.disabled = false;
                 
                 // Update active conversation in sidebar
                 const items = conversationListElement.querySelectorAll('.conversation-item');
@@ -361,7 +440,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         
         try {
             statusElement.textContent = 'Loading simulation...';
-            recordButton.disabled = true;
+            // recordButton.disabled = true;
             
             // Keep track of current voice selection
             currentVoiceId = voiceSelect.value;
@@ -382,7 +461,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 currentSimulation = data.current_simulation;
                 currentConversationId = data.conversation_id;
                 statusElement.textContent = 'Ready';
-                recordButton.disabled = false;
+                // recordButton.disabled = false;
                 conversationElement.innerHTML = ''; // Clear conversation
                 
                 // Update voice preference for this conversation
@@ -415,7 +494,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         } catch (error) {
             console.error('Error selecting simulation:', error);
             statusElement.textContent = 'Error selecting simulation';
-            recordButton.disabled = true;
+            // recordButton.disabled = true;
         }
     }
     
@@ -514,170 +593,170 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
     
     // Add a simple audio level visualization during recording
-    function setupVisualization(stream) {
-        if (!audioContext) return;
+    // function setupVisualization(stream) {
+    //     if (!audioContext) return;
         
-        // Create a visualization container
-        const visualizer = document.createElement('div');
-        visualizer.className = 'audio-visualizer';
-        recordButton.appendChild(visualizer);
+    //     // Create a visualization container
+    //     const visualizer = document.createElement('div');
+    //     visualizer.className = 'audio-visualizer';
+    //     // recordButton.appendChild(visualizer);
         
-        // Create analyzer
-        const analyser = audioContext.createAnalyser();
-        const source = audioContext.createMediaStreamSource(stream);
-        source.connect(analyser);
+    //     // Create analyzer
+    //     const analyser = audioContext.createAnalyser();
+    //     const source = audioContext.createMediaStreamSource(stream);
+    //     source.connect(analyser);
         
-        analyser.fftSize = 32;
-        const bufferLength = analyser.frequencyBinCount;
-        const dataArray = new Uint8Array(bufferLength);
+    //     analyser.fftSize = 32;
+    //     const bufferLength = analyser.frequencyBinCount;
+    //     const dataArray = new Uint8Array(bufferLength);
         
-        // Create visualization bars
-        for (let i = 0; i < bufferLength; i++) {
-            const bar = document.createElement('div');
-            bar.className = 'visualizer-bar';
-            visualizer.appendChild(bar);
-        }
+    //     // Create visualization bars
+    //     for (let i = 0; i < bufferLength; i++) {
+    //         const bar = document.createElement('div');
+    //         bar.className = 'visualizer-bar';
+    //         visualizer.appendChild(bar);
+    //     }
         
-        // Update visualization
-        function updateVisualization() {
-            if (!isRecording) {
-                visualizer.remove();
-                return;
-            }
+    //     // Update visualization
+    //     function updateVisualization() {
+    //         if (!isRecording) {
+    //             visualizer.remove();
+    //             return;
+    //         }
             
-            analyser.getByteFrequencyData(dataArray);
-            const bars = visualizer.querySelectorAll('.visualizer-bar');
+    //         analyser.getByteFrequencyData(dataArray);
+    //         const bars = visualizer.querySelectorAll('.visualizer-bar');
             
-            for (let i = 0; i < bars.length; i++) {
-                const barHeight = dataArray[i] / 255 * 100;
-                bars[i].style.height = barHeight + '%';
-            }
+    //         for (let i = 0; i < bars.length; i++) {
+    //             const barHeight = dataArray[i] / 255 * 100;
+    //             bars[i].style.height = barHeight + '%';
+    //         }
             
-            requestAnimationFrame(updateVisualization);
-        }
+    //         requestAnimationFrame(updateVisualization);
+    //     }
         
-        updateVisualization();
-    }
+    //     updateVisualization();
+    // }
     
     // Modify startRecording to include visualization
-    async function startRecording() {
-        try {
-            console.log('startRecording: Starting recording process');
+    // async function startRecording() {
+    //     try {
+    //         console.log('startRecording: Starting recording process');
             
-            // Initialize AudioContext as early as possible upon user interaction
-            if (!audioContext) {
-                audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                console.log('startRecording: AudioContext initialized with state:', audioContext.state);
-            }
+    //         // Initialize AudioContext as early as possible upon user interaction
+    //         if (!audioContext) {
+    //             audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    //             console.log('startRecording: AudioContext initialized with state:', audioContext.state);
+    //         }
     
-            if (audioContext && audioContext.state === 'suspended') {
-                console.log('startRecording: AudioContext is suspended, attempting to resume...');
-                try {
-                    await audioContext.resume();
-                    console.log('startRecording: AudioContext resumed. New state:', audioContext.state);
-                } catch (resumeError) {
-                    console.error('startRecording: Error resuming AudioContext:', resumeError);
-                }
-            }
+    //         if (audioContext && audioContext.state === 'suspended') {
+    //             console.log('startRecording: AudioContext is suspended, attempting to resume...');
+    //             try {
+    //                 await audioContext.resume();
+    //                 console.log('startRecording: AudioContext resumed. New state:', audioContext.state);
+    //             } catch (resumeError) {
+    //                 console.error('startRecording: Error resuming AudioContext:', resumeError);
+    //             }
+    //         }
     
-            // Setup Microphone
-            if (!await setupMicrophone()) {
-                console.error('startRecording: Failed to set up microphone');
-                return;
-            }
-            console.log('startRecording: Microphone setup complete');
+    //         // Setup Microphone
+    //         if (!await setupMicrophone()) {
+    //             console.error('startRecording: Failed to set up microphone');
+    //             return;
+    //         }
+    //         console.log('startRecording: Microphone setup complete');
             
-            // Create a new conversation if none exists
-            if (!currentConversationId) {
-                console.log('startRecording: No active conversation, creating new one');
-                await createNewConversation();
-            }
+    //         // Create a new conversation if none exists
+    //         if (!currentConversationId) {
+    //             console.log('startRecording: No active conversation, creating new one');
+    //             await createNewConversation();
+    //         }
             
-            // Stop any currently playing audio
-            if (currentAudioSource) {
-                console.log('startRecording: Stopping previous audio before recording');
-                currentAudioSource.stop();
-                if (currentAudioSource.onended) {
-                    currentAudioSource.onended = null; // Clear handler
-                }
-                currentAudioSource = null;
-            }
+    //         // Stop any currently playing audio
+    //         if (currentAudioSource) {
+    //             console.log('startRecording: Stopping previous audio before recording');
+    //             currentAudioSource.stop();
+    //             if (currentAudioSource.onended) {
+    //                 currentAudioSource.onended = null; // Clear handler
+    //             }
+    //             currentAudioSource = null;
+    //         }
             
-            // Get User Media Stream with explicit constraints for audio quality
-            console.log('startRecording: Requesting media stream');
-            const stream = await navigator.mediaDevices.getUserMedia({
-                audio: {
-                    echoCancellation: true,
-                    noiseSuppression: true,
-                    autoGainControl: true,
-                    sampleRate: 44100,
-                }
-            });
-            console.log('startRecording: Media stream obtained successfully');
+    //         // Get User Media Stream with explicit constraints for audio quality
+    //         console.log('startRecording: Requesting media stream');
+    //         const stream = await navigator.mediaDevices.getUserMedia({
+    //             audio: {
+    //                 echoCancellation: true,
+    //                 noiseSuppression: true,
+    //                 autoGainControl: true,
+    //                 sampleRate: 44100,
+    //             }
+    //         });
+    //         console.log('startRecording: Media stream obtained successfully');
             
-            // MediaRecorder Setup with MIME Type
-            console.log('startRecording: Setting up MediaRecorder');
-            const options = { mimeType: 'audio/webm; codecs=opus' };
-            if (!MediaRecorder.isTypeSupported(options.mimeType)) {
-                console.warn(`${options.mimeType} is not Supported, trying audio/webm`);
-                options.mimeType = 'audio/webm'; 
-                if (!MediaRecorder.isTypeSupported(options.mimeType)) {
-                    console.warn(`${options.mimeType} is not Supported, browser default will be used.`);
-                    delete options.mimeType; 
-                }
-            }
+    //         // MediaRecorder Setup with MIME Type
+    //         console.log('startRecording: Setting up MediaRecorder');
+    //         const options = { mimeType: 'audio/webm; codecs=opus' };
+    //         if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+    //             console.warn(`${options.mimeType} is not Supported, trying audio/webm`);
+    //             options.mimeType = 'audio/webm'; 
+    //             if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+    //                 console.warn(`${options.mimeType} is not Supported, browser default will be used.`);
+    //                 delete options.mimeType; 
+    //             }
+    //         }
             
-            mediaRecorder = new MediaRecorder(stream, options);
-            recordedMimeType = mediaRecorder.mimeType; // Store the actual MIME type
-            console.log('startRecording: MediaRecorder initialized with MIME type:', recordedMimeType);
+    //         mediaRecorder = new MediaRecorder(stream, options);
+    //         recordedMimeType = mediaRecorder.mimeType; // Store the actual MIME type
+    //         console.log('startRecording: MediaRecorder initialized with MIME type:', recordedMimeType);
     
-            audioChunks = [];
+    //         audioChunks = [];
             
-            mediaRecorder.ondataavailable = (event) => {
-                audioChunks.push(event.data);
-                console.log(`startRecording: Audio chunk received, size: ${event.data.size} bytes`);
-            };
+    //         mediaRecorder.ondataavailable = (event) => {
+    //             audioChunks.push(event.data);
+    //             console.log(`startRecording: Audio chunk received, size: ${event.data.size} bytes`);
+    //         };
             
-            mediaRecorder.onstop = async () => {
-                console.log(`startRecording: MediaRecorder stopped, processing ${audioChunks.length} chunks`);
-                // Use the stored, correct MIME type here
-                await processAudio(new Blob(audioChunks, { type: recordedMimeType || 'audio/webm' }));
-            };
+    //         mediaRecorder.onstop = async () => {
+    //             console.log(`startRecording: MediaRecorder stopped, processing ${audioChunks.length} chunks`);
+    //             // Use the stored, correct MIME type here
+    //             await processAudio(new Blob(audioChunks, { type: recordedMimeType || 'audio/webm' }));
+    //         };
             
-            mediaRecorder.start();
-            console.log('startRecording: MediaRecorder started');
-            isRecording = true;
-            statusElement.textContent = 'Recording...';
-            recordButton.classList.add('recording');
+    //         mediaRecorder.start();
+    //         console.log('startRecording: MediaRecorder started');
+    //         isRecording = true;
+    //         statusElement.textContent = 'Recording...';
+    //         // recordButton.classList.add('recording');
     
-            // Add visualization for audio feedback
-            setupVisualization(mediaRecorder.stream);
+    //         // Add visualization for audio feedback
+    //         setupVisualization(mediaRecorder.stream);
     
-        } catch (error) {
-            console.error('startRecording: Error starting recording:', error);
-            // Provide more specific error message to the user if possible
-            if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
-                statusElement.textContent = 'Microphone access denied.';
-            } else if (error.name === 'NotFoundError') {
-                statusElement.textContent = 'No microphone found.';
-            } else {
-                statusElement.textContent = 'Error starting recording.';
-            }
-        }
-    }
+    //     } catch (error) {
+    //         console.error('startRecording: Error starting recording:', error);
+    //         // Provide more specific error message to the user if possible
+    //         if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
+    //             statusElement.textContent = 'Microphone access denied.';
+    //         } else if (error.name === 'NotFoundError') {
+    //             statusElement.textContent = 'No microphone found.';
+    //         } else {
+    //             statusElement.textContent = 'Error starting recording.';
+    //         }
+    //     }
+    // }
     
-    // Stop recording
-    function stopRecording() {
-        if (isRecording && mediaRecorder) {
-            mediaRecorder.stop();
-            isRecording = false;
-            statusElement.textContent = 'Processing...';
-            recordButton.classList.remove('recording');
+    // // Stop recording
+    // function stopRecording() {
+    //     if (isRecording && mediaRecorder) {
+    //         mediaRecorder.stop();
+    //         isRecording = false;
+    //         statusElement.textContent = 'Processing...';
+    //         // recordButton.classList.remove('recording');
             
-            // Stop all audio tracks
-            mediaRecorder.stream.getTracks().forEach(track => track.stop());
-        }
-    }
+    //         // Stop all audio tracks
+    //         mediaRecorder.stream.getTracks().forEach(track => track.stop());
+    //     }
+    // }
     
     // Process audio
     async function processAudio(audioBlob) {
@@ -731,7 +810,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 console.log('processAudio: Exit command detected');
                 addMessage('assistant', data.assistant_response_text);
                 statusElement.textContent = 'Conversation ended';
-                recordButton.disabled = true;
+                // recordButton.disabled = true;
                 
                 // Refresh conversation list
                 await loadConversationHistory();
@@ -742,9 +821,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             console.error('processAudio: Error processing audio:', error);
             statusElement.textContent = `Error: ${error.message || 'Failed to process audio'}`;
             
-            // Enable the record button again so users can retry
-            recordButton.disabled = false;
-            recordButton.classList.remove('recording');
+            // // Enable the record button again so users can retry
+            // recordButton.disabled = false;
+            // recordButton.classList.remove('recording');
         }
     }
     
@@ -868,15 +947,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
     
     // Add touch support for mobile devices
-    recordButton.addEventListener('touchstart', async function(e) {
-        e.preventDefault(); // Prevent default touch behavior
-        startRecording();
-    });
+    // recordButton.addEventListener('touchstart', async function(e) {
+    //     e.preventDefault(); // Prevent default touch behavior
+    //     startRecording();
+    // });
     
-    recordButton.addEventListener('touchend', function(e) {
-        e.preventDefault(); // Prevent default touch behavior
-        stopRecording();
-    });
+    // recordButton.addEventListener('touchend', function(e) {
+    //     e.preventDefault(); // Prevent default touch behavior
+    //     stopRecording();
+    // });
     
     // Add diagnostic function to test audio system
     async function testAudioSystem() {
@@ -969,15 +1048,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     testAudioSystem().catch(err => console.error('Audio diagnostic error:', err));
 
     // Add this after creating recordButton constant
-    function styleRecordButton() {
-        recordButton.innerHTML = `
-            <div class="record-button-inner">
-                <div class="record-icon"></div>
-                <span>Hold to Speak</span>
-            </div>
-        `;
-    }
-    styleRecordButton();
+    // function styleAutoListenBtn() {
+    //     autoListenBtn.innerHTML = `
+    //         <div class="controls">
+    //         <button id="autoListenBtn" class="record-button">
+    //             <span class="record-icon"></span>
+    //             Auto Listen
+    //         </button>
+    //         </div>
+    //     `
+    //     ;
+    // }
+    // styleAutoListenBtn();
 
     // Update DOM structure to fix layout
     function updateLayoutStructure() {

@@ -57,12 +57,14 @@
                     <!-- Conversation messages will be displayed here -->
                 </div>
                 
+                <!-- ❷ NEW  insert in exactly the same place -->
                 <div class="controls">
-                    <button id="recordButton" class="record-button">
+                    <button id="autoListenBtn" class="record-button">
                         <span class="record-icon"></span>
-                        Hold to Speak
+                        Auto Listen
                     </button>
                 </div>
+
             </main>
             
             <footer>
@@ -71,6 +73,10 @@
         </div>
     </div>
     
-    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+   <!-- <script src="{{ url_for('static', filename='js/main.js') }}"></script>-->
+   <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web/dist/ort.min.js"></script>
+
+    <script type="module" src="{{ url_for('static', filename='js/main.js') }}"></script>
+
 </body>
 </html> 
