@@ -73,10 +73,31 @@
         </div>
     </div>
     
-   <!-- <script src="{{ url_for('static', filename='js/main.js') }}"></script>-->
+   <!-- Load ONNX Runtime and VAD library first -->
    <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web/dist/ort.min.js"></script>
-   <script src="https://cdn.jsdelivr.net/npm/@ricky0123/vad-web@0.0.22/dist/bundle.min.js"></script>
-    <script type="module" src="{{ url_for('static', filename='js/main.js') }}"></script>
+   <script src="https://cdn.jsdelivr.net/npm/@ricky0123/vad-web@0.0.22/dist/bundle.min.js" 
+           onload="console.log('VAD library loaded successfully')" 
+           onerror="console.error('Failed to load VAD library')"></script>
+   
+   <!-- Wait a bit for libraries to initialize, then load our main script -->
+   <script>
+       // Ensure libraries are loaded before main script
+       window.addEventListener('DOMContentLoaded', () => {
+           console.log('DOM loaded, checking library availability...');
+           console.log('ONNX Runtime available:', typeof ort !== 'undefined');
+           console.log('MicVAD available:', typeof MicVAD !== 'undefined');
+           
+           // Add a small delay to ensure libraries are fully initialized
+           setTimeout(() => {
+               const script = document.createElement('script');
+               script.type = 'module';
+               script.src = "{{ url_for('static', filename='js/main.js') }}";
+               script.onload = () => console.log('Main script loaded successfully');
+               script.onerror = () => console.error('Failed to load main script');
+               document.body.appendChild(script);
+           }, 100);
+       });
+   </script>
 
 </body>
 </html> 
