@@ -73,157 +73,83 @@
         </div>
     </div>
     
-    <!-- Load ONNX Runtime first -->
-    <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web/dist/ort.min.js"></script>
+    <!-- Add logging div for debugging -->
+    <div id="vadLogs" style="display: none; position: fixed; bottom: 0; right: 0; max-height: 300px; overflow-y: auto; background: rgba(0,0,0,0.8); color: white; padding: 10px; font-family: monospace; font-size: 12px;">
+        <div style="margin-bottom: 10px;">
+            <button onclick="document.getElementById('vadLogContent').innerHTML = ''">Clear Logs</button>
+            <button onclick="document.getElementById('vadLogs').style.display = 'none'">Hide</button>
+        </div>
+        <div id="vadLogContent"></div>
+    </div>
 
-    <!-- Single consolidated script for loading -->
+    <!-- Load dependencies with detailed logging -->
     <script>
-        // Function to check what's available on window
-        function debugWindowObjects() {
-            console.log('=== WINDOW OBJECT DEBUGGING ===');
-            console.log('ONNX Runtime (ort):', typeof ort !== 'undefined');
-            console.log('MicVAD:', typeof MicVAD !== 'undefined');
-            console.log('window.MicVAD:', typeof window.MicVAD !== 'undefined');
-            if (typeof MicVAD !== 'undefined') {
-                console.log('MicVAD properties:', Object.keys(MicVAD));
-            }
-            console.log('=== END DEBUGGING ===');
-        }
-
-        // Load VAD library with Promise-based approach
-        function loadVADLibrary() {
-            return new Promise((resolve, reject) => {
-                // Try loading the UMD bundle first
-                const script = document.createElement('script');
-                script.src = 'https://cdn.jsdelivr.net/npm/@ricky0123/vad-web@0.0.22/dist/vad.js';
+        // Initialize logging system
+        const vadLogger = {
+            log: function(step, message, type = 'info') {
+                const timestamp = new Date().toISOString().split('T')[1];
+                const logElement = document.getElementById('vadLogContent');
+                const color = type === 'error' ? 'red' : type === 'success' ? 'green' : 'white';
                 
-                let retryCount = 0;
-                const maxRetries = 3;
-
-                function tryLoadingVAD() {
-                    console.log(`Attempt ${retryCount + 1} to load VAD...`);
-                    
-                    setTimeout(() => {
-                        if (typeof window.vad !== 'undefined' || typeof window.MicVAD !== 'undefined') {
-                            // Library loaded successfully
-                            if (typeof window.MicVAD === 'undefined' && typeof window.vad !== 'undefined') {
-                                window.MicVAD = window.vad.MicVAD;
-                            }
-                            console.log('✅ VAD library loaded and initialized successfully');
-                            debugWindowObjects();
-                            resolve();
-                        } else if (retryCount < maxRetries) {
-                            retryCount++;
-                            tryLoadingVAD();
-                        } else {
-                            // If all retries failed, try loading the alternative bundle
-                            console.log('Trying alternative VAD bundle...');
-                            const altScript = document.createElement('script');
-                            altScript.src = 'https://cdn.jsdelivr.net/npm/@ricky0123/vad-web@0.0.22/dist/bundle.min.js';
-                            
-                            altScript.onload = () => {
-                                setTimeout(() => {
-                                    if (typeof window.MicVAD !== 'undefined') {
-                                        console.log('✅ Alternative VAD bundle loaded successfully');
-                                        debugWindowObjects();
-                                        resolve();
-                                    } else {
-                                        reject(new Error('Failed to load VAD library after all attempts'));
-                                    }
-                                }, 1000); // Give it a second to initialize
-                            };
-                            
-                            altScript.onerror = () => {
-                                reject(new Error('Failed to load alternative VAD bundle'));
-                            };
-                            
-                            document.head.appendChild(altScript);
-                        }
-                    }, 500); // Half second between retries
+                // Console logging
+                console.log(`[VAD ${step}] ${message}`);
+                
+                // UI logging
+                if (logElement) {
+                    logElement.innerHTML = `<div style="color: ${color};">[${timestamp}] [${step}] ${message}</div>` + logElement.innerHTML;
                 }
+            },
+            error: function(step, message) {
+                this.log(step, message, 'error');
+            },
+            success: function(step, message) {
+                this.log(step, message, 'success');
+            }
+        };
 
+        // Show logs button in header
+        document.addEventListener('DOMContentLoaded', () => {
+            const header = document.querySelector('header');
+            if (header) {
+                const showLogsBtn = document.createElement('button');
+                showLogsBtn.textContent = 'Show VAD Logs';
+                showLogsBtn.onclick = () => document.getElementById('vadLogs').style.display = 'block';
+                header.appendChild(showLogsBtn);
+            }
+        });
+    </script>
+
+    <!-- Load ONNX Runtime -->
+    <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web/dist/ort.min.js" 
+            onload="vadLogger.success('DEPS', 'ONNX Runtime loaded successfully')"
+            onerror="vadLogger.error('DEPS', 'Failed to load ONNX Runtime')">
+    </script>
+
+    <!-- Load Silero VAD with retry -->
+    <script>
+        function loadVAD() {
+            return new Promise((resolve, reject) => {
+                const script = document.createElement('script');
+                script.src = 'https://cdn.jsdelivr.net/npm/@ricky0123/vad-web/dist/bundle.min.js';
                 script.onload = () => {
-                    console.log('VAD script loaded, checking initialization...');
-                    tryLoadingVAD();
+                    vadLogger.success('DEPS', 'VAD library loaded');
+                    resolve();
                 };
-                
-                script.onerror = () => {
-                    console.error('Failed to load primary VAD script, trying alternative...');
-                    // Immediately try the alternative bundle
-                    const altScript = document.createElement('script');
-                    altScript.src = 'https://cdn.jsdelivr.net/npm/@ricky0123/vad-web@0.0.22/dist/bundle.min.js';
-                    
-                    altScript.onload = () => {
-                        setTimeout(() => {
-                            if (typeof window.MicVAD !== 'undefined') {
-                                console.log('✅ Alternative VAD bundle loaded successfully');
-                                debugWindowObjects();
-                                resolve();
-                            } else {
-                                reject(new Error('Failed to load VAD library'));
-                            }
-                        }, 1000);
-                    };
-                    
-                    altScript.onerror = () => {
-                        reject(new Error('Failed to load both VAD bundles'));
-                    };
-                    
-                    document.head.appendChild(altScript);
-                };
-                
+                script.onerror = reject;
                 document.head.appendChild(script);
             });
         }
+        
+        // Try loading VAD
+        loadVAD().catch(err => {
+            vadLogger.error('DEPS', 'Failed to load VAD: ' + err);
+        });
+    </script>
 
-        // Main initialization function
-        async function initializeApp() {
-            try {
-                console.log('Starting app initialization...');
-                
-                // First, load and initialize VAD
-                await loadVADLibrary();
-                console.log('VAD library initialized successfully');
-                
-                // Double check MicVAD is available
-                if (!window.MicVAD) {
-                    throw new Error('MicVAD not available after initialization');
-                }
-                
-                // Now load the main script
-                const mainScript = document.createElement('script');
-                mainScript.src = "{{ url_for('static', filename='js/main.js') }}";
-                
-                // Wait for main script to load
-                await new Promise((resolve, reject) => {
-                    mainScript.onload = () => {
-                        console.log('Main script loaded successfully');
-                        resolve();
-                    };
-                    mainScript.onerror = (error) => {
-                        console.error('Failed to load main script:', error);
-                        reject(error);
-                    };
-                    document.body.appendChild(mainScript);
-                });
-                
-            } catch (error) {
-                console.error('Error during app initialization:', error);
-                // Add visible error message to the page
-                const status = document.getElementById('status');
-                if (status) {
-                    status.textContent = 'Error: Failed to initialize voice detection';
-                    status.style.color = 'red';
-                }
-            }
-        }
-
-        // Start initialization when DOM is ready
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', initializeApp);
-        } else {
-            initializeApp();
-        }
+    <!-- Load main script -->
+    <script src="{{ url_for('static', filename='js/main.js') }}"
+            onload="vadLogger.success('DEPS', 'Main script loaded successfully')"
+            onerror="vadLogger.error('DEPS', 'Failed to load main script')">
     </script>
 </body>
 </html> 

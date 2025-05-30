@@ -1,7 +1,11 @@
 document.addEventListener('DOMContentLoaded', async () => {
-
+    // Single declaration of shared variables
     let stopVAD = null;        // will hold the cleanup fn
     let diagnosticRun = false; // flag to track if diagnostic has been run
+    
+    // Get DOM elements
+    // const autoListenBtn = document.getElementById('autoListenBtn');
+    // const statusElement = document.getElementById('status');
 
     // Create a robust getUserMedia function that handles different browser implementations
     function getRobustGetUserMedia() {
