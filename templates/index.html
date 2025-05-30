@@ -79,23 +79,140 @@
            onload="console.log('VAD library loaded successfully')" 
            onerror="console.error('Failed to load VAD library')"></script>
    
-   <!-- Wait a bit for libraries to initialize, then load our main script -->
+   <!-- Enhanced library checking and main script loading -->
    <script>
-       // Ensure libraries are loaded before main script
+       // Function to check what's available on window
+       function debugWindowObjects() {
+           console.log('=== WINDOW OBJECT DEBUGGING ===');
+           console.log('ONNX Runtime (ort):', typeof ort !== 'undefined');
+           console.log('MicVAD:', typeof MicVAD !== 'undefined');
+           console.log('window.MicVAD:', typeof window.MicVAD !== 'undefined');
+           
+           // Check for other possible VAD-related objects
+           const vadRelated = Object.keys(window).filter(key => 
+               key.toLowerCase().includes('vad') || 
+               key.toLowerCase().includes('mic') ||
+               key.toLowerCase().includes('voice')
+           );
+           console.log('VAD-related window properties:', vadRelated);
+           
+           // Check what's actually in the window
+           console.log('All window properties containing "VAD":', Object.keys(window).filter(k => k.includes('VAD')));
+           console.log('=== END DEBUGGING ===');
+       }
+
+       // Wait for DOM and then check libraries
        window.addEventListener('DOMContentLoaded', () => {
            console.log('DOM loaded, checking library availability...');
-           console.log('ONNX Runtime available:', typeof ort !== 'undefined');
-           console.log('MicVAD available:', typeof MicVAD !== 'undefined');
            
-           // Add a small delay to ensure libraries are fully initialized
-           setTimeout(() => {
+           // Initial check
+           debugWindowObjects();
+           
+           // Wait longer for libraries to fully initialize
+           let attempts = 0;
+           const maxAttempts = 50; // 5 seconds total
+           
+           function checkAndLoadMain() {
+               attempts++;
+               console.log(`Attempt ${attempts}: Checking for MicVAD...`);
+               
+               // Check multiple possible locations for MicVAD
+               const micVADAvailable = (
+                   typeof window.MicVAD !== 'undefined' ||
+                   typeof MicVAD !== 'undefined' ||
+                   (window.vad && window.vad.MicVAD)
+               );
+               
+               if (micVADAvailable || attempts >= maxAttempts) {
+                   if (micVADAvailable) {
+                       console.log('✅ MicVAD is now available! Loading main script...');
+                       
+                       // Make sure MicVAD is available globally
+                       if (typeof window.MicVAD === 'undefined' && typeof MicVAD !== 'undefined') {
+                           window.MicVAD = MicVAD;
+                           console.log('✅ Assigned MicVAD to window.MicVAD');
+                       }
+                   } else {
+                       console.error('❌ MicVAD still not available after maximum attempts');
+                       debugWindowObjects();
+                   }
+                   
+                   // Load main script (remove type="module" to fix scope issues)
+                   const script = document.createElement('script');
+                   script.src = "{{ url_for('static', filename='js/main.js') }}";
+                   script.onload = () => console.log('Main script loaded successfully');
+                   script.onerror = () => console.error('Failed to load main script');
+                   document.body.appendChild(script);
+               } else {
+                   // Wait 100ms and try again
+                   setTimeout(checkAndLoadMain, 100);
+               }
+           }
+           
+           // Start checking after a brief delay
+           setTimeout(checkAndLoadMain, 200);
+       });
+   </script>
+
+   <!-- Alternative VAD library loading -->
+   <script>
+       // Load VAD library with Promise-based approach
+       function loadVADLibrary() {
+           return new Promise((resolve, reject) => {
                const script = document.createElement('script');
-               script.type = 'module';
-               script.src = "{{ url_for('static', filename='js/main.js') }}";
-               script.onload = () => console.log('Main script loaded successfully');
-               script.onerror = () => console.error('Failed to load main script');
-               document.body.appendChild(script);
-           }, 100);
+               script.src = 'https://cdn.jsdelivr.net/npm/@ricky0123/vad-web@0.0.22/dist/bundle.min.js';
+               
+               script.onload = () => {
+                   console.log('VAD script loaded, waiting for MicVAD...');
+                   
+                   // Poll for MicVAD availability
+                   let checks = 0;
+                   const checkForMicVAD = () => {
+                       checks++;
+                       if (typeof window.MicVAD !== 'undefined' || typeof MicVAD !== 'undefined') {
+                           // Ensure it's available globally
+                           if (typeof window.MicVAD === 'undefined') {
+                               window.MicVAD = MicVAD;
+                           }
+                           console.log('✅ MicVAD is available!');
+                           resolve();
+                       } else if (checks < 50) {
+                           setTimeout(checkForMicVAD, 100);
+                       } else {
+                           console.error('❌ MicVAD not available after 5 seconds');
+                           reject(new Error('MicVAD not available'));
+                       }
+                   };
+                   
+                   checkForMicVAD();
+               };
+               
+               script.onerror = () => {
+                   console.error('Failed to load VAD script');
+                   reject(new Error('Failed to load VAD script'));
+               };
+               
+               document.head.appendChild(script);
+           });
+       }
+
+       // Load everything in sequence
+       window.addEventListener('DOMContentLoaded', async () => {
+           console.log('DOM loaded, loading VAD library...');
+           
+           try {
+               await loadVADLibrary();
+               console.log('VAD library ready, loading main script...');
+               
+               const mainScript = document.createElement('script');
+               mainScript.src = "{{ url_for('static', filename='js/main.js') }}";
+               mainScript.onload = () => console.log('Main script loaded successfully');
+               mainScript.onerror = () => console.error('Failed to load main script');
+               document.body.appendChild(mainScript);
+               
+           } catch (error) {
+               console.error('Error loading VAD library:', error);
+           }
        });
    </script>
 
