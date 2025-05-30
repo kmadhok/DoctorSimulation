@@ -84,47 +84,92 @@
             console.log('ONNX Runtime (ort):', typeof ort !== 'undefined');
             console.log('MicVAD:', typeof MicVAD !== 'undefined');
             console.log('window.MicVAD:', typeof window.MicVAD !== 'undefined');
+            if (typeof MicVAD !== 'undefined') {
+                console.log('MicVAD properties:', Object.keys(MicVAD));
+            }
             console.log('=== END DEBUGGING ===');
         }
 
         // Load VAD library with Promise-based approach
         function loadVADLibrary() {
             return new Promise((resolve, reject) => {
+                // Try loading the UMD bundle first
                 const script = document.createElement('script');
-                script.src = 'https://cdn.jsdelivr.net/npm/@ricky0123/vad-web@0.0.22/dist/bundle.min.js';
+                script.src = 'https://cdn.jsdelivr.net/npm/@ricky0123/vad-web@0.0.22/dist/vad.js';
                 
-                script.onload = () => {
-                    console.log('VAD script loaded, checking for MicVAD...');
+                let retryCount = 0;
+                const maxRetries = 3;
+
+                function tryLoadingVAD() {
+                    console.log(`Attempt ${retryCount + 1} to load VAD...`);
                     
-                    // Give a small delay for the library to initialize
                     setTimeout(() => {
-                        // Check if MicVAD is available
-                        if (typeof window.MicVAD !== 'undefined' || typeof MicVAD !== 'undefined') {
-                            // Ensure it's available globally
-                            if (typeof window.MicVAD === 'undefined' && typeof MicVAD !== 'undefined') {
-                                window.MicVAD = MicVAD;
+                        if (typeof window.vad !== 'undefined' || typeof window.MicVAD !== 'undefined') {
+                            // Library loaded successfully
+                            if (typeof window.MicVAD === 'undefined' && typeof window.vad !== 'undefined') {
+                                window.MicVAD = window.vad.MicVAD;
                             }
-                            console.log('✅ MicVAD is available!');
+                            console.log('✅ VAD library loaded and initialized successfully');
+                            debugWindowObjects();
                             resolve();
+                        } else if (retryCount < maxRetries) {
+                            retryCount++;
+                            tryLoadingVAD();
                         } else {
-                            // Try importing as a module
-                            import('https://cdn.jsdelivr.net/npm/@ricky0123/vad-web@0.0.22/dist/index.js')
-                                .then(module => {
-                                    window.MicVAD = module.MicVAD;
-                                    console.log('✅ MicVAD loaded via import');
-                                    resolve();
-                                })
-                                .catch(error => {
-                                    console.error('Failed to import VAD module:', error);
-                                    reject(error);
-                                });
+                            // If all retries failed, try loading the alternative bundle
+                            console.log('Trying alternative VAD bundle...');
+                            const altScript = document.createElement('script');
+                            altScript.src = 'https://cdn.jsdelivr.net/npm/@ricky0123/vad-web@0.0.22/dist/bundle.min.js';
+                            
+                            altScript.onload = () => {
+                                setTimeout(() => {
+                                    if (typeof window.MicVAD !== 'undefined') {
+                                        console.log('✅ Alternative VAD bundle loaded successfully');
+                                        debugWindowObjects();
+                                        resolve();
+                                    } else {
+                                        reject(new Error('Failed to load VAD library after all attempts'));
+                                    }
+                                }, 1000); // Give it a second to initialize
+                            };
+                            
+                            altScript.onerror = () => {
+                                reject(new Error('Failed to load alternative VAD bundle'));
+                            };
+                            
+                            document.head.appendChild(altScript);
                         }
-                    }, 500); // Give it half a second to initialize
+                    }, 500); // Half second between retries
+                }
+
+                script.onload = () => {
+                    console.log('VAD script loaded, checking initialization...');
+                    tryLoadingVAD();
                 };
                 
-                script.onerror = (error) => {
-                    console.error('Failed to load VAD script:', error);
-                    reject(error);
+                script.onerror = () => {
+                    console.error('Failed to load primary VAD script, trying alternative...');
+                    // Immediately try the alternative bundle
+                    const altScript = document.createElement('script');
+                    altScript.src = 'https://cdn.jsdelivr.net/npm/@ricky0123/vad-web@0.0.22/dist/bundle.min.js';
+                    
+                    altScript.onload = () => {
+                        setTimeout(() => {
+                            if (typeof window.MicVAD !== 'undefined') {
+                                console.log('✅ Alternative VAD bundle loaded successfully');
+                                debugWindowObjects();
+                                resolve();
+                            } else {
+                                reject(new Error('Failed to load VAD library'));
+                            }
+                        }, 1000);
+                    };
+                    
+                    altScript.onerror = () => {
+                        reject(new Error('Failed to load both VAD bundles'));
+                    };
+                    
+                    document.head.appendChild(altScript);
                 };
                 
                 document.head.appendChild(script);
@@ -140,9 +185,7 @@
                 await loadVADLibrary();
                 console.log('VAD library initialized successfully');
                 
-                // Verify MicVAD is available
-                debugWindowObjects();
-                
+                // Double check MicVAD is available
                 if (!window.MicVAD) {
                     throw new Error('MicVAD not available after initialization');
                 }
@@ -153,15 +196,25 @@
                 
                 // Wait for main script to load
                 await new Promise((resolve, reject) => {
-                    mainScript.onload = resolve;
-                    mainScript.onerror = reject;
+                    mainScript.onload = () => {
+                        console.log('Main script loaded successfully');
+                        resolve();
+                    };
+                    mainScript.onerror = (error) => {
+                        console.error('Failed to load main script:', error);
+                        reject(error);
+                    };
                     document.body.appendChild(mainScript);
                 });
                 
-                console.log('Main script loaded successfully');
-                
             } catch (error) {
                 console.error('Error during app initialization:', error);
+                // Add visible error message to the page
+                const status = document.getElementById('status');
+                if (status) {
+                    status.textContent = 'Error: Failed to initialize voice detection';
+                    status.style.color = 'red';
+                }
             }
         }
 
