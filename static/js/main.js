@@ -138,6 +138,104 @@ document.addEventListener('DOMContentLoaded', async () => {
     const refreshConversationsBtn = document.getElementById('refreshConversationsBtn');
     const newConversationBtn = document.getElementById('newConversationBtn');
     
+    if (autoListenBtn) {
+        autoListenBtn.addEventListener('click', async (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            
+            console.log('<<<<< AUTO LISTEN BUTTON CLICKED - Event handler in main.js EXECUTING! >>>>>');
+            console.log('autoListenBtn: Button clicked, current stopVAD state:', !!stopVAD);
+            
+            if (!stopVAD) {
+                // Initialize AudioContext IMMEDIATELY in the user gesture (before any async operations)
+                if (!audioContext) {
+                    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    console.log('autoListenBtn: AudioContext initialized with state:', audioContext.state);
+                }
+                
+                // Resume AudioContext immediately in the user gesture
+                if (audioContext.state === 'suspended') {
+                    try {
+                        await audioContext.resume();
+                        console.log('autoListenBtn: AudioContext resumed successfully, state:', audioContext.state);
+                    } catch (resumeError) {
+                        console.error('autoListenBtn: Failed to resume AudioContext:', resumeError);
+                    }
+                }
+                
+                // Run audio system diagnostic AFTER AudioContext is ready (make it non-blocking)
+                if (!diagnosticRun) {
+                    console.log('autoListenBtn: Running audio system diagnostic...');
+                    testAudioSystemAsync();
+                    diagnosticRun = true;
+                }
+                
+                // Ask for the mic while we're still in the click-gesture
+                try {
+                    console.log('autoListenBtn: Requesting microphone permission...');
+                    
+                    // Check if we're in a secure context
+                    if (window.location.protocol !== 'https:' && 
+                        window.location.hostname !== 'localhost' && 
+                        window.location.hostname !== '127.0.0.1') {
+                        throw new Error('getUserMedia requires HTTPS or localhost');
+                    }
+                    
+                    const getUserMedia = getRobustGetUserMedia();
+                    if (!getUserMedia) {
+                        throw new Error('getUserMedia is not supported in this browser');
+                    }
+                    
+                    const tmpStream = await getUserMedia({ audio: true });
+                    console.log('autoListenBtn: Microphone permission granted, releasing temporary stream');
+                    tmpStream.getTracks().forEach(t => t.stop());
+                } catch (err) {
+                    console.error('autoListenBtn: Microphone permission error:', err);
+                    let errorMessage = 'Microphone permission required';
+                    
+                    if (err.name === 'NotAllowedError') {
+                        errorMessage = 'Microphone access denied by user';
+                    } else if (err.name === 'NotFoundError') {
+                        errorMessage = 'No microphone found';
+                    } else if (err.name === 'NotSupportedError') {
+                        errorMessage = 'Microphone not supported';
+                    } else if (err.message.includes('HTTPS')) {
+                        errorMessage = 'HTTPS required for microphone access';
+                    } else if (err.message.includes('not supported')) {
+                        errorMessage = 'Browser does not support microphone access';
+                    }
+                    
+                    updateStatus(errorMessage);
+                    return;
+                }
+                
+                try {
+                    console.log('autoListenBtn: Starting VAD initialization...');
+                    updateStatus('Initializing voice detection...');
+                    autoListenBtn.classList.add('recording');
+                    stopVAD = await initAutoVAD();
+                    console.log('autoListenBtn: VAD initialization complete');
+                    updateStatus('Listening…');
+                } catch (vadError) {
+                    console.error('autoListenBtn: VAD initialization failed:', vadError);
+                    updateStatus('Failed to start voice detection');
+                    autoListenBtn.classList.remove('recording');
+                    stopVAD = null;
+                }
+            } else {
+                console.log('autoListenBtn: Stopping VAD...');
+                stopVAD();
+                stopVAD = null;
+                updateStatus('Paused');
+                autoListenBtn.classList.remove('recording');
+                console.log('autoListenBtn: VAD stopped');
+            }
+        });
+        console.log('<<<<< MAIN.JS: autoListenBtn click listener ATTACHED. >>>>>');
+    } else {
+        console.error('<<<<< MAIN.JS - FATAL: autoListenBtn NOT FOUND during DOMContentLoaded! Listener not attached. >>>>>');
+    }
+
     // New DOM element for patient details - reposition it within main content
     const patientDetailsPanel = document.createElement('div');
     patientDetailsPanel.id = 'patientDetailsPanel';
@@ -209,10 +307,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
     
     // Load available simulations
+    console.log('<<<<< MAIN.JS: Awaiting loadSimulations... >>>>>');
     await loadSimulations();
-    
-    // Load conversation history
+    console.log('<<<<< MAIN.JS: loadSimulations complete. >>>>>');    
+
+    console.log('<<<<< MAIN.JS: Awaiting loadConversationHistory... >>>>>');
     await loadConversationHistory();
+    console.log('<<<<< MAIN.JS: loadConversationHistory complete. >>>>>');
+
+    // Load conversation history
+    // await loadConversationHistory();
     
     // Set up event listeners
     // recordButton.addEventListener('mousedown', startRecording);
@@ -236,7 +340,22 @@ document.addEventListener('DOMContentLoaded', async () => {
     //   });
     autoListenBtn.addEventListener('click', async () => {
         console.log('autoListenBtn: Button clicked, current stopVAD state:', !!stopVAD);
-        
+        // Check autoListenBtn again before attaching
+        if (autoListenBtn) {
+            autoListenBtn.addEventListener('click', async (event) => { // Add 'event' parameter
+                event.preventDefault(); // PREVENT ANY DEFAULT ACTION
+                event.stopPropagation(); // PREVENT EVENT BUBBLING
+
+                console.log('<<<<< AUTO LISTEN BUTTON CLICKED - Event handler in main.js EXECUTING! >>>>>'); // VERY IMPORTANT LOG
+
+                // ... (REST OF YOUR EXISTING autoListenBtn click handler logic) ...
+                console.log('autoListenBtn: Button clicked, current stopVAD state:', !!stopVAD);
+                // ...
+            });
+            console.log('<<<<< MAIN.JS: autoListenBtn click listener ATTACHED. >>>>>'); // New log
+        } else {
+            console.error('<<<<< MAIN.JS - ERROR: autoListenBtn was not found when trying to attach listener. >>>>>');
+        }
         if (!stopVAD) {
           // Initialize AudioContext IMMEDIATELY in the user gesture (before any async operations)
           if (!audioContext) {
