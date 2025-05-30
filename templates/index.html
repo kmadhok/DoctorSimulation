@@ -129,21 +129,71 @@
     <script>
         function loadVAD() {
             return new Promise((resolve, reject) => {
+                vadLogger.log('DEPS', 'Starting VAD library load attempt');
+                
+                // Check initial state
+                vadLogger.log('DEBUG', `Initial window.MicVAD state: ${typeof window.MicVAD}`);
+                
                 const script = document.createElement('script');
                 script.src = 'https://cdn.jsdelivr.net/npm/@ricky0123/vad-web/dist/bundle.min.js';
+                
                 script.onload = () => {
-                    vadLogger.success('DEPS', 'VAD library loaded');
-                    resolve();
+                    vadLogger.success('DEPS', 'VAD script tag loaded');
+                    
+                    // Immediate check after load
+                    vadLogger.log('DEBUG', `MicVAD state immediately after script load: ${typeof window.MicVAD}`);
+                    
+                    // Check if it's available in the next tick (timing issue check)
+                    setTimeout(() => {
+                        vadLogger.log('DEBUG', `MicVAD state after setTimeout: ${typeof window.MicVAD}`);
+                        
+                        if (window.MicVAD) {
+                            vadLogger.log('DEBUG', 'MicVAD object structure:', Object.keys(window.MicVAD));
+                        }
+                        
+                        // Try to detect if it's a module
+                        try {
+                            vadLogger.log('DEBUG', `Script type: ${script.type}`);
+                            vadLogger.log('DEBUG', `Is MicVAD in window object: ${'MicVAD' in window}`);
+                        } catch (e) {
+                            vadLogger.error('DEBUG', `Error inspecting MicVAD: ${e.message}`);
+                        }
+                        
+                        resolve();
+                    }, 100);
                 };
-                script.onerror = reject;
+                
+                script.onerror = (error) => {
+                    vadLogger.error('DEPS', `Failed to load VAD script: ${error}`);
+                    reject(error);
+                };
+                
                 document.head.appendChild(script);
             });
         }
         
-        // Try loading VAD
+        // Try loading VAD with enhanced error logging
         loadVAD().catch(err => {
-            vadLogger.error('DEPS', 'Failed to load VAD: ' + err);
+            vadLogger.error('DEPS', `VAD load error: ${err.message || err}`);
+            if (err.stack) {
+                vadLogger.error('DEBUG', `Error stack: ${err.stack}`);
+            }
         });
+        
+        // Add a periodic check for MicVAD availability
+        const checkInterval = setInterval(() => {
+            vadLogger.log('DEBUG', `Periodic check - MicVAD availability: ${typeof window.MicVAD}`);
+            if (window.MicVAD) {
+                vadLogger.success('DEBUG', 'MicVAD found in global scope');
+                clearInterval(checkInterval);
+            }
+        }, 1000);
+        
+        // Stop checking after 10 seconds
+        setTimeout(() => {
+            clearInterval(checkInterval);
+            vadLogger.log('DEBUG', 'Stopped periodic MicVAD checks');
+        }, 10000);
     </script>
 
     <!-- Load main script -->
