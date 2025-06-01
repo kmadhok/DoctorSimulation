@@ -12,6 +12,9 @@ from datetime import datetime
 from dotenv import load_dotenv
 load_dotenv()
 
+import mimetypes
+mimetypes.add_type("application/javascript", ".mjs")
+
 # Configure logging
 logging.basicConfig(
     level=logging.DEBUG,
