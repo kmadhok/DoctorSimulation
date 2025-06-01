@@ -40,7 +40,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                redemptionFrames: 10,
             
                onSpeechStart()  { updateStatus('Listening…') },
-               onSpeechEnd     : async (audio) => { … },
+               onSpeechEnd     : async (audio) => {
+                // … 
+                },
             });
 
         
