@@ -1,78 +1,28 @@
 document.addEventListener('DOMContentLoaded', async () => {
     // Single declaration of shared variables
     let stopVAD = null;        // will hold the cleanup fn
-    let diagnosticRun = false; // flag to track if diagnostic has been run
     
+    // Audio context for playback - moved up to fix TDZ issue
+    let audioContext;
+    
+    // Audio recording variables - moved up near other declarations
+    let mediaRecorder = null;
+    let audioChunks = [];
+    let isRecording = false;
+    let currentSimulation = null;
+    let currentVoiceId = 'Fritz-PlayAI'; // Default voice
+    let currentConversationId = null;
+    let recordedMimeType = '';
+    let currentAudioSource = null; // Track current audio source for interruption
+    let microphoneSetup = false;
+
     // Get DOM elements
     // const autoListenBtn = document.getElementById('autoListenBtn');
     // const statusElement = document.getElementById('status');
 
-    // Create a robust getUserMedia function that handles different browser implementations
-    function getRobustGetUserMedia() {
-        // Check for modern navigator.mediaDevices.getUserMedia
-        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-            console.log('getUserMedia: Using modern navigator.mediaDevices.getUserMedia');
-            return navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
-        }
-        
-        // Fallback to legacy implementations
-        const legacyGetUserMedia = navigator.getUserMedia || 
-                                  navigator.webkitGetUserMedia || 
-                                  navigator.mozGetUserMedia || 
-                                  navigator.msGetUserMedia;
-        
-        if (legacyGetUserMedia) {
-            console.log('getUserMedia: Using legacy getUserMedia implementation');
-            return function(constraints) {
-                return new Promise((resolve, reject) => {
-                    legacyGetUserMedia.call(navigator, constraints, resolve, reject);
-                });
-            };
-        }
-        
-        console.error('getUserMedia: No getUserMedia implementation available');
-        return null;
-    }
-
     async function initAutoVAD() {
         console.log('initAutoVAD: Starting VAD initialization...');
         
-        // Wait until the library has loaded with detailed logging
-        let waitCount = 0;
-        const maxWaitTime = 30000; // 30 seconds maximum wait
-        const checkInterval = 50;
-        const maxChecks = maxWaitTime / checkInterval;
-        
-        while (!window.MicVAD && waitCount < maxChecks) {
-            waitCount++;
-            if (waitCount % 20 === 0) { // Log every second (20 * 50ms)
-                console.log(`initAutoVAD: Still waiting for MicVAD library... (${waitCount * checkInterval}ms elapsed)`);
-            }
-            
-            // Check if we can reload the library
-            if (waitCount === 200) { // After 10 seconds, try to reload
-                console.log('initAutoVAD: Attempting to reload VAD library...');
-                try {
-                    // Try to reload the library
-                    const script = document.createElement('script');
-                    script.src = 'https://cdn.jsdelivr.net/npm/@ricky0123/vad-web@0.0.22/dist/bundle.min.js';
-                    script.onload = () => console.log('initAutoVAD: VAD library reloaded successfully');
-                    script.onerror = () => console.error('initAutoVAD: Failed to reload VAD library');
-                    document.head.appendChild(script);
-                } catch (error) {
-                    console.error('initAutoVAD: Error attempting to reload library:', error);
-                }
-            }
-            
-            await new Promise(r => setTimeout(r, checkInterval));
-        }
-        
-        if (!window.MicVAD) {
-            throw new Error(`MicVAD library failed to load after ${maxWaitTime}ms. Please check your internet connection and try refreshing the page.`);
-        }
-        
-        console.log(`initAutoVAD: MicVAD library loaded after ${waitCount * checkInterval}ms`);
-
         try {
             console.log('initAutoVAD: Creating MicVAD instance with config:', {
                 positiveSpeechThreshold: 0.8,
@@ -82,12 +32,15 @@ document.addEventListener('DOMContentLoaded', async () => {
                 redemptionFrames: 10
             });
 
-            const vad = await MicVAD.new({
-                positiveSpeechThreshold : 0.8,  // raise if background noise triggers
-                negativeSpeechThreshold : 0.5,
-                preSpeechPadFrames      : 8,    // ms before first speech frame
-                minSpeechFrames         : 3,    // 3 × 30 ms  = 90 ms
-                redemptionFrames        : 10,   // hysteresis for trailing silence
+            // Using vad.MicVAD with proper model and worklet paths
+            const myvad = await vad.MicVAD.new({
+                modelPath: '/static/vad-model/silero_vad_legacy.onnx',
+                workletPath: '/static/vad-worklet/vad.worklet.bundle.min.js',
+                positiveSpeechThreshold: 0.8,
+                negativeSpeechThreshold: 0.5,
+                preSpeechPadFrames: 8,
+                minSpeechFrames: 3,
+                redemptionFrames: 10,
 
                 onSpeechStart: () => {
                     console.log('initAutoVAD: Speech detected, starting recording...');
@@ -100,7 +53,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     try {
                         const wavBlob = float32ToWav(float32Audio);
                         console.log(`initAutoVAD: Created WAV blob of size ${wavBlob.size} bytes`);
-                        await processAudio(wavBlob);  // <- your existing pipeline
+                        await processAudio(wavBlob);
                         updateStatus("Ready");
                     } catch (error) {
                         console.error('initAutoVAD: Error processing audio:', error);
@@ -110,19 +63,18 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                 onVADMisfire: () => {
                     console.log('initAutoVAD: VAD misfire detected (false positive)');
-                },
+                }
             });
 
             console.log('initAutoVAD: MicVAD instance created successfully');
-
             console.log('initAutoVAD: Starting VAD...');
-            await vad.start();       // Mic opened, worklet running
+            await myvad.start();
             console.log('initAutoVAD: VAD started successfully');
             
             return () => {
-                console.log('initAutoVAD: Cleanup function called, pausing VAD');
-                vad.pause();
-            };  // cleanup fn to stop VAD + mic
+                console.log('initAutoVAD: Cleanup function called, destroying VAD');
+                myvad.destroy();
+            };
 
         } catch (error) {
             console.error('initAutoVAD: Error during VAD initialization:', error);
@@ -130,7 +82,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             throw error;
         }
     }
-
 
     // DOM elements
     const autoListenBtn = document.getElementById('autoListenBtn');  // ✅ new
@@ -147,97 +98,48 @@ document.addEventListener('DOMContentLoaded', async () => {
             event.preventDefault();
             event.stopPropagation();
             
-            console.log('<<<<< AUTO LISTEN BUTTON CLICKED - Event handler in main.js EXECUTING! >>>>>');
-            console.log('autoListenBtn: Button clicked, current stopVAD state:', !!stopVAD);
+            console.log('Button clicked, current stopVAD state:', !!stopVAD);
             
-            if (!stopVAD) {
-                // Initialize AudioContext IMMEDIATELY in the user gesture (before any async operations)
-                if (!audioContext) {
-                    audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                    console.log('autoListenBtn: AudioContext initialized with state:', audioContext.state);
-                }
-                
-                // Resume AudioContext immediately in the user gesture
-                if (audioContext.state === 'suspended') {
+            try {
+                if (!stopVAD) {
+                    // Initialize AudioContext and run diagnostic once
+                    if (!audioContext) {
+                        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                        console.log('AudioContext initialized, running system diagnostic...');
+                        // Run diagnostic once when AudioContext is first created
+                        testAudioSystemAsync();
+                    }
+                    
+                    // Simple microphone access using modern API
                     try {
-                        await audioContext.resume();
-                        console.log('autoListenBtn: AudioContext resumed successfully, state:', audioContext.state);
-                    } catch (resumeError) {
-                        console.error('autoListenBtn: Failed to resume AudioContext:', resumeError);
-                    }
-                }
-                
-                // Run audio system diagnostic AFTER AudioContext is ready (make it non-blocking)
-                if (!diagnosticRun) {
-                    console.log('autoListenBtn: Running audio system diagnostic...');
-                    testAudioSystemAsync();
-                    diagnosticRun = true;
-                }
-                
-                // Ask for the mic while we're still in the click-gesture
-                try {
-                    console.log('autoListenBtn: Requesting microphone permission...');
-                    
-                    // Check if we're in a secure context
-                    if (window.location.protocol !== 'https:' && 
-                        window.location.hostname !== 'localhost' && 
-                        window.location.hostname !== '127.0.0.1') {
-                        throw new Error('getUserMedia requires HTTPS or localhost');
+                        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                        stream.getTracks().forEach(t => t.stop()); // Release temporary stream
+                    } catch (err) {
+                        console.error('Microphone permission error:', err);
+                        updateStatus('Microphone access required');
+                        return;
                     }
                     
-                    const getUserMedia = getRobustGetUserMedia();
-                    if (!getUserMedia) {
-                        throw new Error('getUserMedia is not supported in this browser');
-                    }
-                    
-                    const tmpStream = await getUserMedia({ audio: true });
-                    console.log('autoListenBtn: Microphone permission granted, releasing temporary stream');
-                    tmpStream.getTracks().forEach(t => t.stop());
-                } catch (err) {
-                    console.error('autoListenBtn: Microphone permission error:', err);
-                    let errorMessage = 'Microphone permission required';
-                    
-                    if (err.name === 'NotAllowedError') {
-                        errorMessage = 'Microphone access denied by user';
-                    } else if (err.name === 'NotFoundError') {
-                        errorMessage = 'No microphone found';
-                    } else if (err.name === 'NotSupportedError') {
-                        errorMessage = 'Microphone not supported';
-                    } else if (err.message.includes('HTTPS')) {
-                        errorMessage = 'HTTPS required for microphone access';
-                    } else if (err.message.includes('not supported')) {
-                        errorMessage = 'Browser does not support microphone access';
-                    }
-                    
-                    updateStatus(errorMessage);
-                    return;
-                }
-                
-                try {
-                    console.log('autoListenBtn: Starting VAD initialization...');
                     updateStatus('Initializing voice detection...');
                     autoListenBtn.classList.add('recording');
                     stopVAD = await initAutoVAD();
-                    console.log('autoListenBtn: VAD initialization complete');
                     updateStatus('Listening…');
-                } catch (vadError) {
-                    console.error('autoListenBtn: VAD initialization failed:', vadError);
-                    updateStatus('Failed to start voice detection');
-                    autoListenBtn.classList.remove('recording');
+                } else {
+                    stopVAD();
                     stopVAD = null;
+                    updateStatus('Paused');
+                    autoListenBtn.classList.remove('recording');
                 }
-            } else {
-                console.log('autoListenBtn: Stopping VAD...');
-                stopVAD();
-                stopVAD = null;
-                updateStatus('Paused');
+            } catch (error) {
+                console.error('Error in click handler:', error);
+                updateStatus('Error initializing voice detection');
                 autoListenBtn.classList.remove('recording');
-                console.log('autoListenBtn: VAD stopped');
+                stopVAD = null;
             }
         });
-        console.log('<<<<< MAIN.JS: autoListenBtn click listener ATTACHED. >>>>>');
+        console.log('Click listener attached');
     } else {
-        console.error('<<<<< MAIN.JS - FATAL: autoListenBtn NOT FOUND during DOMContentLoaded! Listener not attached. >>>>>');
+        console.error('Auto listen button not found');
     }
 
     // New DOM element for patient details - reposition it within main content
@@ -249,27 +151,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     const mainContent = document.querySelector('.main-content');
     mainContent.appendChild(patientDetailsPanel);
     
-    // Audio recording variables
-    let mediaRecorder = null;
-    let audioChunks = [];
-    let isRecording = false;
-    let currentSimulation = null;
-    let currentVoiceId = 'Fritz-PlayAI'; // Default voice
-    let currentConversationId = null;
-    let recordedMimeType = '';
-    // Audio context for playback
-    let audioContext;
-    let currentAudioSource = null; // Track current audio source for interruption
-
-    // // Dynamic import works in every browser that supports modules
-    // import("https://cdn.jsdelivr.net/npm/@ricky0123/vad-web@0.0.22/dist/bundle.min.js")
-    // .then((module) => {
-    //     window.MicVAD = module.MicVAD;   // MicVAD is exported at top level
-    // })
-    // .catch(console.error);
-    // import("https://cdn.jsdelivr.net/npm/@ricky0123/vad-web@0.0.22/dist/index.js")
-    // .then(({ MicVAD }) => (window.MicVAD = MicVAD))
-    // .catch(console.error);
     function float32ToWav(float32, sampleRate = 16000) {
         const buffer = new ArrayBuffer(44 + float32.length * 2);
         const view   = new DataView(buffer);
@@ -301,14 +182,14 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
       
     
-    // Initialize audio context on user interaction
-    function initAudioContext() {
-        if (!audioContext) {
-            audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            console.log('AudioContext initialized. Initial state:', audioContext.state);
+    // // Initialize audio context on user interaction
+    // function initAudioContext() {
+    //     if (!audioContext) {
+    //         audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    //         console.log('AudioContext initialized. Initial state:', audioContext.state);
 
-        }
-    }
+    //     }
+    // }
     
     // Load available simulations
     console.log('<<<<< MAIN.JS: Awaiting loadSimulations... >>>>>');
@@ -342,114 +223,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     //       autoListenBtn.classList.remove('recording');
     //     }
     //   });
-    autoListenBtn.addEventListener('click', async () => {
-        console.log('autoListenBtn: Button clicked, current stopVAD state:', !!stopVAD);
-        // Check autoListenBtn again before attaching
-        if (autoListenBtn) {
-            autoListenBtn.addEventListener('click', async (event) => { // Add 'event' parameter
-                event.preventDefault(); // PREVENT ANY DEFAULT ACTION
-                event.stopPropagation(); // PREVENT EVENT BUBBLING
-
-                console.log('<<<<< AUTO LISTEN BUTTON CLICKED - Event handler in main.js EXECUTING! >>>>>'); // VERY IMPORTANT LOG
-
-                // ... (REST OF YOUR EXISTING autoListenBtn click handler logic) ...
-                console.log('autoListenBtn: Button clicked, current stopVAD state:', !!stopVAD);
-                // ...
-            });
-            console.log('<<<<< MAIN.JS: autoListenBtn click listener ATTACHED. >>>>>'); // New log
-        } else {
-            console.error('<<<<< MAIN.JS - ERROR: autoListenBtn was not found when trying to attach listener. >>>>>');
-        }
-        if (!stopVAD) {
-          // Initialize AudioContext IMMEDIATELY in the user gesture (before any async operations)
-          if (!audioContext) {
-            audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            console.log('autoListenBtn: AudioContext initialized with state:', audioContext.state);
-          }
-          
-          // Resume AudioContext immediately in the user gesture
-          if (audioContext.state === 'suspended') {
-            try {
-              await audioContext.resume();
-              console.log('autoListenBtn: AudioContext resumed successfully, state:', audioContext.state);
-            } catch (resumeError) {
-              console.error('autoListenBtn: Failed to resume AudioContext:', resumeError);
-            }
-          }
-          
-          // Run audio system diagnostic AFTER AudioContext is ready (make it non-blocking)
-          if (!diagnosticRun) {
-            console.log('autoListenBtn: Running audio system diagnostic...');
-            // Run this in background without awaiting
-            testAudioSystemAsync();
-            diagnosticRun = true;
-          }
-          
-          /* ── Ask for the mic while we're still in the click-gesture ── */
-          try {
-            console.log('autoListenBtn: Requesting microphone permission...');
-            
-            // Check if we're in a secure context
-            if (window.location.protocol !== 'https:' && 
-                window.location.hostname !== 'localhost' && 
-                window.location.hostname !== '127.0.0.1') {
-              throw new Error('getUserMedia requires HTTPS or localhost');
-            }
-            
-            const getUserMedia = getRobustGetUserMedia();
-            if (!getUserMedia) {
-              throw new Error('getUserMedia is not supported in this browser');
-            }
-            
-            const tmpStream = await getUserMedia({ audio: true });
-            console.log('autoListenBtn: Microphone permission granted, releasing temporary stream');
-            tmpStream.getTracks().forEach(t => t.stop());   // release it immediately
-          } catch (err) {
-            console.error('autoListenBtn: Microphone permission error:', err);
-            let errorMessage = 'Microphone permission required';
-            
-            if (err.name === 'NotAllowedError') {
-              errorMessage = 'Microphone access denied by user';
-            } else if (err.name === 'NotFoundError') {
-              errorMessage = 'No microphone found';
-            } else if (err.name === 'NotSupportedError') {
-              errorMessage = 'Microphone not supported';
-            } else if (err.message.includes('HTTPS')) {
-              errorMessage = 'HTTPS required for microphone access';
-            } else if (err.message.includes('not supported')) {
-              errorMessage = 'Browser does not support microphone access';
-            }
-            
-            updateStatus(errorMessage);
-            return;                                         // abort starting VAD
-          }
+   
       
-          try {
-            console.log('autoListenBtn: Starting VAD initialization...');
-            updateStatus('Initializing voice detection...');
-            autoListenBtn.classList.add('recording');
-            stopVAD = await initAutoVAD();                    // starts VAD & keeps mic open
-            console.log('autoListenBtn: VAD initialization complete');
-            updateStatus('Listening…');
-          } catch (vadError) {
-            console.error('autoListenBtn: VAD initialization failed:', vadError);
-            updateStatus('Failed to start voice detection');
-            autoListenBtn.classList.remove('recording');
-            stopVAD = null;
-          }
-        } else {
-          console.log('autoListenBtn: Stopping VAD...');
-          stopVAD();                                        // pauses VAD and closes mic
-          stopVAD = null;
-          updateStatus('Paused');
-          autoListenBtn.classList.remove('recording');
-          console.log('autoListenBtn: VAD stopped');
-        }
-      });
-      
-    
-    // Request microphone access on first recording attempt rather than on page load
-    let microphoneSetup = false;
     
     // Create a new empty conversation
     async function createNewConversation() {
@@ -1331,27 +1106,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     updateStatus('Ready');
     
     // Audio system diagnostic will run when user clicks Auto Listen button
-    
-    // Check if MicVAD library is loaded
-    console.log('App initialization: Checking MicVAD library availability...');
-    if (window.MicVAD) {
-        console.log('App initialization: MicVAD library is already available');
-    } else {
-        console.log('App initialization: MicVAD library not yet loaded, will wait for it during VAD initialization');
-        
-        // Add a listener to detect when the library loads
-        let checkCount = 0;
-        const checkInterval = setInterval(() => {
-            checkCount++;
-            if (window.MicVAD) {
-                console.log(`App initialization: MicVAD library loaded after ${checkCount * 100}ms`);
-                clearInterval(checkInterval);
-            } else if (checkCount > 100) { // Stop checking after 10 seconds
-                console.warn('App initialization: MicVAD library still not loaded after 10 seconds');
-                clearInterval(checkInterval);
-            }
-        }, 100);
-    }
     
     // Listen for script loading errors
     window.addEventListener('error', (event) => {
