@@ -1,0 +1,13 @@
+{
+    "name": "vad-assets-copy",
+    "private": true,
+    "dependencies": {
+      "@ricky0123/vad-web": "0.0.22",
+      "onnxruntime-web": "^1.14.0"
+    },
+    "scripts": {
+      /* this runs automatically on every Heroku build */
+      "postinstall": "node copy-vad.js"
+    }
+  }
+  

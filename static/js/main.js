@@ -23,6 +23,27 @@ document.addEventListener('DOMContentLoaded', async () => {
     async function initAutoVAD() {
         console.log('initAutoVAD: Starting VAD initialization...');
         
+        const myvad = await vad.MicVAD.new({
+              /* tell VAD where every asset lives on _your_ server */
+              baseAssetPath:        '/static/vad-model/',   // .onnx + worklet
+              onnxWASMBasePath:     '/static/vad-model/',   // .wasm trio
+            
+               // (optional – keeps things explicit, but you could omit
+               //  because they're derived from baseAssetPath anyway)
+               workletURL: '/static/vad-model/vad.worklet.bundle.min.js',
+               modelURL:   '/static/vad-model/silero_vad_legacy.onnx',
+            
+               positiveSpeechThreshold: 0.8,
+               negativeSpeechThreshold: 0.5,
+               preSpeechPadFrames: 8,
+               minSpeechFrames: 3,
+               redemptionFrames: 10,
+            
+               onSpeechStart()  { updateStatus('Listening…') },
+               onSpeechEnd     : async (audio) => { … },
+            });
+
+        
         try {
             console.log('initAutoVAD: Creating MicVAD instance with config:', {
                 positiveSpeechThreshold: 0.8,
