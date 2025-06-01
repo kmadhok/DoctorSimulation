@@ -1,22 +1,35 @@
-// copy-vad.js  (repo root)
-import {join} from 'node:path';
-import {fileURLToPath} from 'node:url';
-import cpy from 'cpy';
+// copy-vad.js  (root of repo – runs during `npm install` on Heroku)
 
-const root = join(fileURLToPath(import.meta.url), '..');        // repo root
-const VAD = join(root, 'node_modules/@ricky0123/vad-web/dist');
-const ORT = join(root, 'node_modules/onnxruntime-web/dist');
-const DEST = join(root, 'static', 'vad-model');
+import { promises as fs } from 'node:fs';
+import path from 'node:path';
 
-(async () => {
-  await cpy(
-    [
-      `${VAD}/vad.worklet.bundle.min.js`,
-      `${VAD}/*.onnx`,
-      `${ORT}/*.wasm`
-    ],
-    DEST,
-    {verbose: true}
-  );
-  console.log('[VAD COPY] Completed ✓');
-})();
+const dest = path.join(process.cwd(), 'static', 'vad-model');
+
+// List everything ONNX-runtime & VAD will ever request
+const sources = [
+  // worklet bundle
+  'node_modules/@ricky0123/vad-web/dist/vad.worklet.bundle.min.js',
+
+  // both ONNX model variants
+  'node_modules/@ricky0123/vad-web/dist/silero_vad_legacy.onnx',
+  'node_modules/@ricky0123/vad-web/dist/silero_vad_v5.onnx',
+
+  // wasm binaries **and** the .mjs loader stubs
+  ...(
+    await fs.readdir('node_modules/onnxruntime-web/dist')
+  )
+    .filter(f => f.startsWith('ort-wasm'))          // picks *.wasm and *.mjs
+    .map(f => `node_modules/onnxruntime-web/dist/${f}`)
+];
+
+// make dest dir once
+await fs.mkdir(dest, { recursive: true });
+
+// copy one by one
+await Promise.all(
+  sources.map(async src => {
+    const fileName = path.basename(src);
+    await fs.copyFile(src, path.join(dest, fileName));
+    console.log(`[VAD COPY] ${fileName} → ${dest}`);
+  })
+);
