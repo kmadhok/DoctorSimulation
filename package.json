@@ -3,21 +3,18 @@
     "private": true,
     "version": "1.0.0",
   
-    /* make Node treat .js files that use import/export as ES-modules */
     "type": "module",
   
-    /* pin a modern LTS range; keeps Heroku from picking Node 22 if you
-       prefer Node 20, but 22 is also fine — adjust to taste              */
     "engines": { "node": ">=20 <23" },
   
     "dependencies": {
       "@ricky0123/vad-web": "0.0.22",
       "onnxruntime-web": "^1.14.0",
-      "cpy": "^8.1.2"              //  ← NEW  (or "cpy-cli": "^4.2.0")
+      "cpy": "^8.1.2"              
     },
   
     "scripts": {
-      "postinstall": "node copy-vad.js"   // path is fine because file is in repo root
+      "postinstall": "node copy-vad.js"   
     }
   }
   
