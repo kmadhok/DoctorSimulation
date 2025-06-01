@@ -119,17 +119,6 @@
         });
     </script>
 
-    <!-- Load ONNX Runtime first -->
-    {% comment %} <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web/dist/ort.min.js" 
-            onload="vadLogger.success('DEPS', 'ONNX Runtime loaded successfully')"
-            onerror="vadLogger.error('DEPS', 'Failed to load ONNX Runtime')">
-    </script> {% endcomment %}
-
-    <!-- Load VAD bundle -->
-    {% comment %} <script src="https://cdn.jsdelivr.net/npm/@ricky0123/vad-web@0.0.22/dist/bundle.min.js"
-            onload="vadLogger.success('DEPS', 'VAD bundle loaded successfully')"
-            onerror="vadLogger.error('DEPS', 'Failed to load VAD bundle')">
-    </script> {% endcomment %}
     <script src="{{ url_for('static',
                             filename='vad-model/bundle.min.js') }}"
             onload="vadLogger.success('DEPS', 'VAD bundle loaded successfully')"
