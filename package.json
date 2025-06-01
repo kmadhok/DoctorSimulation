@@ -6,7 +6,6 @@
       "onnxruntime-web": "^1.14.0"
     },
     "scripts": {
-      /* this runs automatically on every Heroku build */
       "postinstall": "node copy-vad.js"
     }
   }
