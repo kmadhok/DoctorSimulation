@@ -10,6 +10,9 @@ const sources = [
   // worklet bundle
   'node_modules/@ricky0123/vad-web/dist/vad.worklet.bundle.min.js',
 
+  // top-level MicVAD runtime
+  'node_modules/@ricky0123/vad-web/dist/bundle.min.js',
+
   // both ONNX model variants
   'node_modules/@ricky0123/vad-web/dist/silero_vad_legacy.onnx',
   'node_modules/@ricky0123/vad-web/dist/silero_vad_v5.onnx',
