@@ -755,7 +755,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         
         try {
             statusElement.textContent = 'Loading simulation...';
-            // recordButton.disabled = true;
             
             // Keep track of current voice selection
             currentVoiceId = voiceSelect.value;
@@ -776,8 +775,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 currentSimulation = data.current_simulation;
                 currentConversationId = data.conversation_id;
                 statusElement.textContent = 'Ready';
-                // recordButton.disabled = false;
-                conversationElement.innerHTML = ''; // Clear conversation
                 
                 // Update voice preference for this conversation
                 if (currentConversationId) {
@@ -809,7 +806,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         } catch (error) {
             console.error('Error selecting simulation:', error);
             statusElement.textContent = 'Error selecting simulation';
-            // recordButton.disabled = true;
         }
     }
     
@@ -1125,7 +1121,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 console.log('processAudio: Exit command detected');
                 addMessage('assistant', data.assistant_response_text);
                 statusElement.textContent = 'Conversation ended';
-                // recordButton.disabled = true;
                 
                 // Refresh conversation list
                 await loadConversationHistory();
@@ -1135,10 +1130,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         } catch (error) {
             console.error('processAudio: Error processing audio:', error);
             statusElement.textContent = `Error: ${error.message || 'Failed to process audio'}`;
-            
-            // // Enable the record button again so users can retry
-            // recordButton.disabled = false;
-            // recordButton.classList.remove('recording');
         }
     }
     

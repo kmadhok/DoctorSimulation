@@ -119,27 +119,16 @@
         });
     </script>
 
-    <!-- Load ONNX Runtime -->
+    <!-- Load ONNX Runtime first -->
     <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web/dist/ort.min.js" 
             onload="vadLogger.success('DEPS', 'ONNX Runtime loaded successfully')"
             onerror="vadLogger.error('DEPS', 'Failed to load ONNX Runtime')">
     </script>
 
-    <!-- Load Silero VAD with retry -->
-    <script type="module">
-        // Import MicVAD from the ESM version
-        import { MicVAD } from 'https://cdn.jsdelivr.net/npm/@ricky0123/vad-web@0.0.22/dist/index.js';
-        
-        // Expose to window for use in main.js
-        window.MicVAD = MicVAD;
-        vadLogger.success('DEPS', 'VAD module imported and exposed to window');
-        
-        // Add error handling
-        window.addEventListener('error', (event) => {
-            if (event.error && event.error.toString().includes('vad-web')) {
-                vadLogger.error('DEPS', `VAD module error: ${event.error}`);
-            }
-        });
+    <!-- Load VAD bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/@ricky0123/vad-web@0.0.22/dist/bundle.min.js"
+            onload="vadLogger.success('DEPS', 'VAD bundle loaded successfully')"
+            onerror="vadLogger.error('DEPS', 'Failed to load VAD bundle')">
     </script>
 
     <!-- Load main script -->
