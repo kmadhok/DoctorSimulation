@@ -119,15 +119,27 @@
         });
     </script>
 
-    <script src="{{ url_for('static',
-                            filename='vad-model/bundle.min.js') }}"
-            onload="vadLogger.success('DEPS', 'VAD bundle loaded successfully')"
-            onerror="vadLogger.error('DEPS', 'Failed to load VAD bundle')">
+    <!-- onnxruntime – must be first so it defines global `ort` -->
+    <script
+    src="{{ url_for('static', filename='vad-model/ort.min.js') }}"
+    onload="vadLogger.success('DEPS', 'ONNX Runtime loaded successfully')"
+    onerror="vadLogger.error('DEPS', 'Failed to load ONNX Runtime')">
     </script>
-    <!-- Load main script -->
-    <script src="{{ url_for('static', filename='js/main.js') }}"
-            onload="vadLogger.success('DEPS', 'Main script loaded successfully')"
-            onerror="vadLogger.error('DEPS', 'Failed to load main script')">
+
+    <!-- VAD wrapper – exposes global `vad` -->
+    <script
+    src="{{ url_for('static', filename='vad-model/bundle.min.js') }}"
+    onload="vadLogger.success('DEPS', 'VAD bundle loaded successfully')"
+    onerror="vadLogger.error('DEPS', 'Failed to load VAD bundle')">
     </script>
+
+    <!-- ⭐ your application logic (needs `vad` to exist) -->
+    <script
+    src="{{ url_for('static', filename='js/main.js') }}"
+    onload="vadLogger.success('DEPS', 'Main script loaded successfully')"
+    onerror="vadLogger.error('DEPS', 'Failed to load main script')">
+    </script>
+
+
 </body>
 </html> 
