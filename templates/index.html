@@ -13,7 +13,7 @@
             <div class="sidebar-header">
                 <h2>Conversation History</h2>
                 <div class="sidebar-actions">
-                    <button id="newConversationBtn" class="action-button" title="New Conversation">
+                    <button id="newPatientBtn" class="action-button" title="Create New Patient">
                         <span class="action-icon">+</span>
                     </button>
                     <button id="refreshConversationsBtn" class="action-button" title="Refresh conversations">
@@ -31,13 +31,88 @@
         <div class="main-content">
             <header>
                 <h1>Can you guess what's wrong with me?</h1>
-                <div class="simulation-selector">
-                    <label for="simulationSelect">Select Patient Simulation (Optional):</label>
-                    <select id="simulationSelect">
-                        <option value="">No simulation</option>
-                        <option value="" disabled>Loading simulations...</option>
-                    </select>
+                
+                <!-- Custom Patient Creation Form -->
+                <div class="patient-creator" id="patientCreator">
+                    <h3>Create New Patient</h3>
+                    <form id="customPatientForm">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="patientName">Patient Name:</label>
+                                <input type="text" id="patientName" name="patient_name" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="patientAge">Age:</label>
+                                <input type="number" id="patientAge" name="age" min="1" max="120" required>
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="patientGender">Gender:</label>
+                                <select id="patientGender" name="gender" required>
+                                    <option value="">Select...</option>
+                                    <option value="Male">Male</option>
+                                    <option value="Female">Female</option>
+                                    <option value="Non-binary">Non-binary</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="patientOccupation">Occupation:</label>
+                                <input type="text" id="patientOccupation" name="occupation">
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="medicalHistory">Medical History:</label>
+                            <textarea id="medicalHistory" name="medical_history" rows="2" 
+                                placeholder="e.g., Diabetes, Hypertension, Asthma..."></textarea>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="areaOfMedicine">Area of Medicine:</label>
+                                <select id="areaOfMedicine" name="area_of_medicine">
+                                    <option value="">Any</option>
+                                    <option value="Cardiology">Cardiology</option>
+                                    <option value="Neurology">Neurology</option>
+                                    <option value="Gastroenterology">Gastroenterology</option>
+                                    <option value="Pulmonology">Pulmonology</option>
+                                    <option value="Orthopedics">Orthopedics</option>
+                                    <option value="Dermatology">Dermatology</option>
+                                    <option value="Emergency Medicine">Emergency Medicine</option>
+                                    <option value="Internal Medicine">Internal Medicine</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="bodyPart">Body Part/System:</label>
+                                <select id="bodyPart" name="body_part">
+                                    <option value="">Any</option>
+                                    <option value="Head/Neck">Head/Neck</option>
+                                    <option value="Chest">Chest</option>
+                                    <option value="Abdomen">Abdomen</option>
+                                    <option value="Back">Back</option>
+                                    <option value="Arms">Arms</option>
+                                    <option value="Legs">Legs</option>
+                                    <option value="Joints">Joints</option>
+                                    <option value="Skin">Skin</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="additionalInfo">Additional Information:</label>
+                            <textarea id="additionalInfo" name="additional_info" rows="2" 
+                                placeholder="Recent travel, exposure, lifestyle factors..."></textarea>
+                        </div>
+                        
+                        <div class="form-actions">
+                            <button type="submit" class="create-patient-btn">Create Patient</button>
+                        </div>
+                    </form>
                 </div>
+
                 <div class="voice-selector">
                     <label for="voiceSelect">Select Voice:</label>
                     <select id="voiceSelect">
@@ -49,22 +124,24 @@
                         <option value="Cheyenne-PlayAI">Emily</option>
                     </select>
                 </div>
-                <p class="status" id="status">Ready</p>
+                <p class="status" id="status">Create a patient to begin</p>
             </header>
             
             <main>
                 <div class="conversation" id="conversation">
                     <!-- Conversation messages will be displayed here -->
+                    <div class="welcome-message">
+                        <p>👩‍⚕️ Welcome to the Medical Simulation!</p>
+                        <p>Create a patient above to start your diagnostic interview.</p>
+                    </div>
                 </div>
                 
-                <!-- ❷ NEW  insert in exactly the same place -->
                 <div class="controls">
-                    <button id="autoListenBtn" class="record-button">
+                    <button id="autoListenBtn" class="record-button" disabled>
                         <span class="record-icon"></span>
                         Auto Listen
                     </button>
                 </div>
-
             </main>
             
             <footer>

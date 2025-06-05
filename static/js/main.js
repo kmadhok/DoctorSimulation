@@ -216,7 +216,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     // Load available simulations
     console.log('<<<<< MAIN.JS: Awaiting loadSimulations... >>>>>');
-    await loadSimulations();
+    await loadConversationHistory();
     console.log('<<<<< MAIN.JS: loadSimulations complete. >>>>>');    
 
     console.log('<<<<< MAIN.JS: Awaiting loadConversationHistory... >>>>>');
@@ -313,41 +313,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             statusElement.classList.add('processing');
         } else if (message.includes('Error')) {
             statusElement.classList.add('error');
-        }
-    }
-    
-    // Load available simulations
-    async function loadSimulations() {
-        try {
-            const response = await fetch('/api/patient-simulations');
-            const data = await response.json();
-            
-            if (data.status === 'success') {
-                // Clear loading option
-                // Keep the "No simulation" option and remove all others
-                while (simulationSelect.options.length > 1) {
-                    simulationSelect.remove(1);
-                }
-                
-                // Add simulations to select
-                data.simulations.forEach(simulation => {
-                    const option = document.createElement('option');
-                    option.value = simulation;
-                    option.textContent = simulation;
-                    simulationSelect.appendChild(option);
-                });
-                
-                // Set current simulation if available
-                if (data.current_simulation) {
-                    simulationSelect.value = data.current_simulation;
-                    currentSimulation = data.current_simulation;
-                }
-            } else {
-                throw new Error(data.message || 'Failed to load simulations');
-            }
-        } catch (error) {
-            console.error('Error loading simulations:', error);
-            statusElement.textContent = 'Error loading simulations';
         }
     }
     
@@ -1205,4 +1170,215 @@ document.addEventListener('DOMContentLoaded', async () => {
             console.log('==== DIAGNOSTIC COMPLETE ====');
         }, 0);
     }
-}); 
+
+    // Initialize the application
+    await loadConversationHistory();
+    
+    // Setup event listeners
+    setupEventListeners();
+});
+
+function setupEventListeners() {
+    // Custom patient form submission
+    document.getElementById('customPatientForm').addEventListener('submit', handleCustomPatientSubmit);
+    
+    // New patient button (clears form)
+    document.getElementById('newPatientBtn').addEventListener('click', createNewPatient);
+    
+    // Voice change handler
+    document.getElementById('voiceSelect').addEventListener('change', handleVoiceChange);
+    
+    // Other existing event listeners...
+    document.getElementById('refreshConversationsBtn').addEventListener('click', loadConversationHistory);
+}
+
+async function handleCustomPatientSubmit(event) {
+    event.preventDefault();
+    
+    const formData = new FormData(event.target);
+    const data = Object.fromEntries(formData.entries());
+    
+    // Basic validation
+    if (!data.patient_name || !data.age || !data.gender) {
+        alert('Please fill in required fields (Name, Age, Gender)');
+        return;
+    }
+    
+    try {
+        updateStatus('Creating patient and generating condition...');
+        
+        const response = await fetch('/api/create-custom-patient', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        });
+        
+        const result = await response.json();
+        
+        if (result.status === 'success') {
+            // Patient created successfully
+            currentConversationId = result.conversation_id;
+            
+            // Hide the form and show patient details
+            document.getElementById('patientCreator').style.display = 'none';
+            
+            // Enable the auto listen button
+            document.getElementById('autoListenBtn').disabled = false;
+            
+            // Load the new patient details
+            await loadPatientDetails();
+            
+            // Clear conversation display and show welcome
+            document.getElementById('conversation').innerHTML = `
+                <div class="patient-created-message">
+                    <h3>✅ Patient Created: ${result.patient_name}</h3>
+                    <p><strong>Generated Condition:</strong> ${result.generated_disease}</p>
+                    <p><em>This diagnosis is now hidden from you. Begin your consultation!</em></p>
+                    <button onclick="startConsultation()">Start Consultation</button>
+                </div>
+            `;
+            
+            // Refresh conversation list to show the new conversation
+            await loadConversationHistory();
+            
+            updateStatus('Patient ready - Start your consultation!');
+        } else {
+            throw new Error(result.message);
+        }
+        
+    } catch (error) {
+        console.error('Error creating custom patient:', error);
+        updateStatus('Error creating patient');
+        alert('Error creating custom patient: ' + error.message);
+    }
+}
+
+function createNewPatient() {
+    // Reset form
+    document.getElementById('customPatientForm').reset();
+    
+    // Show the patient creation form
+    document.getElementById('patientCreator').style.display = 'block';
+    
+    // Disable auto listen button until patient is created
+    document.getElementById('autoListenBtn').disabled = true;
+    
+    // Clear conversation display
+    document.getElementById('conversation').innerHTML = `
+        <div class="welcome-message">
+            <p>👩‍⚕️ Create a new patient to begin your diagnostic interview.</p>
+        </div>
+    `;
+    
+    // Clear patient details
+    const patientDetailsPanel = document.getElementById('patientDetailsPanel');
+    if (patientDetailsPanel) {
+        patientDetailsPanel.innerHTML = '';
+    }
+    
+    updateStatus('Fill out patient details above');
+}
+
+function startConsultation() {
+    // Clear the conversation and prepare for the actual consultation
+    document.getElementById('conversation').innerHTML = '';
+    updateStatus('Ready - Ask your first question!');
+}
+
+async function loadPatientDetails() {
+    try {
+        const response = await fetch('/api/current-patient-details');
+        const data = await response.json();
+        
+        if (data.status === 'success') {
+            displayPatientDetails(data.patient_details);
+        } else {
+            throw new Error(data.message || 'Failed to load patient details');
+        }
+    } catch (error) {
+        console.error('Error loading patient details:', error);
+        // Create patient details panel if it doesn't exist
+        let patientDetailsPanel = document.getElementById('patientDetailsPanel');
+        if (!patientDetailsPanel) {
+            patientDetailsPanel = document.createElement('div');
+            patientDetailsPanel.id = 'patientDetailsPanel';
+            patientDetailsPanel.className = 'patient-details-panel';
+            document.querySelector('.main-content').appendChild(patientDetailsPanel);
+        }
+        patientDetailsPanel.innerHTML = '<p class="error">Error loading patient details</p>';
+    }
+}
+
+function displayPatientDetails(details) {
+    // Create patient details panel if it doesn't exist
+    let patientDetailsPanel = document.getElementById('patientDetailsPanel');
+    if (!patientDetailsPanel) {
+        patientDetailsPanel = document.createElement('div');
+        patientDetailsPanel.id = 'patientDetailsPanel';
+        patientDetailsPanel.className = 'patient-details-panel';
+        document.querySelector('.main-content').appendChild(patientDetailsPanel);
+    }
+    
+    patientDetailsPanel.innerHTML = '<h3>Current Patient</h3>';
+    
+    if (!details || Object.keys(details).length === 0) {
+        patientDetailsPanel.innerHTML += '<p>No patient details available</p>';
+        return;
+    }
+    
+    const detailsList = document.createElement('ul');
+    
+    // Display patient fields (illness is hidden)
+    const fieldsToDisplay = {
+        'name': 'Name',
+        'age': 'Age',
+        'gender': 'Gender',
+        'occupation': 'Occupation',
+        'medical_history': 'Medical History',
+        'area_of_medicine': 'Area of Medicine',
+        'body_part': 'Body Part',
+        'recent_exposure': 'Additional Info'
+    };
+    
+    for (const [key, label] of Object.entries(fieldsToDisplay)) {
+        if (details[key]) {
+            const item = document.createElement('li');
+            item.innerHTML = `<strong>${label}:</strong> ${details[key]}`;
+            detailsList.appendChild(item);
+        }
+    }
+    
+    patientDetailsPanel.appendChild(detailsList);
+    
+    // Add reveal diagnosis button (for end of session)
+    const revealBtn = document.createElement('button');
+    revealBtn.textContent = 'Reveal Diagnosis';
+    revealBtn.className = 'reveal-diagnosis-btn';
+    revealBtn.onclick = revealDiagnosis;
+    patientDetailsPanel.appendChild(revealBtn);
+}
+
+async function revealDiagnosis() {
+    try {
+        const response = await fetch('/api/reveal-diagnosis');
+        const data = await response.json();
+        
+        if (data.status === 'success') {
+            alert(`The actual diagnosis was: ${data.diagnosis}\n\nHow did you do?`);
+        } else {
+            throw new Error(data.message);
+        }
+    } catch (error) {
+        console.error('Error revealing diagnosis:', error);
+        alert('Error revealing diagnosis: ' + error.message);
+    }
+}
+
+// Keep existing functions for:
+// - processAudio()
+// - addMessage()
+// - handleVoiceChange()
+// - loadConversationHistory()
+// - etc. 

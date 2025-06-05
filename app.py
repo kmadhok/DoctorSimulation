@@ -129,18 +129,6 @@ def index():
     logger.info('Serving index page')
     return render_template('index.html')
 
-@app.route('/api/patient-simulations', methods=['GET'])
-def list_patient_simulations():
-    """List available patient simulations"""
-    logger.info('Listing patient simulations')
-    simulations = get_available_patient_simulations()
-    logger.debug('Found simulations: %s', simulations)
-    return jsonify({
-        'status': 'success',
-        'simulations': simulations,
-        'current_simulation': current_patient_simulation
-    })
-
 @app.route('/api/conversations/new', methods=['POST'])
 def create_new_conversation():
     """Create a new empty conversation without a patient simulation"""
@@ -166,86 +154,6 @@ def create_new_conversation():
         return jsonify({
             'status': 'error',
             'message': f'Error creating conversation: {str(e)}'
-        }), 500
-
-@app.route('/api/select-simulation', methods=['POST'])
-def select_simulation():
-    """Select a patient simulation"""
-    global patient_data, current_patient_simulation, current_conversation_id, conversation_history
-    
-    try:
-        data = request.get_json()
-        if not data or 'simulation_file' not in data:
-            return jsonify({
-                'status': 'error',
-                'message': 'No simulation file specified'
-            }), 400
-            
-        simulation_file = data['simulation_file']
-        logger.info(f"Selecting simulation file: {simulation_file}")
-        
-        # Allow empty simulation file to clear the current simulation
-        if simulation_file == "":
-            logger.info("Clearing current simulation and voice settings")
-            current_patient_simulation = None
-            patient_data = {}
-        elif not os.path.exists(simulation_file):
-            logger.error(f"Simulation file not found: {simulation_file}")
-            return jsonify({
-                'status': 'error',
-                'message': f'Simulation file {simulation_file} not found'
-            }), 404
-        else:
-            # Load the selected simulation
-            logger.info(f"Loading simulation data from: {simulation_file}")
-            patient_data = initialize_patient_data(simulation_file)
-            
-            # Explicitly log the loaded data for debugging
-            logger.info(f"Loaded patient_data: {patient_data}")
-            
-            # Ensure voice_id is present
-            if patient_data:
-                current_voice = patient_data.get('voice_id')
-                logger.info(f"Loaded voice_id from simulation: {current_voice}")
-                if 'voice_id' not in patient_data:
-                    logger.warning(f"No voice_id found in simulation file: {simulation_file}")
-                    patient_data['voice_id'] = 'Fritz-PlayAI'
-                    logger.info(f"Set default voice_id: {patient_data['voice_id']}")
-            else:
-                logger.warning("No patient data loaded from simulation file")
-                patient_data = {}
-        
-        # Clear conversation history when changing simulations
-        conversation_history = []
-        
-        # Create a new conversation in the database with a generic title
-        # The title will be updated with actual content after the first message
-        title = "New Conversation"
-        if simulation_file:
-            title = f"Conversation with {os.path.basename(simulation_file)}"
-        
-        # Store the patient_data in the database along with the conversation
-        # This will require modifying your database.py file to store simulation data
-        current_conversation_id = create_conversation(title, simulation_file)
-        
-        # Store the actual patient data in the database (add this function to database.py)
-        if patient_data:
-            # This should be implemented in database.py
-            logger.info("Storing patient data in database for conversation")
-            store_conversation_data(current_conversation_id, 'patient_data', patient_data)
-        
-        return jsonify({
-            'status': 'success',
-            'message': f'Selected simulation: {simulation_file}',
-            'current_simulation': current_patient_simulation,
-            'conversation_id': current_conversation_id
-        })
-        
-    except Exception as e:
-        logger.error(f"Error selecting simulation: {str(e)}", exc_info=True)
-        return jsonify({
-            'status': 'error',
-            'message': f'Error selecting simulation: {str(e)}'
         }), 500
 
 @app.route('/api/update-voice', methods=['POST'])
@@ -594,24 +502,164 @@ def diagnose_api():
     
     return jsonify(results)
 
-@app.route('/api/current-patient-details', methods=['GET'])
-def get_current_patient_details():
-    """Get details of the currently selected patient simulation"""
-    if not patient_data or not patient_data.get('patient_details'):
+@app.route('/api/create-custom-patient', methods=['POST'])
+def create_custom_patient():
+    """Create a custom patient from user form data and generate disease"""
+    global current_conversation_id, conversation_history, patient_data
+    
+    try:
+        data = request.get_json()
+        
+        # Extract form fields
+        patient_name = data.get('patient_name', '')
+        age = data.get('age', '')
+        gender = data.get('gender', '')
+        occupation = data.get('occupation', '')
+        medical_history = data.get('medical_history', '')
+        area_of_medicine = data.get('area_of_medicine', '')
+        body_part = data.get('body_part', '')
+        additional_info = data.get('additional_info', '')
+        
+        # Use LLM to generate a realistic disease/condition
+        disease_prompt = f"""
+        Generate a single, realistic medical condition for a patient with these characteristics:
+        - Age: {age}
+        - Gender: {gender}
+        - Occupation: {occupation}
+        - Medical History: {medical_history}
+        - Medical Area of Interest: {area_of_medicine}
+        - Affected Body Part: {body_part}
+        - Additional Info: {additional_info}
+        
+        Return only the disease/condition name (1-3 words maximum).
+        Make it educational and appropriate for medical training.
+        Examples: "Appendicitis", "Migraine", "Pneumonia", "Gout"
+        """
+        
+        # Get disease from LLM
+        generated_disease = get_groq_response(disease_prompt, model="llama-3.3-70b-versatile")
+        
+        # Create patient profile
+        patient_details = {
+            "name": patient_name,
+            "age": age,
+            "gender": gender,
+            "occupation": occupation,
+            "medical_history": medical_history,
+            "illness": generated_disease.strip(),
+            "recent_exposure": additional_info,
+            "area_of_medicine": area_of_medicine,
+            "body_part": body_part
+        }
+        
+        # Create conversation title
+        title = f"{patient_name}, {age}yo - {area_of_medicine or 'General'}"
+        
+        # Create new conversation
+        current_conversation_id = create_conversation(title, None)  # No simulation file
+        
+        # Store patient data in database
+        store_conversation_data(current_conversation_id, "patient_details", patient_details)
+        store_conversation_data(current_conversation_id, "generated_disease", generated_disease.strip())
+        
+        # Update global patient data for LLM prompting
+        patient_data = {
+            "prompt_template": get_standard_prompt_template(),
+            "patient_details": patient_details,
+            "doctor_question": "What brings you in today?"
+        }
+        
+        # Clear conversation history
+        conversation_history = []
+        
+        return jsonify({
+            'status': 'success',
+            'message': 'Custom patient created successfully',
+            'conversation_id': current_conversation_id,
+            'patient_name': patient_name,
+            'generated_disease': generated_disease.strip()
+        })
+        
+    except Exception as e:
+        logger.error(f"Error creating custom patient: {e}")
         return jsonify({
             'status': 'error',
-            'message': 'No patient simulation selected or invalid simulation data'
+            'message': f'Error creating custom patient: {str(e)}'
+        }), 500
+
+def get_standard_prompt_template():
+    """Return the standard patient simulation prompt template"""
+    return """You are a virtual patient in a clinical simulation. You have been assigned the following profile (for your reference only – you must never reveal the diagnosis itself, only describe symptoms):
+
+  • Name: {name}
+  • Age: {age}  
+  • Gender: {gender}  
+  • Occupation: {occupation}  
+  • Relevant medical history: {medical_history}  
+  • Underlying illness (secret – do not mention this word or any synonyms): {illness}  
+  • Any recent events or exposures: {recent_exposure}
+
+Your task:
+When the "Doctor" (the next speaker) asks you questions, respond as a real patient would – describe what hurts, how you feel, when symptoms started, how they've changed, etc. Under no circumstances mention or hint at the diagnosis name.  
+Keep answers concise, natural, and include details like pain quality, timing, triggers, and any self-care you've tried.
+
+Now begin:
+Doctor: "_________________"  
+Patient: """
+
+@app.route('/api/current-patient-details', methods=['GET'])
+def get_current_patient_details():
+    """Get details of the current custom patient"""
+    global current_conversation_id
+    
+    if not current_conversation_id:
+        return jsonify({
+            'status': 'error',
+            'message': 'No active conversation'
+        }), 404
+    
+    # Get patient details from database
+    patient_details = get_conversation_data(current_conversation_id, "patient_details")
+    
+    if not patient_details:
+        return jsonify({
+            'status': 'error',
+            'message': 'No patient details found'
         }), 404
         
-    # Get patient details, excluding the 'illness' field
-    details = patient_data.get('patient_details', {}).copy()
-    if 'illness' in details:
-        del details['illness']  # Remove illness field
+    # Remove the 'illness' field for display (keep it secret from doctor)
+    display_details = patient_details.copy()
+    if 'illness' in display_details:
+        del display_details['illness']
         
     return jsonify({
         'status': 'success',
-        'patient_details': details,
-        'simulation_file': current_patient_simulation
+        'patient_details': display_details
+    })
+
+@app.route('/api/reveal-diagnosis', methods=['GET'])
+def reveal_diagnosis():
+    """Reveal the generated diagnosis for the current patient (for end of session)"""
+    global current_conversation_id
+    
+    if not current_conversation_id:
+        return jsonify({
+            'status': 'error',
+            'message': 'No active conversation'
+        }), 404
+    
+    # Get the hidden diagnosis
+    generated_disease = get_conversation_data(current_conversation_id, "generated_disease")
+    
+    if not generated_disease:
+        return jsonify({
+            'status': 'error',
+            'message': 'No diagnosis found'
+        }), 404
+        
+    return jsonify({
+        'status': 'success',
+        'diagnosis': generated_disease
     })
 
 # Keep the if __name__ == '__main__' block for running the app
