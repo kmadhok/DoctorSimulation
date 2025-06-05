@@ -230,10 +230,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     // recordButton.addEventListener('mousedown', startRecording);
     // recordButton.addEventListener('mouseup', stopRecording);
     // recordButton.addEventListener('mouseleave', stopRecording);
-    simulationSelect.addEventListener('change', handleSimulationChange);
-    voiceSelect.addEventListener('change', handleVoiceChange);
-    refreshConversationsBtn.addEventListener('click', loadConversationHistory);
-    newConversationBtn.addEventListener('click', createNewConversation);
+    if (simulationSelect) {
+        simulationSelect.addEventListener('change', handleSimulationChange);
+    }
+    if (voiceSelect) {
+        voiceSelect.addEventListener('change', handleVoiceChange);
+    }
+    if (refreshConversationsBtn) {
+        refreshConversationsBtn.addEventListener('click', loadConversationHistory);
+    }
+    if (newConversationBtn) {
+        newConversationBtn.addEventListener('click', createNewConversation);
+    }
     // autoListenBtn.addEventListener('click', async () => {
     //     if (!stopVAD) {
     //       updateStatus("Listening…");
