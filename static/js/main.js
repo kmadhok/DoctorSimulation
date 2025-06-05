@@ -107,7 +107,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // DOM elements
-    const autoListenBtn = document.getElementById('autoListenBtn');  // ✅ new
+    const autoListenBtn = document.getElementById('autoListenBtn');
     const statusElement = document.getElementById('status');
     const conversationElement = document.getElementById('conversation');
     const simulationSelect = document.getElementById('simulationSelect');
@@ -1173,9 +1173,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Initialize the application
     await loadConversationHistory();
-    
-    // Setup event listeners
-    setupEventListeners();
 });
 
 function setupEventListeners() {
