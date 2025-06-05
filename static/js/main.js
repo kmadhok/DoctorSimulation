@@ -1181,6 +1181,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Initialize the application
     await loadConversationHistory();
+    
+    // Setup event listeners
+    setupEventListeners();
 });
 
 function setupEventListeners() {
