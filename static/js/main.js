@@ -270,14 +270,19 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const customPatientData = collectCustomPatientData();
                 console.log('Creating custom patient with data:', customPatientData);
                 
-                // TODO: This will be implemented in Step 3 - Backend API
-                // For now, just show success message
-                setTimeout(() => {
-                    updateStatus('Custom patient created! (Backend API coming in next step)');
-                    setFormLoading(false);
-                    // Don't hide form yet - will be handled by backend integration
-                }, 1000);
+                // Call the backend API to create custom patient
+                const success = await createCustomPatient(customPatientData);
                 
+                if (success) {
+                    updateStatus('Custom patient created successfully!');
+                    setFormLoading(false);
+                    // Hide form and refresh conversation list
+                    hideCustomPatientForm();
+                    await loadConversationHistory();
+                } else {
+                    updateStatus('Error creating custom patient');
+                    setFormLoading(false);
+                }
             } catch (error) {
                 console.error('Error creating custom patient:', error);
                 updateStatus('Error creating custom patient');
@@ -312,9 +317,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         try {
             updateStatus('Creating new conversation...');
             
-            // Clear simulation selection
+            // Clear simulation selection and hide custom form
             simulationSelect.value = '';
             currentSimulation = null;
+            hideCustomPatientForm();
             
             // Get current voice selection
             currentVoiceId = voiceSelect.value;
@@ -341,8 +347,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                     })
                 });
                 
-                // Enable recording button
-                // recordButton.disabled = false;
+                // Clear patient details panel
+                patientDetailsPanel.innerHTML = '';
                 
                 // Refresh the conversation list
                 await loadConversationHistory();
@@ -513,14 +519,23 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (data.status === 'success') {
                 currentConversationId = conversationId;
                 
-                // Set the simulation if available
-                if (data.conversation.simulation_file) {
+                // Handle different simulation types
+                if (data.conversation.simulation_file === '__custom__') {
+                    // Custom patient conversation
+                    currentSimulation = '__custom__';
+                    simulationSelect.value = '__custom__';
+                    // Hide custom patient form since we're loading an existing conversation
+                    hideCustomPatientForm();
+                } else if (data.conversation.simulation_file) {
+                    // File-based patient simulation
                     currentSimulation = data.conversation.simulation_file;
                     simulationSelect.value = currentSimulation;
+                    hideCustomPatientForm();
                 } else {
-                    // Clear simulation if none is associated
+                    // No simulation associated
                     currentSimulation = null;
                     simulationSelect.value = '';
+                    hideCustomPatientForm();
                 }
                 
                 // Set the voice if available
@@ -541,7 +556,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     addMessage(message.role, message.content);
                 });
                 
-                // If the conversation has an associated simulation, load the patient details
+                // Load patient details for any type of patient simulation
                 if (data.conversation.simulation_file) {
                     await loadPatientDetails();
                 } else {
@@ -551,7 +566,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 
                 // Update UI
                 updateStatus('Ready');
-                // recordButton.disabled = false;
                 
                 // Update active conversation in sidebar
                 const items = conversationListElement.querySelectorAll('.conversation-item');
@@ -929,6 +943,64 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
         
         return !error;
+    }
+    
+    async function createCustomPatient(customPatientData) {
+        try {
+            console.log('Sending custom patient data to backend:', customPatientData);
+            
+            const response = await fetch('/api/create-custom-patient', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(customPatientData)
+            });
+            
+            const data = await response.json();
+            console.log('Backend response:', data);
+            
+            if (data.status === 'success') {
+                // Update global state
+                currentConversationId = data.conversation_id;
+                currentSimulation = '__custom__';
+                
+                // Keep track of current voice selection and update for this conversation
+                currentVoiceId = voiceSelect.value;
+                if (currentConversationId) {
+                    await fetch('/api/update-voice', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            voice_id: currentVoiceId,
+                            conversation_id: currentConversationId
+                        })
+                    });
+                }
+                
+                // Display patient details (excluding illness for UI)
+                if (data.patient_details) {
+                    displayPatientDetails(data.patient_details);
+                }
+                
+                // Clear conversation display for new conversation
+                conversationElement.innerHTML = '';
+                
+                console.log('Custom patient created successfully with conversation ID:', currentConversationId);
+                return true;
+            } else {
+                console.error('Backend error:', data.message);
+                updateStatus(`Error: ${data.message}`);
+                return false;
+            }
+            
+        } catch (error) {
+            console.error('Network error creating custom patient:', error);
+            updateStatus('Network error - please check your connection');
+            return false;
+        }
     }
     
     // Setup microphone access

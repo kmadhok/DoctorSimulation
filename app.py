@@ -91,16 +91,25 @@ def get_available_patient_simulations():
     simulation_files = glob.glob('patient_simulation_*.json')
     return [os.path.basename(f) for f in simulation_files]
 
-def initialize_patient_data(patient_file=None):
+def initialize_patient_data(patient_file=None, custom_data=None):
     global current_patient_simulation
     patient_data = {}
-    if patient_file:
+    
+    if custom_data:
+        # Handle custom patient data passed directly
+        logger.info("Initializing custom patient data")
+        patient_data = custom_data
+        current_patient_simulation = '__custom__'
+        logger.info(f"Custom patient data initialized: {patient_data}")
+    elif patient_file:
+        # Handle file-based patient data
         patient_data = load_patient_simulation(patient_file)
         if patient_data:
             print(f"Patient simulation data loaded successfully from {patient_file}")
             current_patient_simulation = patient_file
         else:
             print("Warning: Failed to load patient simulation data")
+    
     return patient_data
 
 # Use this global variable instead of the one dependent on args
@@ -184,6 +193,20 @@ def select_simulation():
         simulation_file = data['simulation_file']
         logger.info(f"Selecting simulation file: {simulation_file}")
         
+        # Handle custom patient selection (redirect to form, don't create conversation yet)
+        if simulation_file == "__custom__":
+            logger.info("Custom patient selected - frontend will show form")
+            # Don't create conversation yet, that happens when form is submitted
+            # Just acknowledge the selection
+            current_patient_simulation = None
+            patient_data = {}
+            return jsonify({
+                'status': 'success',
+                'message': 'Custom patient selection acknowledged - please fill out the form',
+                'current_simulation': '__custom__',
+                'conversation_id': None  # No conversation created yet
+            })
+        
         # Allow empty simulation file to clear the current simulation
         if simulation_file == "":
             logger.info("Clearing current simulation and voice settings")
@@ -196,7 +219,7 @@ def select_simulation():
                 'message': f'Simulation file {simulation_file} not found'
             }), 404
         else:
-            # Load the selected simulation
+            # Load the selected simulation (file-based)
             logger.info(f"Loading simulation data from: {simulation_file}")
             patient_data = initialize_patient_data(simulation_file)
             
@@ -285,6 +308,128 @@ def update_voice():
         return jsonify({
             'status': 'error',
             'message': f'Error updating voice: {str(e)}'
+        }), 500
+
+@app.route('/api/create-custom-patient', methods=['POST'])
+def create_custom_patient():
+    """Create a new conversation with custom patient data"""
+    global patient_data, current_patient_simulation, current_conversation_id, conversation_history
+    
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({
+                'status': 'error',
+                'message': 'No data provided'
+            }), 400
+        
+        # Validate the data structure
+        if 'type' not in data or data['type'] != 'custom':
+            return jsonify({
+                'status': 'error',
+                'message': 'Invalid data type - expected custom patient data'
+            }), 400
+        
+        if 'patient_details' not in data:
+            return jsonify({
+                'status': 'error',
+                'message': 'Missing patient_details in request'
+            }), 400
+        
+        custom_patient_details = data['patient_details']
+        
+        # Validate required fields
+        required_fields = ['age', 'gender', 'occupation', 'illness']
+        missing_fields = [field for field in required_fields if not custom_patient_details.get(field)]
+        
+        if missing_fields:
+            return jsonify({
+                'status': 'error',
+                'message': f'Missing required fields: {", ".join(missing_fields)}'
+            }), 400
+        
+        # Validate age
+        try:
+            age = int(custom_patient_details['age'])
+            if age < 1 or age > 120:
+                return jsonify({
+                    'status': 'error',
+                    'message': 'Age must be between 1 and 120'
+                }), 400
+        except (ValueError, TypeError):
+            return jsonify({
+                'status': 'error',
+                'message': 'Age must be a valid number'
+            }), 400
+        
+        logger.info(f"Creating custom patient with details: {custom_patient_details}")
+        
+        # Create patient data structure compatible with existing system
+        # Use the default prompt template from existing patient simulations
+        default_prompt_template = """You are a virtual patient in a clinical simulation. You have been assigned the following profile (for your reference only – you must never reveal the diagnosis itself, only describe symptoms):
+
+  • Age: {age}  
+  • Gender: {gender}  
+  • Occupation: {occupation}  
+  • Relevant medical history: {medical_history}  
+  • Underlying illness (secret – do not mention this word or any synonyms): {illness}  
+  • Any recent events or exposures: {recent_exposure}  
+
+Your task:
+When the "Doctor" (the next speaker) asks you questions, respond as a real patient would – describe what hurts, how you feel, when symptoms started, how they've changed, etc. Under no circumstances mention or hint at the diagnosis name.  
+Keep answers concise, natural, and include details like pain quality, timing, triggers, and any self-care you've tried."""
+        
+        # Structure the custom patient data to match file-based patient format
+        patient_data = {
+            'type': 'custom',
+            'prompt_template': default_prompt_template,
+            'patient_details': {
+                'age': str(custom_patient_details['age']),
+                'gender': custom_patient_details['gender'],
+                'occupation': custom_patient_details['occupation'],
+                'medical_history': custom_patient_details.get('medical_history', 'No significant medical history'),
+                'illness': custom_patient_details['illness'],
+                'recent_exposure': custom_patient_details.get('recent_exposure', 'None reported')
+            },
+            'voice_id': 'Fritz-PlayAI'  # Default voice, can be changed later
+        }
+        
+        # Clear conversation history for new patient
+        conversation_history = []
+        
+        # Set current patient simulation to indicate custom patient
+        current_patient_simulation = '__custom__'
+        
+        # Create new conversation with descriptive title
+        title = f"Custom Patient - {custom_patient_details['gender']}, {custom_patient_details['age']}"
+        
+        # Create conversation in database
+        current_conversation_id = create_conversation(title, '__custom__')
+        
+        # Store the custom patient data in the database
+        store_conversation_data(current_conversation_id, 'patient_data', patient_data)
+        
+        logger.info(f"Created custom patient conversation {current_conversation_id} with data: {patient_data}")
+        
+        return jsonify({
+            'status': 'success',
+            'message': 'Custom patient created successfully',
+            'conversation_id': current_conversation_id,
+            'patient_details': {
+                'age': patient_data['patient_details']['age'],
+                'gender': patient_data['patient_details']['gender'],
+                'occupation': patient_data['patient_details']['occupation'],
+                'medical_history': patient_data['patient_details']['medical_history'],
+                'recent_exposure': patient_data['patient_details']['recent_exposure']
+                # Note: illness is intentionally excluded from response for UI display
+            }
+        })
+        
+    except Exception as e:
+        logger.error(f"Error creating custom patient: {str(e)}", exc_info=True)
+        return jsonify({
+            'status': 'error',
+            'message': f'Error creating custom patient: {str(e)}'
         }), 500
 
 @app.route('/process_audio', methods=['POST'])
