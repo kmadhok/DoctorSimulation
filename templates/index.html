@@ -39,6 +39,99 @@
                         <option value="" disabled>Loading simulations...</option>
                     </select>
                 </div>
+                
+                <!-- Custom Patient Form (initially hidden) -->
+                <div id="customPatientForm" class="custom-patient-form" style="display: none;">
+                    <h3>Create Custom Patient</h3>
+                    <form id="customPatientFormFields">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="patientAge">Age <span class="required">*</span></label>
+                                <input 
+                                    type="number" 
+                                    id="patientAge" 
+                                    name="age" 
+                                    min="1" 
+                                    max="120" 
+                                    required 
+                                    placeholder="e.g., 45"
+                                    class="form-control"
+                                >
+                                <div class="error-message" id="ageError"></div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="patientGender">Gender <span class="required">*</span></label>
+                                <select id="patientGender" name="gender" required class="form-control">
+                                    <option value="">Select gender</option>
+                                    <option value="Male">Male</option>
+                                    <option value="Female">Female</option>
+                                    <option value="Non-binary">Non-binary</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                                <div class="error-message" id="genderError"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="patientOccupation">Occupation <span class="required">*</span></label>
+                                <input 
+                                    type="text" 
+                                    id="patientOccupation" 
+                                    name="occupation" 
+                                    required 
+                                    placeholder="e.g., Office manager, Teacher, Retired"
+                                    class="form-control"
+                                >
+                                <div class="error-message" id="occupationError"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="patientMedicalHistory">Medical History</label>
+                            <textarea 
+                                id="patientMedicalHistory" 
+                                name="medical_history" 
+                                rows="3" 
+                                placeholder="e.g., Hypertension controlled with medication, No significant history"
+                                class="form-control"
+                            ></textarea>
+                            <div class="error-message" id="medicalHistoryError"></div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="patientIllness">Current Condition/Symptoms <span class="required">*</span></label>
+                            <textarea 
+                                id="patientIllness" 
+                                name="illness" 
+                                rows="3" 
+                                required 
+                                placeholder="e.g., Migraine, Chest pain, Persistent cough - describe the symptoms the patient should exhibit"
+                                class="form-control"
+                            ></textarea>
+                            <div class="error-message" id="illnessError"></div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="patientRecentExposure">Recent Events or Exposures</label>
+                            <textarea 
+                                id="patientRecentExposure" 
+                                name="recent_exposure" 
+                                rows="2" 
+                                placeholder="e.g., Working long hours with poor lighting, Recent travel, Attended large gathering"
+                                class="form-control"
+                            ></textarea>
+                            <div class="error-message" id="recentExposureError"></div>
+                        </div>
+                        
+                        <div class="form-actions">
+                            <button type="button" id="cancelCustomPatient" class="btn btn-secondary">Cancel</button>
+                            <button type="submit" id="createCustomPatient" class="btn btn-primary">Create Patient</button>
+                        </div>
+                    </form>
+                </div>
+                
                 <div class="voice-selector">
                     <label for="voiceSelect">Select Voice:</label>
                     <select id="voiceSelect">

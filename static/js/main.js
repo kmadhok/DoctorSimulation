@@ -116,6 +116,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     const refreshConversationsBtn = document.getElementById('refreshConversationsBtn');
     const newConversationBtn = document.getElementById('newConversationBtn');
     
+    // Custom Patient Form DOM elements
+    const customPatientForm = document.getElementById('customPatientForm');
+    const customPatientFormFields = document.getElementById('customPatientFormFields');
+    const cancelCustomPatientBtn = document.getElementById('cancelCustomPatient');
+    const createCustomPatientBtn = document.getElementById('createCustomPatient');
+    
     if (autoListenBtn) {
         autoListenBtn.addEventListener('click', async (event) => {
             event.preventDefault();
@@ -234,18 +240,70 @@ document.addEventListener('DOMContentLoaded', async () => {
     voiceSelect.addEventListener('change', handleVoiceChange);
     refreshConversationsBtn.addEventListener('click', loadConversationHistory);
     newConversationBtn.addEventListener('click', createNewConversation);
-    // autoListenBtn.addEventListener('click', async () => {
-    //     if (!stopVAD) {
-    //       updateStatus("Listening…");
-    //       autoListenBtn.classList.add('recording');
-    //       stopVAD = await initAutoVAD();    // starts everything
-    //     } else {
-    //       stopVAD();                        // pauses VAD and closes mic
-    //       stopVAD = null;
-    //       updateStatus("Paused");
-    //       autoListenBtn.classList.remove('recording');
-    //     }
-    //   });
+    
+    // Custom Patient Form Event Listeners
+    if (cancelCustomPatientBtn) {
+        cancelCustomPatientBtn.addEventListener('click', () => {
+            // Reset dropdown to "No simulation" and hide form
+            simulationSelect.value = '';
+            hideCustomPatientForm();
+            updateStatus('Ready');
+        });
+    }
+    
+    if (customPatientFormFields) {
+        customPatientFormFields.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            
+            // Validate form
+            if (!validateCustomPatientForm()) {
+                updateStatus('Please fix the errors in the form');
+                return;
+            }
+            
+            // Show loading state
+            setFormLoading(true);
+            updateStatus('Creating custom patient...');
+            
+            try {
+                // Collect form data
+                const customPatientData = collectCustomPatientData();
+                console.log('Creating custom patient with data:', customPatientData);
+                
+                // TODO: This will be implemented in Step 3 - Backend API
+                // For now, just show success message
+                setTimeout(() => {
+                    updateStatus('Custom patient created! (Backend API coming in next step)');
+                    setFormLoading(false);
+                    // Don't hide form yet - will be handled by backend integration
+                }, 1000);
+                
+            } catch (error) {
+                console.error('Error creating custom patient:', error);
+                updateStatus('Error creating custom patient');
+                setFormLoading(false);
+            }
+        });
+        
+        // Real-time validation feedback
+        const formInputs = customPatientFormFields.querySelectorAll('.form-control');
+        formInputs.forEach(input => {
+            input.addEventListener('blur', () => {
+                // Only validate this specific field on blur
+                validateSingleField(input);
+            });
+            
+            input.addEventListener('input', () => {
+                // Clear error state when user starts typing
+                const fieldName = input.name;
+                const errorElement = document.getElementById(fieldName + 'Error');
+                if (errorElement && errorElement.textContent) {
+                    errorElement.textContent = '';
+                    input.classList.remove('error');
+                }
+            });
+        });
+    }
    
       
     
@@ -553,11 +611,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         
         // Check if custom patient is selected
         if (selectedSimulation === '__custom__') {
-            console.log('Custom patient selected - form will be shown here');
-            statusElement.textContent = 'Custom patient selected';
+            console.log('Custom patient selected - showing form');
+            showCustomPatientForm();
+            statusElement.textContent = 'Create your custom patient';
             patientDetailsPanel.innerHTML = '';
             return;
         }
+        
+        // Hide custom patient form if it was shown
+        hideCustomPatientForm();
         
         try {
             statusElement.textContent = 'Loading simulation...';
@@ -692,6 +754,181 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
         
         patientDetailsPanel.appendChild(detailsList);
+    }
+    
+    // ========== CUSTOM PATIENT FORM FUNCTIONS ==========
+    
+    function showCustomPatientForm() {
+        if (customPatientForm) {
+            customPatientForm.style.display = 'block';
+            customPatientForm.classList.add('show');
+            clearCustomPatientForm(); // Start with a clean form
+        }
+    }
+    
+    function hideCustomPatientForm() {
+        if (customPatientForm) {
+            customPatientForm.style.display = 'none';
+            customPatientForm.classList.remove('show');
+            clearAllErrorMessages();
+        }
+    }
+    
+    function validateCustomPatientForm() {
+        let isValid = true;
+        const errors = {};
+        
+        // Get form data
+        const formData = new FormData(customPatientFormFields);
+        const data = Object.fromEntries(formData.entries());
+        
+        // Age validation
+        const age = parseInt(data.age);
+        if (!data.age || isNaN(age) || age < 1 || age > 120) {
+            errors.age = 'Please enter a valid age between 1 and 120';
+            isValid = false;
+        }
+        
+        // Gender validation
+        if (!data.gender) {
+            errors.gender = 'Please select a gender';
+            isValid = false;
+        }
+        
+        // Occupation validation
+        if (!data.occupation || data.occupation.trim().length < 2) {
+            errors.occupation = 'Please enter an occupation (at least 2 characters)';
+            isValid = false;
+        }
+        
+        // Illness validation (required)
+        if (!data.illness || data.illness.trim().length < 5) {
+            errors.illness = 'Please describe the condition/symptoms (at least 5 characters)';
+            isValid = false;
+        }
+        
+        // Show/hide error messages
+        showFormErrors(errors);
+        
+        return isValid;
+    }
+    
+    function showFormErrors(errors) {
+        // Clear all previous errors
+        clearAllErrorMessages();
+        
+        // Show new errors
+        Object.keys(errors).forEach(fieldName => {
+            const errorElement = document.getElementById(fieldName + 'Error');
+            const inputElement = document.getElementById('patient' + fieldName.charAt(0).toUpperCase() + fieldName.slice(1));
+            
+            if (errorElement) {
+                errorElement.textContent = errors[fieldName];
+            }
+            
+            if (inputElement) {
+                inputElement.classList.add('error');
+            }
+        });
+    }
+    
+    function clearAllErrorMessages() {
+        const errorElements = customPatientForm.querySelectorAll('.error-message');
+        errorElements.forEach(element => {
+            element.textContent = '';
+        });
+        
+        const inputElements = customPatientForm.querySelectorAll('.form-control');
+        inputElements.forEach(element => {
+            element.classList.remove('error');
+        });
+    }
+    
+    function collectCustomPatientData() {
+        const formData = new FormData(customPatientFormFields);
+        const data = Object.fromEntries(formData.entries());
+        
+        // Structure the data to match the expected patient simulation format
+        return {
+            type: 'custom',
+            patient_details: {
+                age: data.age,
+                gender: data.gender,
+                occupation: data.occupation,
+                medical_history: data.medical_history || 'No significant medical history',
+                illness: data.illness,
+                recent_exposure: data.recent_exposure || 'None reported'
+            }
+        };
+    }
+    
+    function clearCustomPatientForm() {
+        if (customPatientFormFields) {
+            customPatientFormFields.reset();
+            clearAllErrorMessages();
+        }
+    }
+    
+    function setFormLoading(isLoading) {
+        const submitBtn = createCustomPatientBtn;
+        const cancelBtn = cancelCustomPatientBtn;
+        
+        if (isLoading) {
+            submitBtn.disabled = true;
+            submitBtn.classList.add('loading');
+            submitBtn.textContent = 'Creating...';
+            cancelBtn.disabled = true;
+        } else {
+            submitBtn.disabled = false;
+            submitBtn.classList.remove('loading');
+            submitBtn.textContent = 'Create Patient';
+            cancelBtn.disabled = false;
+        }
+    }
+    
+    function validateSingleField(input) {
+        const fieldName = input.name;
+        const value = input.value.trim();
+        let error = '';
+        
+        switch (fieldName) {
+            case 'age':
+                const age = parseInt(value);
+                if (!value || isNaN(age) || age < 1 || age > 120) {
+                    error = 'Please enter a valid age between 1 and 120';
+                }
+                break;
+            case 'gender':
+                if (!value) {
+                    error = 'Please select a gender';
+                }
+                break;
+            case 'occupation':
+                if (!value || value.length < 2) {
+                    error = 'Please enter an occupation (at least 2 characters)';
+                }
+                break;
+            case 'illness':
+                if (!value || value.length < 5) {
+                    error = 'Please describe the condition/symptoms (at least 5 characters)';
+                }
+                break;
+            // medical_history and recent_exposure are optional, so no validation needed
+        }
+        
+        // Show/hide error for this field
+        const errorElement = document.getElementById(fieldName + 'Error');
+        if (errorElement) {
+            errorElement.textContent = error;
+        }
+        
+        if (error) {
+            input.classList.add('error');
+        } else {
+            input.classList.remove('error');
+        }
+        
+        return !error;
     }
     
     // Setup microphone access
