@@ -5,3 +5,11 @@ venv/
 env/
 llm_doctor/
 debug_tts_output.mp3
+*.log
+app.log
+test_env/
+llm_new/
+__pycache__/
+*.pyc
+*.pyo
+.DS_Store

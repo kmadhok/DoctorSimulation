@@ -324,9 +324,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             
             if (data.status === 'success') {
                 // Clear loading option
-                // Keep the "No simulation" option and remove all others
-                while (simulationSelect.options.length > 1) {
-                    simulationSelect.remove(1);
+                // Keep the "No simulation" and "Create Custom Patient" options and remove all others
+                while (simulationSelect.options.length > 2) {
+                    simulationSelect.remove(2);
                 }
                 
                 // Add simulations to select
@@ -550,6 +550,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Handle simulation change
     async function handleSimulationChange(event) {
         const selectedSimulation = event.target.value;
+        
+        // Check if custom patient is selected
+        if (selectedSimulation === '__custom__') {
+            console.log('Custom patient selected - form will be shown here');
+            statusElement.textContent = 'Custom patient selected';
+            patientDetailsPanel.innerHTML = '';
+            return;
+        }
         
         try {
             statusElement.textContent = 'Loading simulation...';
