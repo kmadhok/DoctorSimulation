@@ -364,24 +364,9 @@ def create_custom_patient():
         
         logger.info(f"Creating custom patient with details: {custom_patient_details}")
         
-        # Create patient data structure compatible with existing system
-        # Use the default prompt template from existing patient simulations
-        default_prompt_template = """You are a virtual patient in a clinical simulation. You have been assigned the following profile (for your reference only – you must never reveal the diagnosis itself, only describe symptoms):
-
-  • Age: {age}  
-  • Gender: {gender}  
-  • Occupation: {occupation}  
-  • Relevant medical history: {medical_history}  
-  • Underlying illness (secret – do not mention this word or any synonyms): {illness}  
-  • Any recent events or exposures: {recent_exposure}  
-
-Your task:
-When the "Doctor" (the next speaker) asks you questions, respond as a real patient would – describe what hurts, how you feel, when symptoms started, how they've changed, etc. Under no circumstances mention or hint at the diagnosis name.  
-Keep answers concise, natural, and include details like pain quality, timing, triggers, and any self-care you've tried."""
-        
-        # Generate illness based on patient demographics
+        # Generate illness based on patient demographics (synchronous call)
         logger.info("Generating illness for custom patient...")
-        generated_illness = await generate_illness_for_patient(custom_patient_details)
+        generated_illness = generate_illness_for_patient(custom_patient_details)
         
         # Create patient data structure with generated illness
         patient_data = {
@@ -780,7 +765,7 @@ def generate_illness():
         
         # Generate illness based on patient demographics
         logger.info("Generating illness for custom patient...")
-        generated_illness = await generate_illness_for_patient(patient_details)
+        generated_illness = generate_illness_for_patient(patient_details)
         
         return jsonify({
             'status': 'success',
@@ -794,8 +779,8 @@ def generate_illness():
             'message': str(e)
         }), 500
 
-async def generate_illness_for_patient(patient_details):
-    """Generate a realistic illness based on patient demographics"""
+def generate_illness_for_patient(patient_details):
+    """Generate a realistic illness based on patient demographics (synchronous)"""
     
     prompt = f"""Based on the following patient profile, generate a realistic medical condition or illness that this patient could plausibly have. Consider their demographics and risk factors.
 
@@ -821,7 +806,7 @@ CONDITION: Tension headaches
 SYMPTOMS: Throbbing headache, neck stiffness, light sensitivity"""
 
     try:
-        # Use your existing Groq client
+        # Use your existing Groq client (synchronous call)
         response = groq_client.chat.completions.create(
             model="llama-3.1-70b-versatile",
             messages=[{"role": "user", "content": prompt}],
