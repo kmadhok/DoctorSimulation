@@ -339,7 +339,7 @@ def create_custom_patient():
         custom_patient_details = data['patient_details']
         
         # Validate required fields
-        required_fields = ['age', 'gender', 'occupation', 'illness']
+        required_fields = ['age', 'gender', 'occupation']
         missing_fields = [field for field in required_fields if not custom_patient_details.get(field)]
         
         if missing_fields:
@@ -379,7 +379,11 @@ Your task:
 When the "Doctor" (the next speaker) asks you questions, respond as a real patient would – describe what hurts, how you feel, when symptoms started, how they've changed, etc. Under no circumstances mention or hint at the diagnosis name.  
 Keep answers concise, natural, and include details like pain quality, timing, triggers, and any self-care you've tried."""
         
-        # Structure the custom patient data to match file-based patient format
+        # Generate illness based on patient demographics
+        logger.info("Generating illness for custom patient...")
+        generated_illness = await generate_illness_for_patient(custom_patient_details)
+        
+        # Create patient data structure with generated illness
         patient_data = {
             'type': 'custom',
             'prompt_template': default_prompt_template,
@@ -388,10 +392,11 @@ Keep answers concise, natural, and include details like pain quality, timing, tr
                 'gender': custom_patient_details['gender'],
                 'occupation': custom_patient_details['occupation'],
                 'medical_history': custom_patient_details.get('medical_history', 'No significant medical history'),
-                'illness': custom_patient_details['illness'],
+                'illness': generated_illness['full_description'],  # Use generated illness
                 'recent_exposure': custom_patient_details.get('recent_exposure', 'None reported')
             },
-            'voice_id': 'Fritz-PlayAI'  # Default voice, can be changed later
+            'generated_condition': generated_illness,  # Store the structured illness data
+            'voice_id': 'Fritz-PlayAI'
         }
         
         # Clear conversation history for new patient
@@ -421,7 +426,7 @@ Keep answers concise, natural, and include details like pain quality, timing, tr
                 'occupation': patient_data['patient_details']['occupation'],
                 'medical_history': patient_data['patient_details']['medical_history'],
                 'recent_exposure': patient_data['patient_details']['recent_exposure']
-                # Note: illness is intentionally excluded from response for UI display
+                # Note: illness is intentionally excluded from response
             }
         })
         
@@ -758,6 +763,159 @@ def get_current_patient_details():
         'patient_details': details,
         'simulation_file': current_patient_simulation
     })
+
+@app.route('/api/generate-illness', methods=['POST'])
+def generate_illness():
+    """Generate a realistic illness based on patient demographics"""
+    
+    try:
+        data = request.get_json()
+        if not data or 'patient_details' not in data:
+            return jsonify({
+                'status': 'error',
+                'message': 'No patient details provided'
+            }), 400
+        
+        patient_details = data['patient_details']
+        
+        # Generate illness based on patient demographics
+        logger.info("Generating illness for custom patient...")
+        generated_illness = await generate_illness_for_patient(patient_details)
+        
+        return jsonify({
+            'status': 'success',
+            'generated_illness': generated_illness
+        })
+        
+    except Exception as e:
+        logger.error(f"Error generating illness: {e}")
+        return jsonify({
+            'status': 'error',
+            'message': str(e)
+        }), 500
+
+async def generate_illness_for_patient(patient_details):
+    """Generate a realistic illness based on patient demographics"""
+    
+    prompt = f"""Based on the following patient profile, generate a realistic medical condition or illness that this patient could plausibly have. Consider their demographics and risk factors.
+
+Patient Profile:
+- Age: {patient_details['age']}
+- Gender: {patient_details['gender']}
+- Occupation: {patient_details['occupation']}
+- Medical History: {patient_details.get('medical_history', 'No significant history')}
+- Recent Exposures: {patient_details.get('recent_exposure', 'None reported')}
+
+Generate a single, specific medical condition with realistic symptoms that would be appropriate for this patient profile. Consider:
+- Age-related conditions
+- Occupational hazards
+- Gender-specific conditions
+- Medical history implications
+
+Respond with just the condition name and 2-3 key symptoms they would experience, formatted as:
+CONDITION: [condition name]
+SYMPTOMS: [symptom 1], [symptom 2], [symptom 3]
+
+Example:
+CONDITION: Tension headaches
+SYMPTOMS: Throbbing headache, neck stiffness, light sensitivity"""
+
+    try:
+        # Use your existing Groq client
+        response = groq_client.chat.completions.create(
+            model="llama-3.1-70b-versatile",
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.7,
+            max_tokens=200
+        )
+        
+        generated_text = response.choices[0].message.content.strip()
+        
+        # Parse the response
+        lines = generated_text.split('\n')
+        condition = ""
+        symptoms = ""
+        
+        for line in lines:
+            if line.startswith('CONDITION:'):
+                condition = line.replace('CONDITION:', '').strip()
+            elif line.startswith('SYMPTOMS:'):
+                symptoms = line.replace('SYMPTOMS:', '').strip()
+        
+        return {
+            'condition': condition,
+            'symptoms': symptoms,
+            'full_description': f"{condition} - {symptoms}"
+        }
+        
+    except Exception as e:
+        logger.error(f"Error generating illness: {e}")
+        # Fallback to a generic condition
+        return {
+            'condition': 'General fatigue and discomfort',
+            'symptoms': 'Tiredness, mild aches, general malaise',
+            'full_description': 'General fatigue and discomfort - Tiredness, mild aches, general malaise'
+        }
+
+@app.route('/api/submit-diagnosis', methods=['POST'])
+def submit_diagnosis():
+    """Allow the doctor to submit their diagnosis for evaluation"""
+    global current_conversation_id
+    
+    try:
+        data = request.get_json()
+        submitted_diagnosis = data.get('diagnosis', '').strip()
+        
+        if not current_conversation_id:
+            return jsonify({'status': 'error', 'message': 'No active conversation'}), 400
+        
+        # Get the actual condition from the database
+        patient_data = get_conversation_data(current_conversation_id, 'patient_data')
+        if not patient_data or 'generated_condition' not in patient_data:
+            return jsonify({'status': 'error', 'message': 'No patient data found'}), 400
+        
+        actual_condition = patient_data['generated_condition']['condition']
+        
+        # Use LLM to evaluate the diagnosis
+        evaluation = evaluate_diagnosis(submitted_diagnosis, actual_condition)
+        
+        return jsonify({
+            'status': 'success',
+            'actual_condition': actual_condition,
+            'evaluation': evaluation,
+            'submitted_diagnosis': submitted_diagnosis
+        })
+        
+    except Exception as e:
+        logger.error(f"Error submitting diagnosis: {e}")
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+def evaluate_diagnosis(submitted_diagnosis, actual_condition):
+    """Use LLM to evaluate how close the diagnosis is"""
+    prompt = f"""Evaluate how accurate this medical diagnosis is:
+
+Submitted Diagnosis: {submitted_diagnosis}
+Actual Condition: {actual_condition}
+
+Rate the accuracy on a scale of 1-10 and provide brief feedback on:
+1. How close the diagnosis is
+2. What was missed or incorrect
+3. What was correctly identified
+
+Format your response as:
+SCORE: [1-10]
+FEEDBACK: [your evaluation]"""
+
+    try:
+        response = groq_client.chat.completions.create(
+            model="llama-3.1-70b-versatile",
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.3,
+            max_tokens=300
+        )
+        return response.choices[0].message.content.strip()
+    except:
+        return "Unable to evaluate diagnosis at this time."
 
 # Keep the if __name__ == '__main__' block for running the app
 if __name__ == '__main__':
