@@ -35,7 +35,7 @@
                     <label for="simulationSelect">Select Patient Simulation (Optional):</label>
                     <select id="simulationSelect">
                         <option value="">No simulation</option>
-                        <option value="__custom__">Generate AI Patient Case</option>
+                        <option value="__custom__">Create Custom Patient</option>
                         <option value="" disabled>Loading simulations...</option>
                     </select>
                 </div>
@@ -43,104 +43,130 @@
                 <!-- Custom Patient Form (initially hidden) -->
                 <div id="customPatientForm" class="custom-patient-form" style="display: none;">
                     <h3>Generate AI Patient Case</h3>
-                    <p class="form-description">Select a medical specialty and symptoms to generate a realistic patient case with a hidden diagnosis.</p>
+                    <div class="form-description">
+                        <p>Create a realistic medical case by selecting a specialty, symptoms, and patient details. Our AI will generate a comprehensive patient scenario for your simulation.</p>
+                    </div>
+                    
+                    <!-- Loading state -->
+                    <div id="aiGenerationLoading" class="loading-state" style="display: none;">
+                        <div class="spinner"></div>
+                        <p>Generating AI patient case... This may take a few moments.</p>
+                    </div>
+                    
                     <form id="customPatientFormFields">
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="patientAge">Age <span class="required">*</span></label>
-                                <input 
-                                    type="number" 
-                                    id="patientAge" 
-                                    name="age" 
-                                    min="1" 
-                                    max="120" 
-                                    required 
-                                    placeholder="e.g., 45"
-                                    class="form-control"
-                                >
-                                <div class="error-message" id="ageError"></div>
+                        <!-- Patient Demographics Section -->
+                        <div class="form-section">
+                            <h4>Patient Demographics</h4>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="patientAge">Age <span class="required">*</span></label>
+                                    <input 
+                                        type="number" 
+                                        id="patientAge" 
+                                        name="age" 
+                                        min="1" 
+                                        max="120" 
+                                        required 
+                                        placeholder="e.g., 45"
+                                        class="form-control"
+                                    >
+                                    <div class="error-message" id="ageError"></div>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="patientGender">Gender <span class="required">*</span></label>
+                                    <select id="patientGender" name="gender" required class="form-control">
+                                        <option value="">Select gender</option>
+                                        <option value="Male">Male</option>
+                                        <option value="Female">Female</option>
+                                        <option value="Non-binary">Non-binary</option>
+                                        <option value="Other">Other</option>
+                                    </select>
+                                    <div class="error-message" id="genderError"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="patientOccupation">Occupation <span class="required">*</span></label>
+                                    <input 
+                                        type="text" 
+                                        id="patientOccupation" 
+                                        name="occupation" 
+                                        required 
+                                        placeholder="e.g., Office manager, Teacher, Retired"
+                                        class="form-control"
+                                    >
+                                    <div class="error-message" id="occupationError"></div>
+                                </div>
                             </div>
                             
                             <div class="form-group">
-                                <label for="patientGender">Gender <span class="required">*</span></label>
-                                <select id="patientGender" name="gender" required class="form-control">
-                                    <option value="">Select gender</option>
-                                    <option value="Male">Male</option>
-                                    <option value="Female">Female</option>
-                                    <option value="Non-binary">Non-binary</option>
-                                    <option value="Other">Other</option>
-                                </select>
-                                <div class="error-message" id="genderError"></div>
-                            </div>
-                        </div>
-                        
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="patientOccupation">Occupation <span class="required">*</span></label>
-                                <input 
-                                    type="text" 
-                                    id="patientOccupation" 
-                                    name="occupation" 
-                                    required 
-                                    placeholder="e.g., Office manager, Teacher, Retired"
+                                <label for="patientMedicalHistory">Medical History</label>
+                                <textarea 
+                                    id="patientMedicalHistory" 
+                                    name="medical_history" 
+                                    rows="2" 
+                                    placeholder="e.g., Hypertension controlled with medication, No significant history"
                                     class="form-control"
-                                >
-                                <div class="error-message" id="occupationError"></div>
+                                ></textarea>
+                                <div class="error-message" id="medicalHistoryError"></div>
                             </div>
                         </div>
-                        
-                        <div class="form-group">
-                            <label for="medicalSpecialty">Medical Specialty <span class="required">*</span></label>
-                            <select id="medicalSpecialty" name="specialty" required class="form-control">
-                                <option value="">Select specialty</option>
-                                <option value="cardiology">Cardiology</option>
-                                <option value="neurology">Neurology</option>
-                                <option value="orthopedics">Orthopedics</option>
-                                <option value="gastroenterology">Gastroenterology</option>
-                                <option value="respiratory">Respiratory Medicine</option>
-                                <option value="dermatology">Dermatology</option>
-                                <option value="emergency">Emergency Medicine</option>
-                                <option value="endocrinology">Endocrinology</option>
-                                <option value="psychiatry">Psychiatry</option>
-                                <option value="nephrology">Nephrology</option>
-                            </select>
-                            <div class="error-message" id="specialtyError"></div>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label>Presenting Symptoms <span class="required">*</span></label>
-                            <div class="symptom-checkboxes" id="symptomCheckboxes">
-                                <!-- Symptoms will be populated dynamically based on specialty selection -->
-                                <p class="symptom-placeholder">Please select a medical specialty first</p>
+
+                        <!-- Medical Case Generation Section -->
+                        <div class="form-section">
+                            <h4>Medical Case Parameters</h4>
+                            
+                            <!-- Specialty Selection -->
+                            <div class="form-group">
+                                <label for="medicalSpecialty">Medical Specialty <span class="required">*</span></label>
+                                <select id="medicalSpecialty" name="specialty" required class="form-control">
+                                    <option value="">Select medical specialty</option>
+                                    <!-- Options will be populated dynamically -->
+                                </select>
+                                <div class="specialty-description" id="specialtyDescription"></div>
+                                <div class="error-message" id="specialtyError"></div>
                             </div>
-                            <div class="error-message" id="symptomsError"></div>
+
+                            <!-- Dynamic Symptom Selection -->
+                            <div class="form-group">
+                                <label>Presenting Symptoms <span class="required">*</span></label>
+                                <div class="symptoms-info">
+                                    <p id="symptomsInstructions">Select a specialty above to see available symptoms</p>
+                                </div>
+                                <div id="symptomsContainer" class="symptoms-container" style="display: none;">
+                                    <!-- Dynamic symptom checkboxes will be populated here -->
+                                </div>
+                                <div class="error-message" id="symptomsError"></div>
+                            </div>
+
+                            <!-- Severity Selection -->
+                            <div class="form-group">
+                                <label for="symptomSeverity">Symptom Severity <span class="required">*</span></label>
+                                <select id="symptomSeverity" name="severity" required class="form-control">
+                                    <option value="">Select severity level</option>
+                                    <option value="mild">Mild - Symptoms are noticeable but not significantly impacting daily activities</option>
+                                    <option value="moderate">Moderate - Symptoms are affecting daily activities and causing concern</option>
+                                    <option value="severe">Severe - Symptoms are severely limiting function and causing significant distress</option>
+                                </select>
+                                <div class="error-message" id="severityError"></div>
+                            </div>
                         </div>
-                        
-                        <div class="form-group">
-                            <label for="severityLevel">Symptom Severity</label>
-                            <select id="severityLevel" name="severity" class="form-control">
-                                <option value="mild">Mild</option>
-                                <option value="moderate" selected>Moderate</option>
-                                <option value="severe">Severe</option>
-                            </select>
-                            <div class="error-message" id="severityError"></div>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="patientMedicalHistory">Medical History</label>
-                            <textarea 
-                                id="patientMedicalHistory" 
-                                name="medical_history" 
-                                rows="3" 
-                                placeholder="e.g., Hypertension controlled with medication, No significant history"
-                                class="form-control"
-                            ></textarea>
-                            <div class="error-message" id="medicalHistoryError"></div>
-                        </div>
-                        
+
+                        <!-- Form Actions -->
                         <div class="form-actions">
                             <button type="button" id="cancelCustomPatient" class="btn btn-secondary">Cancel</button>
-                            <button type="submit" id="createCustomPatient" class="btn btn-primary">Generate AI Patient</button>
+                            <button type="submit" id="createCustomPatient" class="btn btn-primary">
+                                <span class="button-text">Generate AI Patient Case</span>
+                                <span class="button-spinner" style="display: none;">🔄</span>
+                            </button>
+                        </div>
+                        
+                        <!-- Form Validation Summary -->
+                        <div id="formValidationSummary" class="validation-summary" style="display: none;">
+                            <h5>Please correct the following errors:</h5>
+                            <ul id="validationErrorsList"></ul>
                         </div>
                     </form>
                 </div>
@@ -247,6 +273,318 @@
     onerror="vadLogger.error('DEPS', 'Failed to load main script')">
     </script>
 
+    <!-- Medical Knowledge and Form Management Script -->
+    <script>
+        // Medical knowledge data - will be populated from backend
+        let medicalKnowledge = {
+            specialties: {},
+            all_symptoms: {}
+        };
+
+        // Form state management
+        const formState = {
+            selectedSpecialty: null,
+            selectedSymptoms: [],
+            isLoading: false
+        };
+
+        // Initialize medical knowledge on page load
+        async function initializeMedicalKnowledge() {
+            try {
+                const response = await fetch('/api/medical-knowledge');
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    medicalKnowledge = data;
+                    populateSpecialtySelector();
+                    console.log('Medical knowledge loaded:', medicalKnowledge);
+                } else {
+                    console.error('Failed to load medical knowledge:', data.message);
+                    showFormError('Failed to load medical specialties. Please refresh the page.');
+                }
+            } catch (error) {
+                console.error('Error loading medical knowledge:', error);
+                showFormError('Failed to load medical specialties. Please check your connection and refresh.');
+            }
+        }
+
+        // Populate specialty selector with options
+        function populateSpecialtySelector() {
+            const specialtySelect = document.getElementById('medicalSpecialty');
+            if (!specialtySelect) return;
+
+            // Clear existing options (except the first one)
+            while (specialtySelect.options.length > 1) {
+                specialtySelect.removeChild(specialtySelect.lastChild);
+            }
+
+            // Add specialty options
+            Object.entries(medicalKnowledge.specialties).forEach(([key, specialty]) => {
+                const option = document.createElement('option');
+                option.value = key;
+                option.textContent = specialty.name;
+                option.dataset.description = specialty.description;
+                specialtySelect.appendChild(option);
+            });
+        }
+
+        // Handle specialty selection change
+        function handleSpecialtyChange(event) {
+            const selectedKey = event.target.value;
+            const descriptionDiv = document.getElementById('specialtyDescription');
+            const symptomsContainer = document.getElementById('symptomsContainer');
+            const symptomsInstructions = document.getElementById('symptomsInstructions');
+
+            formState.selectedSpecialty = selectedKey;
+            formState.selectedSymptoms = []; // Reset selected symptoms
+
+            if (selectedKey && medicalKnowledge.specialties[selectedKey]) {
+                const specialty = medicalKnowledge.specialties[selectedKey];
+                
+                // Show specialty description
+                descriptionDiv.textContent = specialty.description;
+                descriptionDiv.style.display = 'block';
+                
+                // Populate symptoms for this specialty
+                populateSymptoms(specialty.symptoms);
+                
+                // Show symptoms container
+                symptomsInstructions.style.display = 'none';
+                symptomsContainer.style.display = 'block';
+            } else {
+                // Clear everything
+                descriptionDiv.textContent = '';
+                descriptionDiv.style.display = 'none';
+                symptomsContainer.style.display = 'none';
+                symptomsInstructions.style.display = 'block';
+                symptomsInstructions.textContent = 'Select a specialty above to see available symptoms';
+            }
+
+            // Clear any previous validation errors
+            clearFieldError('specialtyError');
+            clearFieldError('symptomsError');
+        }
+
+        // Populate symptoms checkboxes for selected specialty
+        function populateSymptoms(symptomKeys) {
+            const container = document.getElementById('symptomsContainer');
+            if (!container) return;
+
+            // Clear existing checkboxes
+            container.innerHTML = '';
+
+            // Create symptom checkboxes
+            symptomKeys.forEach(symptomKey => {
+                const symptomName = medicalKnowledge.all_symptoms[symptomKey] || symptomKey;
+                
+                const checkboxDiv = document.createElement('div');
+                checkboxDiv.className = 'symptom-checkbox';
+                
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.id = `symptom_${symptomKey}`;
+                checkbox.value = symptomKey;
+                checkbox.addEventListener('change', handleSymptomChange);
+                
+                const label = document.createElement('label');
+                label.htmlFor = `symptom_${symptomKey}`;
+                label.textContent = symptomName;
+                
+                checkboxDiv.appendChild(checkbox);
+                checkboxDiv.appendChild(label);
+                container.appendChild(checkboxDiv);
+            });
+
+            // Add instructions
+            if (symptomKeys.length > 0) {
+                const instructionsDiv = document.createElement('div');
+                instructionsDiv.className = 'symptoms-instructions';
+                instructionsDiv.innerHTML = '<small>Select one or more symptoms that the patient should present with:</small>';
+                container.insertBefore(instructionsDiv, container.firstChild);
+            }
+        }
+
+        // Handle symptom checkbox changes
+        function handleSymptomChange(event) {
+            const symptomKey = event.target.value;
+            
+            if (event.target.checked) {
+                if (!formState.selectedSymptoms.includes(symptomKey)) {
+                    formState.selectedSymptoms.push(symptomKey);
+                }
+            } else {
+                formState.selectedSymptoms = formState.selectedSymptoms.filter(s => s !== symptomKey);
+            }
+
+            console.log('Selected symptoms:', formState.selectedSymptoms);
+            
+            // Clear symptoms validation error if at least one selected
+            if (formState.selectedSymptoms.length > 0) {
+                clearFieldError('symptomsError');
+            }
+        }
+
+        // Form validation functions
+        function validateForm() {
+            let isValid = true;
+            const errors = [];
+
+            // Clear previous validation
+            clearAllErrors();
+
+            // Age validation
+            const age = document.getElementById('patientAge').value;
+            if (!age || age < 1 || age > 120) {
+                showFieldError('ageError', 'Age must be between 1 and 120');
+                errors.push('Valid age is required');
+                isValid = false;
+            }
+
+            // Gender validation
+            const gender = document.getElementById('patientGender').value;
+            if (!gender) {
+                showFieldError('genderError', 'Gender selection is required');
+                errors.push('Gender selection is required');
+                isValid = false;
+            }
+
+            // Occupation validation
+            const occupation = document.getElementById('patientOccupation').value.trim();
+            if (!occupation) {
+                showFieldError('occupationError', 'Occupation is required');
+                errors.push('Occupation is required');
+                isValid = false;
+            }
+
+            // Specialty validation
+            if (!formState.selectedSpecialty) {
+                showFieldError('specialtyError', 'Medical specialty selection is required');
+                errors.push('Medical specialty selection is required');
+                isValid = false;
+            }
+
+            // Symptoms validation
+            if (formState.selectedSymptoms.length === 0) {
+                showFieldError('symptomsError', 'At least one symptom must be selected');
+                errors.push('At least one symptom must be selected');
+                isValid = false;
+            }
+
+            // Severity validation
+            const severity = document.getElementById('symptomSeverity').value;
+            if (!severity) {
+                showFieldError('severityError', 'Symptom severity selection is required');
+                errors.push('Symptom severity selection is required');
+                isValid = false;
+            }
+
+            // Show validation summary if there are errors
+            if (!isValid) {
+                showValidationSummary(errors);
+            } else {
+                hideValidationSummary();
+            }
+
+            return isValid;
+        }
+
+        // Validation helper functions
+        function showFieldError(elementId, message) {
+            const errorElement = document.getElementById(elementId);
+            if (errorElement) {
+                errorElement.textContent = message;
+                errorElement.style.display = 'block';
+            }
+        }
+
+        function clearFieldError(elementId) {
+            const errorElement = document.getElementById(elementId);
+            if (errorElement) {
+                errorElement.textContent = '';
+                errorElement.style.display = 'none';
+            }
+        }
+
+        function clearAllErrors() {
+            const errorElements = document.querySelectorAll('.error-message');
+            errorElements.forEach(element => {
+                element.textContent = '';
+                element.style.display = 'none';
+            });
+        }
+
+        function showValidationSummary(errors) {
+            const summaryDiv = document.getElementById('formValidationSummary');
+            const errorsList = document.getElementById('validationErrorsList');
+            
+            if (summaryDiv && errorsList) {
+                errorsList.innerHTML = '';
+                errors.forEach(error => {
+                    const li = document.createElement('li');
+                    li.textContent = error;
+                    errorsList.appendChild(li);
+                });
+                summaryDiv.style.display = 'block';
+                summaryDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+        }
+
+        function hideValidationSummary() {
+            const summaryDiv = document.getElementById('formValidationSummary');
+            if (summaryDiv) {
+                summaryDiv.style.display = 'none';
+            }
+        }
+
+        function showFormError(message) {
+            const symptomsInstructions = document.getElementById('symptomsInstructions');
+            if (symptomsInstructions) {
+                symptomsInstructions.textContent = message;
+                symptomsInstructions.style.color = 'red';
+            }
+        }
+
+        // Loading state management
+        function setLoadingState(isLoading) {
+            formState.isLoading = isLoading;
+            const loadingDiv = document.getElementById('aiGenerationLoading');
+            const formFields = document.getElementById('customPatientFormFields');
+            const submitButton = document.getElementById('createCustomPatient');
+            const buttonText = submitButton?.querySelector('.button-text');
+            const buttonSpinner = submitButton?.querySelector('.button-spinner');
+
+            if (isLoading) {
+                loadingDiv.style.display = 'block';
+                formFields.style.opacity = '0.6';
+                formFields.style.pointerEvents = 'none';
+                if (submitButton) submitButton.disabled = true;
+                if (buttonText) buttonText.style.display = 'none';
+                if (buttonSpinner) buttonSpinner.style.display = 'inline';
+            } else {
+                loadingDiv.style.display = 'none';
+                formFields.style.opacity = '1';
+                formFields.style.pointerEvents = 'auto';
+                if (submitButton) submitButton.disabled = false;
+                if (buttonText) buttonText.style.display = 'inline';
+                if (buttonSpinner) buttonSpinner.style.display = 'none';
+            }
+        }
+
+        // Event listeners setup
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize medical knowledge
+            initializeMedicalKnowledge();
+
+            // Specialty selection change handler
+            const specialtySelect = document.getElementById('medicalSpecialty');
+            if (specialtySelect) {
+                specialtySelect.addEventListener('change', handleSpecialtyChange);
+            }
+
+            // Form submission will be handled in main.js
+            console.log('Medical form management initialized');
+        });
+    </script>
 
 </body>
 </html> 

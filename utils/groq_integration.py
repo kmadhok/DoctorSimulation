@@ -57,8 +57,8 @@ def get_groq_response(input_text, model="llama-3.3-70b-versatile", history=None,
          – Do not assume what the doctor might want next.
 
         Do not provide context unless asked.
-         – If the doctor says "What is your name?", respond with just your name.
-         – If the doctor says "Tell me your symptoms," only list the symptoms — no history or emotions unless prompted.
+         – If the doctor says “What is your name?”, respond with just your name.
+         – If the doctor says “Tell me your symptoms,” only list the symptoms — no history or emotions unless prompted.
 
         Do not break character. Do not act like an assistant or model. You are the patient.
 
@@ -72,10 +72,10 @@ def get_groq_response(input_text, model="llama-3.3-70b-versatile", history=None,
         Patient: Sarah.
 
         Doctor: What do you do for work?
-        Patient: I'm a nurse.
+        Patient: I’m a nurse.
 
         Doctor: Why are you here today?
-        Patient: My stomach's been hurting since last night.
+        Patient: My stomach’s been hurting since last night.
 
         """
         
@@ -107,100 +107,6 @@ def get_groq_response(input_text, model="llama-3.3-70b-versatile", history=None,
         print(f"Unexpected error in get_groq_response: {e}")
         traceback.print_exc()
         return f"Error: Failed to get response from Groq: {str(e)}"
-
-def generate_patient_case(specialty, symptoms, patient_demographics, severity="moderate"):
-    """
-    Generate a realistic medical case using AI based on specialty and symptoms.
-    
-    Args:
-        specialty (str): Medical specialty (e.g., 'cardiology', 'neurology')
-        symptoms (list): List of presenting symptoms
-        patient_demographics (dict): Age, gender, occupation, medical_history
-        severity (str): Symptom severity level
-        
-    Returns:
-        dict: Generated patient case with hidden diagnosis
-    """
-    api_key = os.environ.get("GROQ_API_KEY")
-    if not api_key:
-        return {"error": "GROQ_API_KEY environment variable not set"}
-    
-    try:
-        client = Groq(api_key=api_key)
-        
-        # Create detailed prompt for case generation
-        case_generation_prompt = f"""You are an expert medical educator creating realistic patient simulation cases.
-
-TASK: Generate a complete, medically accurate patient case for {specialty} training.
-
-GIVEN INFORMATION:
-- Medical Specialty: {specialty}
-- Presenting Symptoms: {', '.join(symptoms)}
-- Symptom Severity: {severity}
-- Patient Age: {patient_demographics.get('age', 'Unknown')}
-- Patient Gender: {patient_demographics.get('gender', 'Unknown')}
-- Patient Occupation: {patient_demographics.get('occupation', 'Unknown')}
-- Existing Medical History: {patient_demographics.get('medical_history', 'No significant history')}
-
-REQUIREMENTS:
-1. Choose ONE specific medical diagnosis that realistically explains the given symptoms
-2. Add 2-3 additional relevant symptoms the patient should exhibit (beyond those given)
-3. Create realistic medical history that supports this diagnosis
-4. Describe recent events/exposures that could have triggered or contributed to the condition
-5. Make the case appropriately challenging for medical students/residents
-
-MEDICAL ACCURACY: The case must be clinically sound and realistic. Consider:
-- Age/gender prevalence of the condition
-- Symptom progression and timing
-- Risk factors and triggers
-- Appropriate severity level
-
-RETURN FORMAT: Respond with ONLY a valid JSON object in this exact format:
-{{
-    "diagnosis": "Specific medical diagnosis name",
-    "additional_symptoms": "2-3 additional relevant symptoms the patient should exhibit, described naturally",
-    "medical_history": "Relevant past medical history that supports this case",
-    "recent_exposure": "Recent events, activities, or exposures that contributed to this condition",
-    "severity_explanation": "Brief explanation of why symptoms are {severity} severity"
-}}
-
-Do not include any text outside the JSON object."""
-
-        # Make API call
-        response = client.chat.completions.create(
-            messages=[
-                {"role": "system", "content": "You are a medical education expert. Generate realistic patient cases in valid JSON format only."},
-                {"role": "user", "content": case_generation_prompt}
-            ],
-            model="llama-3.3-70b-versatile",
-            temperature=0.7  # Add some creativity while maintaining medical accuracy
-        )
-        
-        response_text = response.choices[0].message.content.strip()
-        
-        # Parse JSON response
-        try:
-            case_data = json.loads(response_text)
-            
-            # Validate required fields
-            required_fields = ['diagnosis', 'additional_symptoms', 'medical_history', 'recent_exposure']
-            if not all(field in case_data for field in required_fields):
-                return {"error": "Invalid case data generated - missing required fields"}
-            
-            return {
-                "success": True,
-                "case_data": case_data
-            }
-            
-        except json.JSONDecodeError as e:
-            print(f"Error parsing JSON from AI response: {e}")
-            print(f"Raw response: {response_text}")
-            return {"error": f"Failed to parse AI response as JSON: {str(e)}"}
-            
-    except Exception as e:
-        print(f"Error generating patient case: {e}")
-        traceback.print_exc()
-        return {"error": f"Failed to generate patient case: {str(e)}"}
 
 if __name__ == "__main__":
     import argparse

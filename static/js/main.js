@@ -122,106 +122,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     const cancelCustomPatientBtn = document.getElementById('cancelCustomPatient');
     const createCustomPatientBtn = document.getElementById('createCustomPatient');
     
-    // Add new DOM elements for specialty and symptoms
-    const medicalSpecialtySelect = document.getElementById('medicalSpecialty');
-    const symptomCheckboxes = document.getElementById('symptomCheckboxes');
-    
-    // Define symptoms for each specialty
-    const specialtySymptoms = {
-        cardiology: [
-            { value: 'chest_pain', label: 'Chest pain' },
-            { value: 'shortness_breath', label: 'Shortness of breath' },
-            { value: 'palpitations', label: 'Palpitations' },
-            { value: 'fatigue', label: 'Fatigue' },
-            { value: 'dizziness', label: 'Dizziness' },
-            { value: 'leg_swelling', label: 'Leg swelling' },
-            { value: 'irregular_heartbeat', label: 'Irregular heartbeat' }
-        ],
-        neurology: [
-            { value: 'headache', label: 'Headache' },
-            { value: 'dizziness', label: 'Dizziness' },
-            { value: 'weakness', label: 'Weakness' },
-            { value: 'numbness', label: 'Numbness/tingling' },
-            { value: 'memory_problems', label: 'Memory problems' },
-            { value: 'vision_changes', label: 'Vision changes' },
-            { value: 'seizures', label: 'Seizures' },
-            { value: 'speech_problems', label: 'Speech difficulties' }
-        ],
-        orthopedics: [
-            { value: 'joint_pain', label: 'Joint pain' },
-            { value: 'back_pain', label: 'Back pain' },
-            { value: 'muscle_pain', label: 'Muscle pain' },
-            { value: 'stiffness', label: 'Stiffness' },
-            { value: 'limited_mobility', label: 'Limited mobility' },
-            { value: 'swelling', label: 'Swelling' },
-            { value: 'bruising', label: 'Bruising' }
-        ],
-        gastroenterology: [
-            { value: 'abdominal_pain', label: 'Abdominal pain' },
-            { value: 'nausea', label: 'Nausea' },
-            { value: 'vomiting', label: 'Vomiting' },
-            { value: 'diarrhea', label: 'Diarrhea' },
-            { value: 'constipation', label: 'Constipation' },
-            { value: 'bloating', label: 'Bloating' },
-            { value: 'heartburn', label: 'Heartburn' },
-            { value: 'loss_appetite', label: 'Loss of appetite' }
-        ],
-        respiratory: [
-            { value: 'cough', label: 'Cough' },
-            { value: 'shortness_breath', label: 'Shortness of breath' },
-            { value: 'wheezing', label: 'Wheezing' },
-            { value: 'chest_tightness', label: 'Chest tightness' },
-            { value: 'sputum', label: 'Sputum/phlegm' },
-            { value: 'fever', label: 'Fever' },
-            { value: 'night_sweats', label: 'Night sweats' }
-        ],
-        dermatology: [
-            { value: 'rash', label: 'Rash' },
-            { value: 'itching', label: 'Itching' },
-            { value: 'skin_lesions', label: 'Skin lesions' },
-            { value: 'dry_skin', label: 'Dry skin' },
-            { value: 'redness', label: 'Redness' },
-            { value: 'scaling', label: 'Scaling' },
-            { value: 'burning_sensation', label: 'Burning sensation' }
-        ],
-        emergency: [
-            { value: 'severe_pain', label: 'Severe pain' },
-            { value: 'fever', label: 'Fever' },
-            { value: 'difficulty_breathing', label: 'Difficulty breathing' },
-            { value: 'nausea_vomiting', label: 'Nausea/vomiting' },
-            { value: 'dizziness', label: 'Dizziness' },
-            { value: 'confusion', label: 'Confusion' },
-            { value: 'rapid_heartbeat', label: 'Rapid heartbeat' }
-        ],
-        endocrinology: [
-            { value: 'fatigue', label: 'Fatigue' },
-            { value: 'weight_changes', label: 'Weight changes' },
-            { value: 'excessive_thirst', label: 'Excessive thirst' },
-            { value: 'frequent_urination', label: 'Frequent urination' },
-            { value: 'heat_cold_intolerance', label: 'Heat/cold intolerance' },
-            { value: 'mood_changes', label: 'Mood changes' },
-            { value: 'hair_loss', label: 'Hair loss' }
-        ],
-        psychiatry: [
-            { value: 'mood_changes', label: 'Mood changes' },
-            { value: 'anxiety', label: 'Anxiety' },
-            { value: 'depression', label: 'Depression' },
-            { value: 'sleep_problems', label: 'Sleep problems' },
-            { value: 'concentration_problems', label: 'Concentration problems' },
-            { value: 'social_withdrawal', label: 'Social withdrawal' },
-            { value: 'panic_attacks', label: 'Panic attacks' }
-        ],
-        nephrology: [
-            { value: 'urination_changes', label: 'Changes in urination' },
-            { value: 'swelling', label: 'Swelling' },
-            { value: 'fatigue', label: 'Fatigue' },
-            { value: 'nausea', label: 'Nausea' },
-            { value: 'back_pain', label: 'Back pain' },
-            { value: 'high_blood_pressure', label: 'High blood pressure' },
-            { value: 'foamy_urine', label: 'Foamy urine' }
-        ]
-    };
-
     if (autoListenBtn) {
         autoListenBtn.addEventListener('click', async (event) => {
             event.preventDefault();
@@ -351,49 +251,41 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
     
-    // Add event listener for specialty selection
-    if (medicalSpecialtySelect) {
-        medicalSpecialtySelect.addEventListener('change', function() {
-            const selectedSpecialty = this.value;
-            populateSymptoms(selectedSpecialty);
-        });
-    }
-    
     if (customPatientFormFields) {
         customPatientFormFields.addEventListener('submit', async (event) => {
             event.preventDefault();
             
             // Validate form
-            if (!validateAIPatientForm()) {
+            if (!validateCustomPatientForm()) {
                 updateStatus('Please fix the errors in the form');
                 return;
             }
             
             // Show loading state
             setFormLoading(true);
-            updateStatus('Generating AI patient case...');
+            updateStatus('Creating custom patient...');
             
             try {
                 // Collect form data
-                const aiPatientData = collectAIPatientData();
-                console.log('Generating AI patient with data:', aiPatientData);
+                const customPatientData = collectCustomPatientData();
+                console.log('Creating custom patient with data:', customPatientData);
                 
-                // Call the backend API to generate AI patient case
-                const success = await generateAIPatientCase(aiPatientData);
+                // Call the backend API to create custom patient
+                const success = await createCustomPatient(customPatientData);
                 
                 if (success) {
-                    updateStatus('AI patient case generated successfully!');
+                    updateStatus('Custom patient created successfully!');
                     setFormLoading(false);
                     // Hide form and refresh conversation list
                     hideCustomPatientForm();
                     await loadConversationHistory();
                 } else {
-                    updateStatus('Error generating AI patient case');
+                    updateStatus('Error creating custom patient');
                     setFormLoading(false);
                 }
             } catch (error) {
-                console.error('Error generating AI patient case:', error);
-                updateStatus('Error generating AI patient case');
+                console.error('Error creating custom patient:', error);
+                updateStatus('Error creating custom patient');
                 setFormLoading(false);
             }
         });
@@ -403,7 +295,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         formInputs.forEach(input => {
             input.addEventListener('blur', () => {
                 // Only validate this specific field on blur
-                validateSingleFieldAI(input);
+                validateSingleField(input);
             });
             
             input.addEventListener('input', () => {
@@ -634,12 +526,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                     simulationSelect.value = '__custom__';
                     // Hide custom patient form since we're loading an existing conversation
                     hideCustomPatientForm();
-                } else if (data.conversation.simulation_file === '__ai_generated__') {
-                    // AI-generated patient conversation
-                    currentSimulation = '__ai_generated__';
-                    simulationSelect.value = '__custom__'; // Uses same UI option
-                    // Hide custom patient form since we're loading an existing conversation
-                    hideCustomPatientForm();
                 } else if (data.conversation.simulation_file) {
                     // File-based patient simulation
                     currentSimulation = data.conversation.simulation_file;
@@ -737,11 +623,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     async function handleSimulationChange(event) {
         const selectedSimulation = event.target.value;
         
-        // Check if AI patient generation is selected
+        // Check if custom patient is selected
         if (selectedSimulation === '__custom__') {
-            console.log('AI patient generation selected - showing form');
+            console.log('Custom patient selected - showing form');
             showCustomPatientForm();
-            statusElement.textContent = 'Generate your AI patient case';
+            statusElement.textContent = 'Create your custom patient';
             patientDetailsPanel.innerHTML = '';
             return;
         }
@@ -890,7 +776,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (customPatientForm) {
             customPatientForm.style.display = 'block';
             customPatientForm.classList.add('show');
-            clearAIPatientForm(); // Start with a clean form
+            clearCustomPatientForm(); // Start with a clean form
         }
     }
     
@@ -902,29 +788,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
     
-    function populateSymptoms(specialty) {
-        if (!specialty || !specialtySymptoms[specialty]) {
-            symptomCheckboxes.innerHTML = '<p class="symptom-placeholder">Please select a medical specialty first</p>';
-            return;
-        }
-        
-        const symptoms = specialtySymptoms[specialty];
-        let html = '<div class="symptom-grid">';
-        
-        symptoms.forEach(symptom => {
-            html += `
-                <label class="symptom-checkbox">
-                    <input type="checkbox" name="symptoms" value="${symptom.value}">
-                    <span class="symptom-label">${symptom.label}</span>
-                </label>
-            `;
-        });
-        
-        html += '</div>';
-        symptomCheckboxes.innerHTML = html;
-    }
-    
-    function validateAIPatientForm() {
+    function validateCustomPatientForm() {
         let isValid = true;
         const errors = {};
         
@@ -951,16 +815,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             isValid = false;
         }
         
-        // Specialty validation
-        if (!data.specialty) {
-            errors.specialty = 'Please select a medical specialty';
-            isValid = false;
-        }
-        
-        // Symptoms validation
-        const selectedSymptoms = formData.getAll('symptoms');
-        if (selectedSymptoms.length === 0) {
-            errors.symptoms = 'Please select at least one symptom';
+        // Illness validation (required)
+        if (!data.illness || data.illness.trim().length < 5) {
+            errors.illness = 'Please describe the condition/symptoms (at least 5 characters)';
             isValid = false;
         }
         
@@ -968,98 +825,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         showFormErrors(errors);
         
         return isValid;
-    }
-    
-    function validateSingleFieldAI(input) {
-        const fieldName = input.name;
-        const value = input.value.trim();
-        let error = '';
-        
-        switch (fieldName) {
-            case 'age':
-                const age = parseInt(value);
-                if (!value || isNaN(age) || age < 1 || age > 120) {
-                    error = 'Please enter a valid age between 1 and 120';
-                }
-                break;
-            case 'gender':
-                if (!value) {
-                    error = 'Please select a gender';
-                }
-                break;
-            case 'occupation':
-                if (!value || value.length < 2) {
-                    error = 'Please enter an occupation (at least 2 characters)';
-                }
-                break;
-            case 'specialty':
-                if (!value) {
-                    error = 'Please select a medical specialty';
-                }
-                break;
-            // medical_history is optional, so no validation needed
-        }
-        
-        // Show/hide error for this field
-        const errorElement = document.getElementById(fieldName + 'Error');
-        if (errorElement) {
-            errorElement.textContent = error;
-        }
-        
-        if (error) {
-            input.classList.add('error');
-        } else {
-            input.classList.remove('error');
-        }
-        
-        return !error;
-    }
-    
-    function collectAIPatientData() {
-        const formData = new FormData(customPatientFormFields);
-        const data = Object.fromEntries(formData.entries());
-        
-        // Get selected symptoms
-        const selectedSymptoms = formData.getAll('symptoms');
-        
-        // Structure the data for the AI generation API
-        return {
-            age: parseInt(data.age),
-            gender: data.gender,
-            occupation: data.occupation,
-            medical_history: data.medical_history || 'No significant medical history',
-            specialty: data.specialty,
-            symptoms: selectedSymptoms,
-            severity: data.severity || 'moderate'
-        };
-    }
-    
-    function clearAIPatientForm() {
-        if (customPatientFormFields) {
-            customPatientFormFields.reset();
-            // Clear symptoms area
-            if (symptomCheckboxes) {
-                symptomCheckboxes.innerHTML = '<p class="symptom-placeholder">Please select a medical specialty first</p>';
-            }
-            clearAllErrorMessages();
-        }
-    }
-    
-    function setFormLoading(isLoading) {
-        const submitBtn = createCustomPatientBtn;
-        const cancelBtn = cancelCustomPatientBtn;
-        
-        if (isLoading) {
-            submitBtn.disabled = true;
-            submitBtn.classList.add('loading');
-            submitBtn.textContent = 'Creating...';
-            cancelBtn.disabled = true;
-        } else {
-            submitBtn.disabled = false;
-            submitBtn.classList.remove('loading');
-            submitBtn.textContent = 'Create Patient';
-            cancelBtn.disabled = false;
-        }
     }
     
     function showFormErrors(errors) {
@@ -1093,16 +858,103 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
     
-    async function generateAIPatientCase(aiPatientData) {
+    function collectCustomPatientData() {
+        const formData = new FormData(customPatientFormFields);
+        const data = Object.fromEntries(formData.entries());
+        
+        // Structure the data to match the expected patient simulation format
+        return {
+            type: 'custom',
+            patient_details: {
+                age: data.age,
+                gender: data.gender,
+                occupation: data.occupation,
+                medical_history: data.medical_history || 'No significant medical history',
+                illness: data.illness,
+                recent_exposure: data.recent_exposure || 'None reported'
+            }
+        };
+    }
+    
+    function clearCustomPatientForm() {
+        if (customPatientFormFields) {
+            customPatientFormFields.reset();
+            clearAllErrorMessages();
+        }
+    }
+    
+    function setFormLoading(isLoading) {
+        const submitBtn = createCustomPatientBtn;
+        const cancelBtn = cancelCustomPatientBtn;
+        
+        if (isLoading) {
+            submitBtn.disabled = true;
+            submitBtn.classList.add('loading');
+            submitBtn.textContent = 'Creating...';
+            cancelBtn.disabled = true;
+        } else {
+            submitBtn.disabled = false;
+            submitBtn.classList.remove('loading');
+            submitBtn.textContent = 'Create Patient';
+            cancelBtn.disabled = false;
+        }
+    }
+    
+    function validateSingleField(input) {
+        const fieldName = input.name;
+        const value = input.value.trim();
+        let error = '';
+        
+        switch (fieldName) {
+            case 'age':
+                const age = parseInt(value);
+                if (!value || isNaN(age) || age < 1 || age > 120) {
+                    error = 'Please enter a valid age between 1 and 120';
+                }
+                break;
+            case 'gender':
+                if (!value) {
+                    error = 'Please select a gender';
+                }
+                break;
+            case 'occupation':
+                if (!value || value.length < 2) {
+                    error = 'Please enter an occupation (at least 2 characters)';
+                }
+                break;
+            case 'illness':
+                if (!value || value.length < 5) {
+                    error = 'Please describe the condition/symptoms (at least 5 characters)';
+                }
+                break;
+            // medical_history and recent_exposure are optional, so no validation needed
+        }
+        
+        // Show/hide error for this field
+        const errorElement = document.getElementById(fieldName + 'Error');
+        if (errorElement) {
+            errorElement.textContent = error;
+        }
+        
+        if (error) {
+            input.classList.add('error');
+        } else {
+            input.classList.remove('error');
+        }
+        
+        return !error;
+    }
+    
+    async function createCustomPatient(customPatientData) {
         try {
-            console.log('Sending AI patient data to backend:', aiPatientData);
+            console.log('Sending custom patient data to backend:', customPatientData);
             
-            const response = await fetch('/api/generate-patient-case', {
+            const response = await fetch('/api/create-custom-patient', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify(aiPatientData)
+                body: JSON.stringify(customPatientData)
             });
             
             const data = await response.json();
@@ -1111,7 +963,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (data.status === 'success') {
                 // Update global state
                 currentConversationId = data.conversation_id;
-                currentSimulation = '__ai_generated__';
+                currentSimulation = '__custom__';
                 
                 // Keep track of current voice selection and update for this conversation
                 currentVoiceId = voiceSelect.value;
@@ -1128,15 +980,15 @@ document.addEventListener('DOMContentLoaded', async () => {
                     });
                 }
                 
-                // Display patient details (excluding diagnosis for UI)
+                // Display patient details (excluding illness for UI)
                 if (data.patient_details) {
-                    displayAIPatientDetails(data.patient_details);
+                    displayPatientDetails(data.patient_details);
                 }
                 
                 // Clear conversation display for new conversation
                 conversationElement.innerHTML = '';
                 
-                console.log('AI patient case generated successfully with conversation ID:', currentConversationId);
+                console.log('Custom patient created successfully with conversation ID:', currentConversationId);
                 return true;
             } else {
                 console.error('Backend error:', data.message);
@@ -1145,57 +997,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
             
         } catch (error) {
-            console.error('Network error generating AI patient case:', error);
+            console.error('Network error creating custom patient:', error);
             updateStatus('Network error - please check your connection');
             return false;
         }
-    }
-    
-    function displayAIPatientDetails(details) {
-        patientDetailsPanel.innerHTML = '<h3>AI-Generated Patient Details</h3>';
-        
-        if (!details || Object.keys(details).length === 0) {
-            patientDetailsPanel.innerHTML += '<p>No patient details available</p>';
-            return;
-        }
-        
-        const detailsList = document.createElement('ul');
-        
-        // Display fields in a specific order for AI patients
-        const fieldsToDisplay = {
-            'age': 'Age',
-            'gender': 'Gender',
-            'occupation': 'Occupation',
-            'specialty': 'Medical Specialty',
-            'presenting_symptoms': 'Presenting Symptoms',
-            'severity': 'Symptom Severity',
-            'medical_history': 'Medical History',
-            'recent_exposure': 'Recent Events/Exposures'
-        };
-        
-        for (const [key, label] of Object.entries(fieldsToDisplay)) {
-            if (details[key]) {
-                const item = document.createElement('li');
-                
-                // Special formatting for presenting symptoms
-                if (key === 'presenting_symptoms' && Array.isArray(details[key])) {
-                    const symptomList = details[key].map(s => s.replace('_', ' ')).join(', ');
-                    item.innerHTML = `<strong>${label}:</strong> ${symptomList}`;
-                } else {
-                    item.innerHTML = `<strong>${label}:</strong> ${details[key]}`;
-                }
-                
-                detailsList.appendChild(item);
-            }
-        }
-        
-        patientDetailsPanel.appendChild(detailsList);
-        
-        // Add note about hidden diagnosis
-        const note = document.createElement('p');
-        note.className = 'ai-note';
-        note.innerHTML = '<strong>Note:</strong> The specific diagnosis has been generated by AI and is hidden. Try to determine the condition through conversation!';
-        patientDetailsPanel.appendChild(note);
     }
     
     // Setup microphone access
