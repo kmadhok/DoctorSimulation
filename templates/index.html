@@ -35,14 +35,15 @@
                     <label for="simulationSelect">Select Patient Simulation (Optional):</label>
                     <select id="simulationSelect">
                         <option value="">No simulation</option>
-                        <option value="__custom__">Create Custom Patient</option>
+                        <option value="__custom__">Generate AI Patient Case</option>
                         <option value="" disabled>Loading simulations...</option>
                     </select>
                 </div>
                 
                 <!-- Custom Patient Form (initially hidden) -->
                 <div id="customPatientForm" class="custom-patient-form" style="display: none;">
-                    <h3>Create Custom Patient</h3>
+                    <h3>Generate AI Patient Case</h3>
+                    <p class="form-description">Select a medical specialty and symptoms to generate a realistic patient case with a hidden diagnosis.</p>
                     <form id="customPatientFormFields">
                         <div class="form-row">
                             <div class="form-group">
@@ -89,6 +90,43 @@
                         </div>
                         
                         <div class="form-group">
+                            <label for="medicalSpecialty">Medical Specialty <span class="required">*</span></label>
+                            <select id="medicalSpecialty" name="specialty" required class="form-control">
+                                <option value="">Select specialty</option>
+                                <option value="cardiology">Cardiology</option>
+                                <option value="neurology">Neurology</option>
+                                <option value="orthopedics">Orthopedics</option>
+                                <option value="gastroenterology">Gastroenterology</option>
+                                <option value="respiratory">Respiratory Medicine</option>
+                                <option value="dermatology">Dermatology</option>
+                                <option value="emergency">Emergency Medicine</option>
+                                <option value="endocrinology">Endocrinology</option>
+                                <option value="psychiatry">Psychiatry</option>
+                                <option value="nephrology">Nephrology</option>
+                            </select>
+                            <div class="error-message" id="specialtyError"></div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Presenting Symptoms <span class="required">*</span></label>
+                            <div class="symptom-checkboxes" id="symptomCheckboxes">
+                                <!-- Symptoms will be populated dynamically based on specialty selection -->
+                                <p class="symptom-placeholder">Please select a medical specialty first</p>
+                            </div>
+                            <div class="error-message" id="symptomsError"></div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="severityLevel">Symptom Severity</label>
+                            <select id="severityLevel" name="severity" class="form-control">
+                                <option value="mild">Mild</option>
+                                <option value="moderate" selected>Moderate</option>
+                                <option value="severe">Severe</option>
+                            </select>
+                            <div class="error-message" id="severityError"></div>
+                        </div>
+                        
+                        <div class="form-group">
                             <label for="patientMedicalHistory">Medical History</label>
                             <textarea 
                                 id="patientMedicalHistory" 
@@ -100,34 +138,9 @@
                             <div class="error-message" id="medicalHistoryError"></div>
                         </div>
                         
-                        <div class="form-group">
-                            <label for="patientIllness">Current Condition/Symptoms <span class="required">*</span></label>
-                            <textarea 
-                                id="patientIllness" 
-                                name="illness" 
-                                rows="3" 
-                                required 
-                                placeholder="e.g., Migraine, Chest pain, Persistent cough - describe the symptoms the patient should exhibit"
-                                class="form-control"
-                            ></textarea>
-                            <div class="error-message" id="illnessError"></div>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="patientRecentExposure">Recent Events or Exposures</label>
-                            <textarea 
-                                id="patientRecentExposure" 
-                                name="recent_exposure" 
-                                rows="2" 
-                                placeholder="e.g., Working long hours with poor lighting, Recent travel, Attended large gathering"
-                                class="form-control"
-                            ></textarea>
-                            <div class="error-message" id="recentExposureError"></div>
-                        </div>
-                        
                         <div class="form-actions">
                             <button type="button" id="cancelCustomPatient" class="btn btn-secondary">Cancel</button>
-                            <button type="submit" id="createCustomPatient" class="btn btn-primary">Create Patient</button>
+                            <button type="submit" id="createCustomPatient" class="btn btn-primary">Generate AI Patient</button>
                         </div>
                     </form>
                 </div>

@@ -432,6 +432,165 @@ Keep answers concise, natural, and include details like pain quality, timing, tr
             'message': f'Error creating custom patient: {str(e)}'
         }), 500
 
+@app.route('/api/generate-patient-case', methods=['POST'])
+def generate_patient_case():
+    """Generate a new patient case using AI based on specialty and symptoms"""
+    global patient_data, current_patient_simulation, current_conversation_id, conversation_history
+    
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({
+                'status': 'error',
+                'message': 'No data provided'
+            }), 400
+        
+        # Validate required fields
+        required_fields = ['age', 'gender', 'occupation', 'specialty', 'symptoms']
+        missing_fields = [field for field in required_fields if not data.get(field)]
+        
+        if missing_fields:
+            return jsonify({
+                'status': 'error',
+                'message': f'Missing required fields: {", ".join(missing_fields)}'
+            }), 400
+        
+        # Validate age
+        try:
+            age = int(data['age'])
+            if age < 1 or age > 120:
+                return jsonify({
+                    'status': 'error',
+                    'message': 'Age must be between 1 and 120'
+                }), 400
+        except (ValueError, TypeError):
+            return jsonify({
+                'status': 'error',
+                'message': 'Age must be a valid number'
+            }), 400
+        
+        # Validate symptoms (should be a list)
+        symptoms = data.get('symptoms', [])
+        if not isinstance(symptoms, list) or len(symptoms) == 0:
+            return jsonify({
+                'status': 'error',
+                'message': 'At least one symptom must be selected'
+            }), 400
+        
+        logger.info(f"Generating AI patient case: specialty={data['specialty']}, symptoms={symptoms}")
+        
+        # Import and use the AI generation function
+        from utils.groq_integration import generate_patient_case as ai_generate_case
+        
+        # Prepare patient demographics for AI
+        patient_demographics = {
+            'age': str(age),
+            'gender': data['gender'],
+            'occupation': data['occupation'],
+            'medical_history': data.get('medical_history', 'No significant medical history')
+        }
+        
+        # Generate case using AI
+        generation_result = ai_generate_case(
+            specialty=data['specialty'],
+            symptoms=symptoms,
+            patient_demographics=patient_demographics,
+            severity=data.get('severity', 'moderate')
+        )
+        
+        if not generation_result.get('success'):
+            logger.error(f"AI case generation failed: {generation_result.get('error')}")
+            return jsonify({
+                'status': 'error',
+                'message': f"Failed to generate patient case: {generation_result.get('error', 'Unknown error')}"
+            }), 500
+        
+        case_data = generation_result['case_data']
+        logger.info(f"AI generated case data: {case_data}")
+        
+        # Use the same prompt template as custom patients
+        default_prompt_template = """You are a virtual patient in a clinical simulation. You have been assigned the following profile (for your reference only – you must never reveal the diagnosis itself, only describe symptoms):
+
+  • Age: {age}  
+  • Gender: {gender}  
+  • Occupation: {occupation}  
+  • Relevant medical history: {medical_history}  
+  • Underlying illness (secret – do not mention this word or any synonyms): {illness}  
+  • Any recent events or exposures: {recent_exposure}  
+
+Your task:
+When the "Doctor" (the next speaker) asks you questions, respond as a real patient would – describe what hurts, how you feel, when symptoms started, how they've changed, etc. Under no circumstances mention or hint at the diagnosis name.  
+Keep answers concise, natural, and include details like pain quality, timing, triggers, and any self-care you've tried."""
+        
+        # Combine user-provided symptoms with AI-generated additional symptoms
+        all_symptoms_description = f"Presenting symptoms: {', '.join(symptoms)}. {case_data['additional_symptoms']}"
+        
+        # Structure the AI-generated patient data
+        patient_data = {
+            'type': 'ai_generated',
+            'prompt_template': default_prompt_template,
+            'patient_details': {
+                'age': str(age),
+                'gender': data['gender'],
+                'occupation': data['occupation'],
+                'medical_history': case_data['medical_history'],
+                'illness': case_data['diagnosis'],  # Hidden from user
+                'recent_exposure': case_data['recent_exposure'],
+                'specialty': data['specialty'],
+                'presenting_symptoms': symptoms,
+                'additional_symptoms': case_data['additional_symptoms'],
+                'severity': data.get('severity', 'moderate'),
+                'all_symptoms': all_symptoms_description
+            },
+            'voice_id': 'Fritz-PlayAI',  # Default voice
+            'generation_metadata': {
+                'generated_at': datetime.now().isoformat(),
+                'severity_explanation': case_data.get('severity_explanation', '')
+            }
+        }
+        
+        # Clear conversation history for new patient
+        conversation_history = []
+        
+        # Set current patient simulation to indicate AI-generated patient
+        current_patient_simulation = '__ai_generated__'
+        
+        # Create new conversation with descriptive title
+        title = f"AI Case - {data['specialty'].title()} - {data['gender']}, {age}"
+        
+        # Create conversation in database
+        current_conversation_id = create_conversation(title, '__ai_generated__')
+        
+        # Store the AI-generated patient data in the database
+        store_conversation_data(current_conversation_id, 'patient_data', patient_data)
+        
+        logger.info(f"Created AI-generated patient conversation {current_conversation_id}")
+        
+        # Return patient details (excluding the diagnosis for UI display)
+        return jsonify({
+            'status': 'success',
+            'message': 'AI patient case generated successfully',
+            'conversation_id': current_conversation_id,
+            'patient_details': {
+                'age': patient_data['patient_details']['age'],
+                'gender': patient_data['patient_details']['gender'],
+                'occupation': patient_data['patient_details']['occupation'],
+                'medical_history': patient_data['patient_details']['medical_history'],
+                'recent_exposure': patient_data['patient_details']['recent_exposure'],
+                'specialty': patient_data['patient_details']['specialty'],
+                'presenting_symptoms': patient_data['patient_details']['presenting_symptoms'],
+                'severity': patient_data['patient_details']['severity']
+                # Note: diagnosis and additional_symptoms are intentionally excluded
+            }
+        })
+        
+    except Exception as e:
+        logger.error(f"Error generating AI patient case: {str(e)}", exc_info=True)
+        return jsonify({
+            'status': 'error',
+            'message': f'Error generating AI patient case: {str(e)}'
+        }), 500
+
 @app.route('/process_audio', methods=['POST'])
 def process_audio():
     """
