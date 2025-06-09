@@ -528,6 +528,18 @@ def generate_patient_case(specialty: str, symptoms: List[str], demographics: Dic
             json_text = ai_response[json_start:json_end]
             case_data = json.loads(json_text)
             
+            # ✅ ADD TYPE CHECKING: Ensure case_data is a dictionary
+            if not isinstance(case_data, dict):
+                logger.error(f"AI response is not a dictionary. Got type: {type(case_data)}, value: {case_data}")
+                return {
+                    "status": "error",
+                    "message": f"AI returned invalid data type: expected dict, got {type(case_data).__name__}",
+                    "raw_response": ai_response
+                }
+            
+            # ✅ ADD LOGGING: Log the parsed structure for debugging
+            logger.info(f"Successfully parsed AI response. Keys: {list(case_data.keys())}")
+            
         except (json.JSONDecodeError, ValueError) as parse_error:
             logger.error(f"Error parsing AI response as JSON: {parse_error}")
             logger.error(f"AI response was: {ai_response}")
@@ -547,10 +559,11 @@ def generate_patient_case(specialty: str, symptoms: List[str], demographics: Dic
                 "case_data": case_data
             }
         
-        # Build final patient data structure
-        patient_data = {
-            'type': 'ai_generated',
-            'prompt_template': """You are a virtual patient in a clinical simulation. You have been assigned the following profile (for your reference only – you must never reveal the diagnosis itself, only describe symptoms):
+        # ✅ SAFER DICTIONARY ACCESS: Build final patient data structure with safe access
+        try:
+            patient_data = {
+                'type': 'ai_generated',
+                'prompt_template': """You are a virtual patient in a clinical simulation. You have been assigned the following profile (for your reference only – you must never reveal the diagnosis itself, only describe symptoms):
 
   • Age: {age}  
   • Gender: {gender}  
@@ -565,39 +578,48 @@ Keep answers concise, natural, and include details like pain quality, timing, tr
 
 Additional symptoms you should exhibit: {additional_symptoms}
 How you should present: {patient_presentation}""",
-            'patient_details': {
-                'age': str(demographics.get('age')),
-                'gender': demographics.get('gender'),
-                'occupation': demographics.get('occupation'),
-                'medical_history': case_data['medical_history'],
-                'illness': case_data['diagnosis'],  # Hidden from user
-                'recent_exposure': case_data['recent_exposure'],
-                'additional_symptoms': case_data['additional_symptoms'],
-                'patient_presentation': case_data['patient_presentation']
-            },
-            'generation_metadata': {
-                'specialty': specialty,
-                'input_symptoms': symptoms,
-                'severity': severity,
-                'difficulty_level': case_data.get('difficulty_level'),
-                'learning_objectives': case_data.get('learning_objectives', []),
-                'differential_diagnoses': case_data.get('differential_diagnoses', []),
-                'clinical_notes': case_data.get('clinical_notes'),
-                'generation_warnings': warnings
-            },
-            'voice_id': 'Fritz-PlayAI'  # Default voice
-        }
+                'patient_details': {
+                    'age': str(demographics.get('age', 'Unknown')),
+                    'gender': demographics.get('gender', 'Unknown'),
+                    'occupation': demographics.get('occupation', 'Unknown'),
+                    'medical_history': case_data.get('medical_history', 'No significant medical history'),
+                    'illness': case_data.get('diagnosis', 'Unknown condition'),  # Hidden from user
+                    'recent_exposure': case_data.get('recent_exposure', 'None reported'),
+                    'additional_symptoms': case_data.get('additional_symptoms', 'See presenting symptoms'),
+                    'patient_presentation': case_data.get('patient_presentation', 'Patient presents with symptoms as described')
+                },
+                'generation_metadata': {
+                    'specialty': specialty,
+                    'input_symptoms': symptoms,
+                    'severity': severity,
+                    'difficulty_level': case_data.get('difficulty_level', 'intermediate'),
+                    'learning_objectives': case_data.get('learning_objectives', []),
+                    'differential_diagnoses': case_data.get('differential_diagnoses', []),
+                    'clinical_notes': case_data.get('clinical_notes', ''),
+                    'generation_warnings': warnings
+                },
+                'voice_id': 'Fritz-PlayAI'  # Default voice
+            }
+        except Exception as build_error:
+            logger.error(f"Error building patient data structure: {build_error}")
+            logger.error(f"case_data type: {type(case_data)}, content: {case_data}")
+            return {
+                "status": "error",
+                "message": f"Error building patient data: {str(build_error)}",
+                "case_data": case_data
+            }
         
         # Log successful generation
-        logger.info(f"Successfully generated case: {case_data['diagnosis']} for {demographics.get('gender', 'unknown')}, {demographics.get('age', 'unknown')} in {specialty}")
+        diagnosis = case_data.get('diagnosis', 'Unknown')
+        logger.info(f"Successfully generated case: {diagnosis} for {demographics.get('gender', 'unknown')}, {demographics.get('age', 'unknown')} in {specialty}")
         
         return {
             "status": "success",
             "patient_data": patient_data,
             "warnings": warnings,
             "case_summary": {
-                "diagnosis": case_data['diagnosis'],
-                "difficulty": case_data.get('difficulty_level'),
+                "diagnosis": diagnosis,
+                "difficulty": case_data.get('difficulty_level', 'intermediate'),
                 "learning_objectives": case_data.get('learning_objectives', [])
             }
         }
