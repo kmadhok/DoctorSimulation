@@ -6,13 +6,24 @@ from typing import Dict, List, Optional, Tuple
 from groq import Groq
 from dotenv import load_dotenv
 
+# Import the new medical validation system
+from .medical_validation import MedicalValidationSystem
+
 # Initialize logger
 logger = logging.getLogger(__name__)
 
 # Load environment variables
 load_dotenv()
 
-# Medical Knowledge Base
+# Initialize global medical validation system
+try:
+    medical_validator = MedicalValidationSystem()
+    logger.info("Medical validation system initialized successfully")
+except Exception as e:
+    logger.error(f"Failed to initialize medical validation system: {e}")
+    medical_validator = None
+
+# Legacy constants for backward compatibility (deprecated - use medical_validation.py instead)
 MEDICAL_SPECIALTIES = {
     "cardiology": {
         "name": "Cardiology",
@@ -86,6 +97,7 @@ MEDICAL_SPECIALTIES = {
     }
 }
 
+# Legacy symptom mapping (deprecated - use medical_validation.py instead)
 SYMPTOM_TO_SPECIALTY_MAPPING = {
     # Cardiology symptoms
     "chest_pain": ["cardiology", "emergency"],
@@ -145,6 +157,7 @@ SYMPTOM_TO_SPECIALTY_MAPPING = {
     "high_blood_pressure": ["cardiology"]
 }
 
+# Legacy severity modifiers (deprecated - use medical_validation.py instead)
 SEVERITY_MODIFIERS = {
     "mild": {
         "description": "Symptoms are noticeable but not significantly impacting daily activities",
@@ -166,6 +179,7 @@ SEVERITY_MODIFIERS = {
 def validate_symptom_specialty_combination(specialty: str, symptoms: List[str]) -> Tuple[bool, List[str]]:
     """
     Validate that the selected symptoms are appropriate for the chosen specialty.
+    Now uses the comprehensive medical validation system.
     
     Args:
         specialty (str): Selected medical specialty
@@ -174,6 +188,14 @@ def validate_symptom_specialty_combination(specialty: str, symptoms: List[str]) 
     Returns:
         Tuple[bool, List[str]]: (is_valid, list_of_warnings)
     """
+    if medical_validator:
+        try:
+            return medical_validator.validate_symptom_specialty_combination(specialty, symptoms)
+        except Exception as e:
+            logger.error(f"Error in medical validation system: {e}")
+            # Fall back to legacy validation
+    
+    # Legacy validation fallback
     warnings = []
     
     if specialty not in MEDICAL_SPECIALTIES:
@@ -197,21 +219,12 @@ def validate_symptom_specialty_combination(specialty: str, symptoms: List[str]) 
     if not specialty_appropriate_symptoms:
         return False, warnings + ["No symptoms are appropriate for the selected specialty"]
     
-    # Check for contradictory symptoms (can be expanded)
-    contradictory_pairs = [
-        ("diarrhea", "constipation"),
-        ("high_blood_pressure", "low_blood_pressure")
-    ]
-    
-    for symptom1, symptom2 in contradictory_pairs:
-        if symptom1 in symptoms and symptom2 in symptoms:
-            warnings.append(f"Contradictory symptoms: {symptom1} and {symptom2}")
-    
     return True, warnings
 
 def validate_demographics_for_specialty(specialty: str, age: int, gender: str) -> Tuple[bool, List[str]]:
     """
-    Validate demographics against typical patterns for the specialty.
+    Validate that patient demographics are appropriate for the specialty.
+    Now uses the comprehensive medical validation system.
     
     Args:
         specialty (str): Medical specialty
@@ -221,23 +234,38 @@ def validate_demographics_for_specialty(specialty: str, age: int, gender: str) -
     Returns:
         Tuple[bool, List[str]]: (is_valid, list_of_warnings)
     """
+    if medical_validator:
+        try:
+            return medical_validator.validate_age_appropriate_conditions(specialty, age, 'moderate')
+        except Exception as e:
+            logger.error(f"Error in medical validation system: {e}")
+            # Fall back to legacy validation
+    
+    # Legacy validation fallback
     warnings = []
+    
+    if not (1 <= age <= 120):
+        return False, [f"Invalid age: {age}. Must be between 1 and 120."]
+    
+    if gender not in ['male', 'female', 'other']:
+        warnings.append(f"Unusual gender value: {gender}")
     
     if specialty not in MEDICAL_SPECIALTIES:
         return False, [f"Invalid specialty: {specialty}"]
     
-    # Age validation (just warnings, not hard failures)
-    specialty_data = MEDICAL_SPECIALTIES[specialty]
-    age_ranges = specialty_data.get("typical_age_ranges", {})
+    # Check age appropriateness for specialty
+    specialty_info = MEDICAL_SPECIALTIES[specialty]
+    age_ranges = specialty_info.get("typical_age_ranges", {})
     
-    is_age_typical = False
+    # Determine if age is typical for this specialty
+    age_appropriate = False
     for age_group, (min_age, max_age) in age_ranges.items():
         if min_age <= age <= max_age:
-            is_age_typical = True
+            age_appropriate = True
             break
     
-    if not is_age_typical:
-        warnings.append(f"Age {age} is atypical for {specialty} cases (consider age-appropriate conditions)")
+    if not age_appropriate:
+        warnings.append(f"Age {age} is less common for {specialty} cases")
     
     return True, warnings
 
@@ -360,6 +388,7 @@ def validate_ai_response(response_data: Dict) -> Tuple[bool, List[str]]:
 def generate_patient_case(specialty: str, symptoms: List[str], demographics: Dict, severity: str) -> Dict:
     """
     Generate a comprehensive patient case using AI based on specialty, symptoms, and demographics.
+    Now uses the comprehensive medical validation system.
     
     Args:
         specialty (str): Medical specialty (e.g., "cardiology", "neurology")
@@ -373,22 +402,63 @@ def generate_patient_case(specialty: str, symptoms: List[str], demographics: Dic
     logger.info(f"Generating patient case for specialty: {specialty}, symptoms: {symptoms}, severity: {severity}")
     
     try:
-        # Input validation
-        validation_result, warnings = validate_symptom_specialty_combination(specialty, symptoms)
-        if not validation_result:
-            error_msg = f"Invalid input combination: {', '.join(warnings)}"
-            logger.error(error_msg)
-            return {
-                "status": "error",
-                "message": error_msg,
-                "warnings": warnings
-            }
-        
-        # Demographics validation
-        age = int(demographics.get('age', 0))
-        gender = demographics.get('gender', '')
-        demo_valid, demo_warnings = validate_demographics_for_specialty(specialty, age, gender)
-        warnings.extend(demo_warnings)
+        # Use comprehensive validation if available
+        if medical_validator:
+            try:
+                age = int(demographics.get('age', 0))
+                gender = demographics.get('gender', '')
+                
+                validation_result = medical_validator.comprehensive_validation(
+                    specialty, symptoms, age, gender, severity
+                )
+                
+                if not validation_result['is_valid']:
+                    error_msg = f"Validation failed: {', '.join(validation_result['errors'])}"
+                    logger.error(error_msg)
+                    return {
+                        "status": "error",
+                        "message": error_msg,
+                        "validation_errors": validation_result['errors'],
+                        "warnings": validation_result['warnings']
+                    }
+                
+                warnings = validation_result['warnings']
+                
+            except Exception as validation_error:
+                logger.error(f"Error in comprehensive validation: {validation_error}")
+                # Fall back to legacy validation
+                validation_result, warnings = validate_symptom_specialty_combination(specialty, symptoms)
+                if not validation_result:
+                    error_msg = f"Invalid input combination: {', '.join(warnings)}"
+                    logger.error(error_msg)
+                    return {
+                        "status": "error",
+                        "message": error_msg,
+                        "warnings": warnings
+                    }
+                
+                # Demographics validation
+                age = int(demographics.get('age', 0))
+                gender = demographics.get('gender', '')
+                demo_valid, demo_warnings = validate_demographics_for_specialty(specialty, age, gender)
+                warnings.extend(demo_warnings)
+        else:
+            # Legacy validation
+            validation_result, warnings = validate_symptom_specialty_combination(specialty, symptoms)
+            if not validation_result:
+                error_msg = f"Invalid input combination: {', '.join(warnings)}"
+                logger.error(error_msg)
+                return {
+                    "status": "error",
+                    "message": error_msg,
+                    "warnings": warnings
+                }
+            
+            # Demographics validation
+            age = int(demographics.get('age', 0))
+            gender = demographics.get('gender', '')
+            demo_valid, demo_warnings = validate_demographics_for_specialty(specialty, age, gender)
+            warnings.extend(demo_warnings)
         
         if warnings:
             logger.warning(f"Case generation warnings: {warnings}")
@@ -544,6 +614,7 @@ How you should present: {patient_presentation}""",
 def get_available_symptoms_for_specialty(specialty: str) -> List[str]:
     """
     Get list of symptoms appropriate for a given specialty.
+    Now uses the comprehensive medical validation system.
     
     Args:
         specialty (str): Medical specialty
@@ -551,6 +622,14 @@ def get_available_symptoms_for_specialty(specialty: str) -> List[str]:
     Returns:
         List[str]: List of appropriate symptoms
     """
+    if medical_validator:
+        try:
+            symptoms_dict = medical_validator.get_available_symptoms_for_specialty(specialty)
+            return symptoms_dict.get('required', []) + symptoms_dict.get('optional', [])
+        except Exception as e:
+            logger.error(f"Error getting symptoms from medical validator: {e}")
+    
+    # Legacy fallback
     if specialty not in MEDICAL_SPECIALTIES:
         return []
     
@@ -559,37 +638,67 @@ def get_available_symptoms_for_specialty(specialty: str) -> List[str]:
         if specialty in specialties:
             appropriate_symptoms.append(symptom)
     
-    return sorted(appropriate_symptoms)
+    return appropriate_symptoms
 
 def get_specialty_info(specialty: str) -> Dict:
     """
-    Get detailed information about a medical specialty.
+    Get information about a specific specialty.
+    Now uses the comprehensive medical validation system.
     
     Args:
-        specialty (str): Medical specialty key
+        specialty (str): Medical specialty
         
     Returns:
         Dict: Specialty information
     """
+    if medical_validator:
+        try:
+            return medical_validator.get_specialty_info(specialty)
+        except Exception as e:
+            logger.error(f"Error getting specialty info from medical validator: {e}")
+    
+    # Legacy fallback
     return MEDICAL_SPECIALTIES.get(specialty, {})
 
 def get_all_specialties() -> Dict:
     """
-    Get all available medical specialties.
+    Get all available specialties.
+    Now uses the comprehensive medical validation system.
     
     Returns:
-        Dict: All specialty information
+        Dict: Mapping of specialty keys to display names
     """
-    return MEDICAL_SPECIALTIES
+    if medical_validator:
+        try:
+            return medical_validator.get_all_specialties()
+        except Exception as e:
+            logger.error(f"Error getting specialties from medical validator: {e}")
+    
+    # Legacy fallback
+    return {key: data.get('name', key) for key, data in MEDICAL_SPECIALTIES.items()}
 
 def get_all_symptoms() -> Dict:
     """
-    Get all available symptoms with their specialty mappings.
+    Get all available symptoms.
+    Now uses the comprehensive medical validation system.
     
     Returns:
-        Dict: Symptom to specialty mappings
+        Dict: Mapping of symptom keys to display names
     """
-    return SYMPTOM_TO_SPECIALTY_MAPPING
+    if medical_validator:
+        try:
+            return medical_validator.get_all_symptoms()
+        except Exception as e:
+            logger.error(f"Error getting symptoms from medical validator: {e}")
+    
+    # Legacy fallback - extract symptoms from mapping
+    all_symptoms = {}
+    for symptom in SYMPTOM_TO_SPECIALTY_MAPPING.keys():
+        # Convert underscore to readable format
+        display_name = symptom.replace('_', ' ').title()
+        all_symptoms[symptom] = display_name
+    
+    return all_symptoms
 
 if __name__ == "__main__":
     # Test the case generator

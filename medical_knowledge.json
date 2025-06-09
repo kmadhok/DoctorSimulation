@@ -1,0 +1,1029 @@
+{
+  "metadata": {
+    "version": "1.0",
+    "last_updated": "2025-01-09",
+    "description": "Comprehensive medical knowledge base for AI-powered patient case generation"
+  },
+  "medical_specialties": {
+    "cardiology": {
+      "name": "Cardiology",
+      "description": "Heart and cardiovascular system disorders",
+      "common_conditions": [
+        {
+          "name": "Myocardial infarction",
+          "severity": ["moderate", "severe"],
+          "age_ranges": [40, 100],
+          "typical_symptoms": ["chest_pain", "shortness_breath", "nausea", "fatigue", "dizziness"]
+        },
+        {
+          "name": "Angina",
+          "severity": ["mild", "moderate", "severe"],
+          "age_ranges": [35, 100],
+          "typical_symptoms": ["chest_pain", "shortness_breath", "fatigue"]
+        },
+        {
+          "name": "Heart failure",
+          "severity": ["moderate", "severe"],
+          "age_ranges": [50, 100],
+          "typical_symptoms": ["shortness_breath", "fatigue", "swelling_legs", "difficulty_breathing"]
+        },
+        {
+          "name": "Arrhythmia",
+          "severity": ["mild", "moderate", "severe"],
+          "age_ranges": [18, 100],
+          "typical_symptoms": ["palpitations", "irregular_heartbeat", "dizziness", "chest_pain"]
+        },
+        {
+          "name": "Hypertension",
+          "severity": ["mild", "moderate", "severe"],
+          "age_ranges": [25, 100],
+          "typical_symptoms": ["headache", "dizziness", "high_blood_pressure"]
+        },
+        {
+          "name": "Valvular disease",
+          "severity": ["mild", "moderate", "severe"],
+          "age_ranges": [30, 100],
+          "typical_symptoms": ["shortness_breath", "fatigue", "chest_pain", "palpitations"]
+        }
+      ],
+      "typical_age_ranges": {
+        "young": [18, 40],
+        "middle": [40, 65],
+        "elderly": [65, 100]
+      },
+      "symptom_requirements": {
+        "minimum_symptoms": 1,
+        "maximum_symptoms": 8,
+        "required_categories": ["cardiovascular"]
+      }
+    },
+    "neurology": {
+      "name": "Neurology",
+      "description": "Brain, spinal cord, and nervous system disorders",
+      "common_conditions": [
+        {
+          "name": "Stroke",
+          "severity": ["severe"],
+          "age_ranges": [45, 100],
+          "typical_symptoms": ["weakness", "speech_difficulty", "confusion", "headache", "vision_changes"]
+        },
+        {
+          "name": "Migraine",
+          "severity": ["moderate", "severe"],
+          "age_ranges": [16, 80],
+          "typical_symptoms": ["headache", "nausea", "vision_changes", "sensitivity_light"]
+        },
+        {
+          "name": "Seizure disorder",
+          "severity": ["moderate", "severe"],
+          "age_ranges": [16, 100],
+          "typical_symptoms": ["seizure", "confusion", "memory_loss", "headache"]
+        },
+        {
+          "name": "Multiple sclerosis",
+          "severity": ["moderate", "severe"],
+          "age_ranges": [20, 70],
+          "typical_symptoms": ["weakness", "numbness", "vision_changes", "fatigue", "coordination_problems"]
+        },
+        {
+          "name": "Parkinson's disease",
+          "severity": ["moderate", "severe"],
+          "age_ranges": [50, 100],
+          "typical_symptoms": ["tremor", "stiffness", "balance_problems", "movement_difficulty"]
+        },
+        {
+          "name": "Dementia",
+          "severity": ["moderate", "severe"],
+          "age_ranges": [65, 100],
+          "typical_symptoms": ["memory_loss", "confusion", "behavioral_changes", "language_difficulty"]
+        }
+      ],
+      "typical_age_ranges": {
+        "young": [18, 50],
+        "middle": [35, 70],
+        "elderly": [60, 100]
+      },
+      "symptom_requirements": {
+        "minimum_symptoms": 1,
+        "maximum_symptoms": 6,
+        "required_categories": ["neurological"]
+      }
+    },
+    "orthopedics": {
+      "name": "Orthopedics",
+      "description": "Bones, joints, and musculoskeletal system",
+      "common_conditions": [
+        {
+          "name": "Fracture",
+          "severity": ["moderate", "severe"],
+          "age_ranges": [16, 100],
+          "typical_symptoms": ["bone_pain", "swelling", "limited_mobility", "deformity"]
+        },
+        {
+          "name": "Arthritis",
+          "severity": ["mild", "moderate", "severe"],
+          "age_ranges": [30, 100],
+          "typical_symptoms": ["joint_pain", "stiffness", "swelling", "limited_mobility"]
+        },
+        {
+          "name": "Back pain",
+          "severity": ["mild", "moderate", "severe"],
+          "age_ranges": [18, 100],
+          "typical_symptoms": ["back_pain", "muscle_pain", "stiffness", "limited_mobility"]
+        },
+        {
+          "name": "Sports injury",
+          "severity": ["mild", "moderate", "severe"],
+          "age_ranges": [16, 60],
+          "typical_symptoms": ["muscle_pain", "joint_pain", "swelling", "limited_mobility"]
+        },
+        {
+          "name": "Osteoporosis",
+          "severity": ["mild", "moderate", "severe"],
+          "age_ranges": [50, 100],
+          "typical_symptoms": ["bone_pain", "height_loss", "fracture_risk"]
+        },
+        {
+          "name": "Joint dislocation",
+          "severity": ["moderate", "severe"],
+          "age_ranges": [16, 100],
+          "typical_symptoms": ["joint_pain", "deformity", "limited_mobility", "swelling"]
+        }
+      ],
+      "typical_age_ranges": {
+        "young": [16, 45],
+        "middle": [30, 70],
+        "elderly": [50, 100]
+      },
+      "symptom_requirements": {
+        "minimum_symptoms": 1,
+        "maximum_symptoms": 6,
+        "required_categories": ["musculoskeletal"]
+      }
+    },
+    "gastroenterology": {
+      "name": "Gastroenterology",
+      "description": "Digestive system and gastrointestinal tract",
+      "common_conditions": [
+        {
+          "name": "GERD",
+          "severity": ["mild", "moderate", "severe"],
+          "age_ranges": [20, 100],
+          "typical_symptoms": ["heartburn", "acid_reflux", "chest_pain", "difficulty_swallowing"]
+        },
+        {
+          "name": "Peptic ulcer",
+          "severity": ["mild", "moderate", "severe"],
+          "age_ranges": [25, 80],
+          "typical_symptoms": ["abdominal_pain", "nausea", "bloating", "loss_appetite"]
+        },
+        {
+          "name": "Inflammatory bowel disease",
+          "severity": ["moderate", "severe"],
+          "age_ranges": [18, 70],
+          "typical_symptoms": ["abdominal_pain", "diarrhea", "fatigue", "weight_loss"]
+        },
+        {
+          "name": "Appendicitis",
+          "severity": ["severe"],
+          "age_ranges": [10, 60],
+          "typical_symptoms": ["abdominal_pain", "nausea", "vomiting", "fever"]
+        },
+        {
+          "name": "Liver disease",
+          "severity": ["moderate", "severe"],
+          "age_ranges": [30, 100],
+          "typical_symptoms": ["fatigue", "abdominal_pain", "jaundice", "loss_appetite"]
+        },
+        {
+          "name": "Gallstones",
+          "severity": ["moderate", "severe"],
+          "age_ranges": [30, 80],
+          "typical_symptoms": ["abdominal_pain", "nausea", "vomiting", "bloating"]
+        }
+      ],
+      "typical_age_ranges": {
+        "young": [18, 45],
+        "middle": [35, 70],
+        "elderly": [60, 100]
+      },
+      "symptom_requirements": {
+        "minimum_symptoms": 1,
+        "maximum_symptoms": 7,
+        "required_categories": ["gastrointestinal"]
+      }
+    },
+    "respiratory": {
+      "name": "Respiratory Medicine",
+      "description": "Lungs and breathing disorders",
+      "common_conditions": [
+        {
+          "name": "Asthma",
+          "severity": ["mild", "moderate", "severe"],
+          "age_ranges": [5, 80],
+          "typical_symptoms": ["wheezing", "shortness_breath", "cough", "chest_tightness"]
+        },
+        {
+          "name": "COPD",
+          "severity": ["moderate", "severe"],
+          "age_ranges": [45, 100],
+          "typical_symptoms": ["shortness_breath", "cough", "sputum_production", "fatigue"]
+        },
+        {
+          "name": "Pneumonia",
+          "severity": ["moderate", "severe"],
+          "age_ranges": [16, 100],
+          "typical_symptoms": ["cough", "fever", "shortness_breath", "chest_pain", "fatigue"]
+        },
+        {
+          "name": "Bronchitis",
+          "severity": ["mild", "moderate"],
+          "age_ranges": [16, 100],
+          "typical_symptoms": ["cough", "sputum_production", "chest_tightness", "fatigue"]
+        },
+        {
+          "name": "Pulmonary embolism",
+          "severity": ["severe"],
+          "age_ranges": [25, 100],
+          "typical_symptoms": ["shortness_breath", "chest_pain", "cough", "rapid_heart_rate"]
+        },
+        {
+          "name": "Lung cancer",
+          "severity": ["severe"],
+          "age_ranges": [40, 100],
+          "typical_symptoms": ["cough", "shortness_breath", "chest_pain", "weight_loss", "fatigue"]
+        }
+      ],
+      "typical_age_ranges": {
+        "young": [18, 50],
+        "middle": [40, 70],
+        "elderly": [60, 100]
+      },
+      "symptom_requirements": {
+        "minimum_symptoms": 1,
+        "maximum_symptoms": 6,
+        "required_categories": ["respiratory"]
+      }
+    },
+    "dermatology": {
+      "name": "Dermatology",
+      "description": "Skin, hair, and nail conditions",
+      "common_conditions": [
+        {
+          "name": "Eczema",
+          "severity": ["mild", "moderate", "severe"],
+          "age_ranges": [1, 100],
+          "typical_symptoms": ["rash", "itching", "dry_skin", "skin_inflammation"]
+        },
+        {
+          "name": "Psoriasis",
+          "severity": ["mild", "moderate", "severe"],
+          "age_ranges": [16, 100],
+          "typical_symptoms": ["skin_lesion", "itching", "scaling", "skin_inflammation"]
+        },
+        {
+          "name": "Skin cancer",
+          "severity": ["moderate", "severe"],
+          "age_ranges": [30, 100],
+          "typical_symptoms": ["skin_lesion", "mole_changes", "skin_discoloration", "bleeding"]
+        },
+        {
+          "name": "Acne",
+          "severity": ["mild", "moderate", "severe"],
+          "age_ranges": [12, 40],
+          "typical_symptoms": ["skin_lesion", "inflammation", "comedones"]
+        },
+        {
+          "name": "Contact dermatitis",
+          "severity": ["mild", "moderate"],
+          "age_ranges": [1, 100],
+          "typical_symptoms": ["rash", "itching", "skin_inflammation", "blisters"]
+        },
+        {
+          "name": "Fungal infection",
+          "severity": ["mild", "moderate"],
+          "age_ranges": [16, 100],
+          "typical_symptoms": ["rash", "itching", "scaling", "skin_discoloration"]
+        }
+      ],
+      "typical_age_ranges": {
+        "young": [16, 40],
+        "middle": [30, 65],
+        "elderly": [50, 100]
+      },
+      "symptom_requirements": {
+        "minimum_symptoms": 1,
+        "maximum_symptoms": 5,
+        "required_categories": ["dermatological"]
+      }
+    },
+    "emergency": {
+      "name": "Emergency Medicine",
+      "description": "Acute and urgent medical conditions",
+      "common_conditions": [
+        {
+          "name": "Trauma",
+          "severity": ["moderate", "severe"],
+          "age_ranges": [16, 100],
+          "typical_symptoms": ["severe_pain", "bleeding", "altered_consciousness", "difficulty_breathing"]
+        },
+        {
+          "name": "Acute chest pain",
+          "severity": ["moderate", "severe"],
+          "age_ranges": [25, 100],
+          "typical_symptoms": ["chest_pain", "shortness_breath", "nausea", "dizziness"]
+        },
+        {
+          "name": "Severe headache",
+          "severity": ["severe"],
+          "age_ranges": [16, 100],
+          "typical_symptoms": ["headache", "nausea", "vision_changes", "confusion"]
+        },
+        {
+          "name": "Acute abdominal pain",
+          "severity": ["moderate", "severe"],
+          "age_ranges": [16, 100],
+          "typical_symptoms": ["abdominal_pain", "nausea", "vomiting", "fever"]
+        },
+        {
+          "name": "Respiratory distress",
+          "severity": ["severe"],
+          "age_ranges": [16, 100],
+          "typical_symptoms": ["difficulty_breathing", "shortness_breath", "chest_pain", "rapid_heart_rate"]
+        },
+        {
+          "name": "Allergic reaction",
+          "severity": ["moderate", "severe"],
+          "age_ranges": [1, 100],
+          "typical_symptoms": ["rash", "itching", "swelling", "difficulty_breathing"]
+        }
+      ],
+      "typical_age_ranges": {
+        "young": [16, 50],
+        "middle": [35, 70],
+        "elderly": [60, 100]
+      },
+      "symptom_requirements": {
+        "minimum_symptoms": 1,
+        "maximum_symptoms": 8,
+        "required_categories": ["emergency"]
+      }
+    }
+  },
+  "symptoms": {
+    "chest_pain": {
+      "name": "Chest pain",
+      "category": "cardiovascular",
+      "description": "Pain or discomfort in the chest area",
+      "associated_specialties": ["cardiology", "emergency", "respiratory"],
+      "severity_impact": {
+        "mild": "Occasional discomfort, doesn't interfere with activities",
+        "moderate": "Regular pain that limits some activities",
+        "severe": "Intense pain that severely limits function"
+      }
+    },
+    "shortness_breath": {
+      "name": "Shortness of breath",
+      "category": "respiratory",
+      "description": "Difficulty breathing or feeling of breathlessness",
+      "associated_specialties": ["cardiology", "respiratory", "emergency"],
+      "severity_impact": {
+        "mild": "Occurs with exertion",
+        "moderate": "Occurs with minimal exertion",
+        "severe": "Occurs at rest"
+      }
+    },
+    "palpitations": {
+      "name": "Palpitations",
+      "category": "cardiovascular",
+      "description": "Feeling of rapid, strong, or irregular heartbeat",
+      "associated_specialties": ["cardiology"],
+      "severity_impact": {
+        "mild": "Occasional awareness of heartbeat",
+        "moderate": "Regular episodes affecting daily life",
+        "severe": "Frequent episodes with associated symptoms"
+      }
+    },
+    "dizziness": {
+      "name": "Dizziness",
+      "category": "neurological",
+      "description": "Feeling of lightheadedness or unsteadiness",
+      "associated_specialties": ["cardiology", "neurology"],
+      "severity_impact": {
+        "mild": "Occasional mild lightheadedness",
+        "moderate": "Regular dizziness affecting balance",
+        "severe": "Severe dizziness with fall risk"
+      }
+    },
+    "fatigue": {
+      "name": "Fatigue",
+      "category": "general",
+      "description": "Feeling of tiredness or lack of energy",
+      "associated_specialties": ["cardiology", "respiratory", "gastroenterology"],
+      "severity_impact": {
+        "mild": "Tiredness that improves with rest",
+        "moderate": "Persistent tiredness affecting activities",
+        "severe": "Extreme exhaustion limiting function"
+      }
+    },
+    "swelling_legs": {
+      "name": "Leg swelling",
+      "category": "cardiovascular",
+      "description": "Swelling or edema in the legs or ankles",
+      "associated_specialties": ["cardiology"],
+      "severity_impact": {
+        "mild": "Slight swelling at end of day",
+        "moderate": "Noticeable swelling affecting footwear",
+        "severe": "Severe swelling limiting mobility"
+      }
+    },
+    "irregular_heartbeat": {
+      "name": "Irregular heartbeat",
+      "category": "cardiovascular",
+      "description": "Heart rhythm abnormalities",
+      "associated_specialties": ["cardiology"],
+      "severity_impact": {
+        "mild": "Occasional skipped beats",
+        "moderate": "Regular rhythm disturbances",
+        "severe": "Sustained arrhythmias"
+      }
+    },
+    "headache": {
+      "name": "Headache",
+      "category": "neurological",
+      "description": "Pain in the head or neck region",
+      "associated_specialties": ["neurology", "emergency"],
+      "severity_impact": {
+        "mild": "Mild pain not affecting activities",
+        "moderate": "Moderate pain limiting some activities",
+        "severe": "Severe pain preventing normal function"
+      }
+    },
+    "seizure": {
+      "name": "Seizure",
+      "category": "neurological",
+      "description": "Sudden uncontrolled electrical activity in brain",
+      "associated_specialties": ["neurology", "emergency"],
+      "severity_impact": {
+        "mild": "Brief episodes with minimal impact",
+        "moderate": "Episodes with some functional impact",
+        "severe": "Frequent or prolonged seizures"
+      }
+    },
+    "memory_loss": {
+      "name": "Memory loss",
+      "category": "neurological",
+      "description": "Difficulty remembering information",
+      "associated_specialties": ["neurology"],
+      "severity_impact": {
+        "mild": "Occasional forgetfulness",
+        "moderate": "Noticeable memory problems",
+        "severe": "Significant memory impairment"
+      }
+    },
+    "confusion": {
+      "name": "Confusion",
+      "category": "neurological",
+      "description": "Difficulty thinking clearly or concentrating",
+      "associated_specialties": ["neurology", "emergency"],
+      "severity_impact": {
+        "mild": "Occasional mental fog",
+        "moderate": "Regular confusion episodes",
+        "severe": "Persistent disorientation"
+      }
+    },
+    "weakness": {
+      "name": "Weakness",
+      "category": "neurological",
+      "description": "Reduced muscle strength or power",
+      "associated_specialties": ["neurology", "orthopedics"],
+      "severity_impact": {
+        "mild": "Slight reduction in strength",
+        "moderate": "Noticeable weakness affecting function",
+        "severe": "Severe weakness limiting mobility"
+      }
+    },
+    "numbness": {
+      "name": "Numbness",
+      "category": "neurological",
+      "description": "Loss of sensation in body parts",
+      "associated_specialties": ["neurology", "orthopedics"],
+      "severity_impact": {
+        "mild": "Occasional tingling sensation",
+        "moderate": "Persistent numbness in specific areas",
+        "severe": "Complete loss of sensation"
+      }
+    },
+    "speech_difficulty": {
+      "name": "Speech difficulty",
+      "category": "neurological",
+      "description": "Problems with speaking or articulation",
+      "associated_specialties": ["neurology", "emergency"],
+      "severity_impact": {
+        "mild": "Slight slurring or word-finding difficulty",
+        "moderate": "Noticeable speech problems",
+        "severe": "Severe communication impairment"
+      }
+    },
+    "vision_changes": {
+      "name": "Vision changes",
+      "category": "neurological",
+      "description": "Alterations in visual perception",
+      "associated_specialties": ["neurology"],
+      "severity_impact": {
+        "mild": "Slight visual disturbances",
+        "moderate": "Noticeable vision problems",
+        "severe": "Significant visual impairment"
+      }
+    },
+    "joint_pain": {
+      "name": "Joint pain",
+      "category": "musculoskeletal",
+      "description": "Pain in joints",
+      "associated_specialties": ["orthopedics"],
+      "severity_impact": {
+        "mild": "Mild discomfort with movement",
+        "moderate": "Pain limiting range of motion",
+        "severe": "Severe pain preventing movement"
+      }
+    },
+    "back_pain": {
+      "name": "Back pain",
+      "category": "musculoskeletal",
+      "description": "Pain in the back region",
+      "associated_specialties": ["orthopedics"],
+      "severity_impact": {
+        "mild": "Occasional back discomfort",
+        "moderate": "Regular pain affecting activities",
+        "severe": "Severe pain limiting mobility"
+      }
+    },
+    "limited_mobility": {
+      "name": "Limited mobility",
+      "category": "musculoskeletal",
+      "description": "Reduced ability to move freely",
+      "associated_specialties": ["orthopedics"],
+      "severity_impact": {
+        "mild": "Slight reduction in movement",
+        "moderate": "Noticeable movement limitations",
+        "severe": "Severely restricted mobility"
+      }
+    },
+    "muscle_pain": {
+      "name": "Muscle pain",
+      "category": "musculoskeletal",
+      "description": "Pain in muscles",
+      "associated_specialties": ["orthopedics"],
+      "severity_impact": {
+        "mild": "Mild muscle soreness",
+        "moderate": "Persistent muscle pain",
+        "severe": "Severe muscle pain limiting function"
+      }
+    },
+    "bone_pain": {
+      "name": "Bone pain",
+      "category": "musculoskeletal",
+      "description": "Deep, aching pain in bones",
+      "associated_specialties": ["orthopedics"],
+      "severity_impact": {
+        "mild": "Occasional bone discomfort",
+        "moderate": "Persistent bone pain",
+        "severe": "Severe bone pain affecting mobility"
+      }
+    },
+    "stiffness": {
+      "name": "Stiffness",
+      "category": "musculoskeletal",
+      "description": "Reduced flexibility or range of motion",
+      "associated_specialties": ["orthopedics"],
+      "severity_impact": {
+        "mild": "Morning stiffness that improves",
+        "moderate": "Persistent stiffness affecting movement",
+        "severe": "Severe stiffness limiting function"
+      }
+    },
+    "abdominal_pain": {
+      "name": "Abdominal pain",
+      "category": "gastrointestinal",
+      "description": "Pain in the abdomen",
+      "associated_specialties": ["gastroenterology", "emergency"],
+      "severity_impact": {
+        "mild": "Mild discomfort",
+        "moderate": "Noticeable pain affecting appetite",
+        "severe": "Severe pain preventing normal activities"
+      }
+    },
+    "nausea": {
+      "name": "Nausea",
+      "category": "gastrointestinal",
+      "description": "Feeling of sickness or urge to vomit",
+      "associated_specialties": ["gastroenterology", "neurology"],
+      "severity_impact": {
+        "mild": "Occasional queasiness",
+        "moderate": "Regular nausea affecting eating",
+        "severe": "Persistent nausea with vomiting"
+      }
+    },
+    "vomiting": {
+      "name": "Vomiting",
+      "category": "gastrointestinal",
+      "description": "Forceful expulsion of stomach contents",
+      "associated_specialties": ["gastroenterology", "neurology", "emergency"],
+      "severity_impact": {
+        "mild": "Occasional vomiting episodes",
+        "moderate": "Regular vomiting affecting nutrition",
+        "severe": "Persistent vomiting causing dehydration"
+      }
+    },
+    "diarrhea": {
+      "name": "Diarrhea",
+      "category": "gastrointestinal",
+      "description": "Loose or watery bowel movements",
+      "associated_specialties": ["gastroenterology"],
+      "severity_impact": {
+        "mild": "Occasional loose stools",
+        "moderate": "Regular diarrhea affecting daily life",
+        "severe": "Severe diarrhea causing dehydration"
+      }
+    },
+    "constipation": {
+      "name": "Constipation",
+      "category": "gastrointestinal",
+      "description": "Difficulty or infrequent bowel movements",
+      "associated_specialties": ["gastroenterology"],
+      "severity_impact": {
+        "mild": "Occasional difficulty with bowel movements",
+        "moderate": "Regular constipation causing discomfort",
+        "severe": "Severe constipation preventing bowel movements"
+      }
+    },
+    "bloating": {
+      "name": "Bloating",
+      "category": "gastrointestinal",
+      "description": "Feeling of fullness or swelling in abdomen",
+      "associated_specialties": ["gastroenterology"],
+      "severity_impact": {
+        "mild": "Occasional feeling of fullness",
+        "moderate": "Regular bloating affecting comfort",
+        "severe": "Severe bloating causing pain"
+      }
+    },
+    "loss_appetite": {
+      "name": "Loss of appetite",
+      "category": "gastrointestinal",
+      "description": "Reduced desire to eat",
+      "associated_specialties": ["gastroenterology"],
+      "severity_impact": {
+        "mild": "Slightly reduced appetite",
+        "moderate": "Noticeable decrease in food intake",
+        "severe": "Severe appetite loss causing weight loss"
+      }
+    },
+    "cough": {
+      "name": "Cough",
+      "category": "respiratory",
+      "description": "Forceful expulsion of air from lungs",
+      "associated_specialties": ["respiratory"],
+      "severity_impact": {
+        "mild": "Occasional dry cough",
+        "moderate": "Persistent cough affecting sleep",
+        "severe": "Severe cough causing pain or bleeding"
+      }
+    },
+    "wheezing": {
+      "name": "Wheezing",
+      "category": "respiratory",
+      "description": "High-pitched whistling sound during breathing",
+      "associated_specialties": ["respiratory"],
+      "severity_impact": {
+        "mild": "Occasional wheeze with exertion",
+        "moderate": "Regular wheezing affecting breathing",
+        "severe": "Severe wheezing limiting activity"
+      }
+    },
+    "chest_tightness": {
+      "name": "Chest tightness",
+      "category": "respiratory",
+      "description": "Feeling of constriction in chest",
+      "associated_specialties": ["respiratory", "cardiology"],
+      "severity_impact": {
+        "mild": "Mild sensation of tightness",
+        "moderate": "Noticeable chest constriction",
+        "severe": "Severe tightness limiting breathing"
+      }
+    },
+    "sputum_production": {
+      "name": "Sputum production",
+      "category": "respiratory",
+      "description": "Production of mucus or phlegm",
+      "associated_specialties": ["respiratory"],
+      "severity_impact": {
+        "mild": "Small amount of clear sputum",
+        "moderate": "Regular sputum production",
+        "severe": "Large amounts of colored sputum"
+      }
+    },
+    "difficulty_breathing": {
+      "name": "Difficulty breathing",
+      "category": "respiratory",
+      "description": "Trouble with normal breathing process",
+      "associated_specialties": ["respiratory", "cardiology", "emergency"],
+      "severity_impact": {
+        "mild": "Slight breathing difficulty with exertion",
+        "moderate": "Noticeable breathing problems",
+        "severe": "Severe respiratory distress"
+      }
+    },
+    "rash": {
+      "name": "Rash",
+      "category": "dermatological",
+      "description": "Skin irritation or inflammation",
+      "associated_specialties": ["dermatology"],
+      "severity_impact": {
+        "mild": "Small localized rash",
+        "moderate": "Widespread rash causing discomfort",
+        "severe": "Severe rash with blistering or infection"
+      }
+    },
+    "itching": {
+      "name": "Itching",
+      "category": "dermatological",
+      "description": "Uncomfortable sensation causing desire to scratch",
+      "associated_specialties": ["dermatology"],
+      "severity_impact": {
+        "mild": "Occasional mild itching",
+        "moderate": "Persistent itching affecting sleep",
+        "severe": "Severe itching causing skin damage"
+      }
+    },
+    "skin_lesion": {
+      "name": "Skin lesion",
+      "category": "dermatological",
+      "description": "Abnormal area of skin",
+      "associated_specialties": ["dermatology"],
+      "severity_impact": {
+        "mild": "Small, non-changing lesion",
+        "moderate": "Noticeable lesion with some changes",
+        "severe": "Large or rapidly changing lesion"
+      }
+    },
+    "dry_skin": {
+      "name": "Dry skin",
+      "category": "dermatological",
+      "description": "Lack of moisture in skin",
+      "associated_specialties": ["dermatology"],
+      "severity_impact": {
+        "mild": "Slightly dry skin",
+        "moderate": "Noticeably dry skin with flaking",
+        "severe": "Severely dry skin with cracking"
+      }
+    },
+    "skin_discoloration": {
+      "name": "Skin discoloration",
+      "category": "dermatological",
+      "description": "Changes in skin color",
+      "associated_specialties": ["dermatology"],
+      "severity_impact": {
+        "mild": "Slight color changes",
+        "moderate": "Noticeable discoloration",
+        "severe": "Significant color changes"
+      }
+    },
+    "fever": {
+      "name": "Fever",
+      "category": "general",
+      "description": "Elevated body temperature",
+      "associated_specialties": ["emergency", "respiratory", "gastroenterology"],
+      "severity_impact": {
+        "mild": "Low-grade fever (99-101°F)",
+        "moderate": "Moderate fever (101-103°F)",
+        "severe": "High fever (>103°F)"
+      }
+    },
+    "severe_pain": {
+      "name": "Severe pain",
+      "category": "emergency",
+      "description": "Intense pain requiring immediate attention",
+      "associated_specialties": ["emergency", "orthopedics"],
+      "severity_impact": {
+        "mild": "Pain manageable with medication",
+        "moderate": "Pain affecting daily activities",
+        "severe": "Excruciating pain preventing function"
+      }
+    },
+    "rapid_heart_rate": {
+      "name": "Rapid heart rate",
+      "category": "cardiovascular",
+      "description": "Heart rate above normal range",
+      "associated_specialties": ["cardiology", "emergency"],
+      "severity_impact": {
+        "mild": "Slightly elevated heart rate",
+        "moderate": "Noticeably fast heart rate",
+        "severe": "Dangerously rapid heart rate"
+      }
+    },
+    "low_blood_pressure": {
+      "name": "Low blood pressure",
+      "category": "cardiovascular",
+      "description": "Blood pressure below normal range",
+      "associated_specialties": ["cardiology", "emergency"],
+      "severity_impact": {
+        "mild": "Slightly low blood pressure",
+        "moderate": "Noticeably low blood pressure",
+        "severe": "Dangerously low blood pressure"
+      }
+    },
+    "high_blood_pressure": {
+      "name": "High blood pressure",
+      "category": "cardiovascular",
+      "description": "Blood pressure above normal range",
+      "associated_specialties": ["cardiology"],
+      "severity_impact": {
+        "mild": "Slightly elevated blood pressure",
+        "moderate": "Moderately high blood pressure",
+        "severe": "Severely elevated blood pressure"
+      }
+    }
+  },
+  "severity_descriptions": {
+    "mild": {
+      "description": "Symptoms are noticeable but not significantly impacting daily activities",
+      "pain_scale": "1-3/10",
+      "functional_impact": "minimal",
+      "urgency": "non-urgent",
+      "typical_duration": "days to weeks",
+      "examples": [
+        "Can perform normal activities with minor discomfort",
+        "Symptoms are manageable without significant intervention",
+        "Quality of life is minimally affected"
+      ]
+    },
+    "moderate": {
+      "description": "Symptoms are affecting daily activities and causing concern",
+      "pain_scale": "4-6/10",
+      "functional_impact": "moderate limitation",
+      "urgency": "semi-urgent",
+      "typical_duration": "weeks to months",
+      "examples": [
+        "Some daily activities are limited or require modification",
+        "Symptoms require medical attention and possibly medication",
+        "Quality of life is noticeably affected"
+      ]
+    },
+    "severe": {
+      "description": "Symptoms are severely limiting function and causing significant distress",
+      "pain_scale": "7-10/10",
+      "functional_impact": "major limitation or inability to function",
+      "urgency": "urgent",
+      "typical_duration": "immediate to weeks",
+      "examples": [
+        "Unable to perform normal daily activities",
+        "Symptoms require immediate medical attention",
+        "Quality of life is severely compromised"
+      ]
+    }
+  },
+  "validation_rules": {
+    "symptom_specialty_combinations": {
+      "cardiology": {
+        "required_symptoms": ["chest_pain", "shortness_breath", "palpitations", "fatigue"],
+        "optional_symptoms": ["dizziness", "swelling_legs", "irregular_heartbeat"],
+        "contraindicated_symptoms": ["skin_lesion", "rash", "joint_pain"]
+      },
+      "neurology": {
+        "required_symptoms": ["headache", "weakness", "numbness", "confusion"],
+        "optional_symptoms": ["seizure", "memory_loss", "speech_difficulty", "vision_changes"],
+        "contraindicated_symptoms": ["rash", "cough", "abdominal_pain"]
+      },
+      "orthopedics": {
+        "required_symptoms": ["joint_pain", "back_pain", "muscle_pain", "stiffness"],
+        "optional_symptoms": ["limited_mobility", "bone_pain", "weakness"],
+        "contraindicated_symptoms": ["rash", "cough", "nausea"]
+      },
+      "gastroenterology": {
+        "required_symptoms": ["abdominal_pain", "nausea", "diarrhea", "constipation"],
+        "optional_symptoms": ["vomiting", "bloating", "loss_appetite", "fatigue"],
+        "contraindicated_symptoms": ["rash", "joint_pain", "palpitations"]
+      },
+      "respiratory": {
+        "required_symptoms": ["cough", "shortness_breath", "wheezing", "chest_tightness"],
+        "optional_symptoms": ["sputum_production", "difficulty_breathing", "fatigue"],
+        "contraindicated_symptoms": ["rash", "joint_pain", "abdominal_pain"]
+      },
+      "dermatology": {
+        "required_symptoms": ["rash", "itching", "skin_lesion", "dry_skin"],
+        "optional_symptoms": ["skin_discoloration"],
+        "contraindicated_symptoms": ["chest_pain", "abdominal_pain", "cough"]
+      },
+      "emergency": {
+        "required_symptoms": ["severe_pain", "difficulty_breathing", "fever"],
+        "optional_symptoms": ["chest_pain", "abdominal_pain", "headache", "confusion"],
+        "contraindicated_symptoms": []
+      }
+    },
+    "contradictory_symptoms": [
+      {
+        "symptoms": ["constipation", "diarrhea"],
+        "reason": "Cannot have both constipation and diarrhea simultaneously"
+      },
+      {
+        "symptoms": ["low_blood_pressure", "high_blood_pressure"],
+        "reason": "Cannot have both low and high blood pressure simultaneously"
+      },
+      {
+        "symptoms": ["dry_skin", "excessive_sweating"],
+        "reason": "Contradictory skin conditions"
+      }
+    ],
+    "age_appropriate_conditions": {
+      "pediatric": {
+        "age_range": [0, 17],
+        "common_specialties": ["emergency", "dermatology"],
+        "less_common_specialties": ["cardiology", "orthopedics"],
+        "typical_conditions": ["asthma", "infections", "injuries", "developmental issues"]
+      },
+      "young_adult": {
+        "age_range": [18, 39],
+        "common_specialties": ["emergency", "orthopedics", "dermatology"],
+        "typical_conditions": ["sports injuries", "acute infections", "stress-related conditions"]
+      },
+      "middle_aged": {
+        "age_range": [40, 64],
+        "common_specialties": ["cardiology", "gastroenterology", "orthopedics"],
+        "typical_conditions": ["cardiovascular disease", "diabetes", "arthritis", "cancer screening"]
+      },
+      "elderly": {
+        "age_range": [65, 100],
+        "common_specialties": ["cardiology", "neurology", "orthopedics", "respiratory"],
+        "typical_conditions": ["heart disease", "dementia", "osteoporosis", "COPD"]
+      }
+    },
+    "minimum_maximum_symptoms": {
+      "cardiology": {"min": 1, "max": 8},
+      "neurology": {"min": 1, "max": 6},
+      "orthopedics": {"min": 1, "max": 6},
+      "gastroenterology": {"min": 1, "max": 7},
+      "respiratory": {"min": 1, "max": 6},
+      "dermatology": {"min": 1, "max": 5},
+      "emergency": {"min": 1, "max": 8}
+    },
+    "severity_symptom_compatibility": {
+      "mild": {
+        "compatible_symptoms": ["fatigue", "mild_pain", "occasional_symptoms"],
+        "incompatible_symptoms": ["severe_pain", "difficulty_breathing", "seizure"]
+      },
+      "moderate": {
+        "compatible_symptoms": ["persistent_symptoms", "functional_limitation"],
+        "incompatible_symptoms": ["life_threatening_symptoms"]
+      },
+      "severe": {
+        "compatible_symptoms": ["severe_pain", "difficulty_breathing", "seizure", "confusion"],
+        "incompatible_symptoms": ["mild_symptoms"]
+      }
+    }
+  },
+  "learning_objectives": {
+    "cardiology": [
+      "Recognize signs and symptoms of cardiovascular disease",
+      "Understand risk factors for heart conditions",
+      "Practice cardiovascular examination techniques",
+      "Learn to interpret cardiac diagnostic tests"
+    ],
+    "neurology": [
+      "Identify neurological symptoms and their significance",
+      "Understand brain and nervous system anatomy",
+      "Practice neurological examination skills",
+      "Learn to assess cognitive function"
+    ],
+    "orthopedics": [
+      "Recognize musculoskeletal injuries and conditions",
+      "Understand bone and joint anatomy",
+      "Practice orthopedic examination techniques",
+      "Learn to assess range of motion and function"
+    ],
+    "gastroenterology": [
+      "Identify gastrointestinal symptoms and their causes",
+      "Understand digestive system anatomy and physiology",
+      "Practice abdominal examination techniques",
+      "Learn to interpret GI diagnostic tests"
+    ],
+    "respiratory": [
+      "Recognize respiratory symptoms and conditions",
+      "Understand lung anatomy and physiology",
+      "Practice respiratory examination skills",
+      "Learn to interpret pulmonary function tests"
+    ],
+    "dermatology": [
+      "Identify skin conditions and lesions",
+      "Understand skin anatomy and physiology",
+      "Practice dermatological examination techniques",
+      "Learn to assess skin changes and their significance"
+    ],
+    "emergency": [
+      "Recognize life-threatening conditions",
+      "Practice triage and prioritization skills",
+      "Learn emergency assessment techniques",
+      "Understand acute care principles"
+    ]
+  }
+} 
