@@ -313,9 +313,7 @@ def update_voice():
 
 @app.route('/api/generate-patient-case', methods=['POST'])
 def generate_patient_case_route():
-    """Generate a new AI-powered patient case based on specialty and symptoms"""
-    global patient_data, current_patient_simulation, current_conversation_id, conversation_history
-    
+    """Generate a new AI patient case based on provided parameters"""
     try:
         data = request.get_json()
         if not data:
@@ -323,162 +321,108 @@ def generate_patient_case_route():
                 'status': 'error',
                 'message': 'No data provided'
             }), 400
+
+        # Extract case parameters
+        case_params = data.get('case_parameters', {})
+        specialty = case_params.get('specialty')
+        symptoms = case_params.get('symptoms', [])
+        severity = case_params.get('severity', 'moderate')
         
-        logger.info(f"Received patient case generation request: {data}")
+        # Debug logging
+        logger.info(f"Generating AI case with specialty: {specialty}, symptoms: {symptoms}, severity: {severity}")
         
-        # Validate the data structure for AI generation
-        if 'type' not in data or data['type'] != 'ai_generated':
+        # Validate inputs before processing
+        if not specialty:
             return jsonify({
                 'status': 'error',
-                'message': 'Invalid data type - expected ai_generated patient data'
+                'message': 'Specialty is required'
             }), 400
-        
-        if 'case_parameters' not in data:
+            
+        if not symptoms:
             return jsonify({
                 'status': 'error',
-                'message': 'Missing case_parameters in request'
+                'message': 'At least one symptom is required'
             }), 400
-        
-        case_params = data['case_parameters']
-        
-        # Validate required fields for AI generation
-        required_fields = ['age', 'gender', 'occupation', 'specialty', 'symptoms', 'severity']
-        missing_fields = [field for field in required_fields if not case_params.get(field)]
-        
-        if missing_fields:
-            return jsonify({
-                'status': 'error',
-                'message': f'Missing required fields: {", ".join(missing_fields)}'
-            }), 400
-        
-        # Validate age
-        try:
-            age = int(case_params['age'])
-            if age < 1 or age > 120:
-                return jsonify({
-                    'status': 'error',
-                    'message': 'Age must be between 1 and 120'
-                }), 400
-        except (ValueError, TypeError):
-            return jsonify({
-                'status': 'error',
-                'message': 'Age must be a valid number'
-            }), 400
-        
-        # Validate specialty
-        available_specialties = get_all_specialties()
-        if case_params['specialty'] not in available_specialties:
-            return jsonify({
-                'status': 'error',
-                'message': f'Invalid specialty. Available options: {", ".join(available_specialties.keys())}'
-            }), 400
-        
-        # Validate symptoms
-        symptoms = case_params['symptoms']
-        if not isinstance(symptoms, list) or not symptoms:
-            return jsonify({
-                'status': 'error',
-                'message': 'Symptoms must be a non-empty list'
-            }), 400
-        
-        # Validate symptom-specialty combination
-        valid_combination, warnings = validate_symptom_specialty_combination(case_params['specialty'], symptoms)
-        if not valid_combination:
-            return jsonify({
-                'status': 'error',
-                'message': f'Invalid symptom-specialty combination: {", ".join(warnings)}'
-            }), 400
-        
-        # Validate severity
-        valid_severities = ['mild', 'moderate', 'severe']
-        if case_params['severity'] not in valid_severities:
-            return jsonify({
-                'status': 'error',
-                'message': f'Invalid severity. Must be one of: {", ".join(valid_severities)}'
-            }), 400
-        
-        logger.info(f"Generating AI patient case for specialty: {case_params['specialty']}, symptoms: {symptoms}")
-        
-        # Prepare demographics for AI generation
+
+        # Extract demographics
         demographics = {
-            'age': case_params['age'],
-            'gender': case_params['gender'],
-            'occupation': case_params['occupation'],
+            'age': case_params.get('age', 45),
+            'gender': case_params.get('gender', 'Male'),
+            'occupation': case_params.get('occupation', 'Office worker'),
             'medical_history': case_params.get('medical_history', 'No significant medical history')
         }
         
-        # Generate AI case using the case generator
-        ai_result = generate_patient_case(
-            specialty=case_params['specialty'],
-            symptoms=symptoms,
-            demographics=demographics,
-            severity=case_params['severity']
-        )
-        
-        if ai_result['status'] != 'success':
-            logger.error(f"AI case generation failed: {ai_result['message']}")
+        logger.info(f"Demographics: {demographics}")
+
+        # Add type checking before calling generate_patient_case
+        try:
+            # Test the medical validation functions first
+            logger.info("Testing get_all_specialties()...")
+            test_specialties = get_all_specialties()
+            logger.info(f"get_all_specialties() returned type: {type(test_specialties)}")
+            
+            if not isinstance(test_specialties, dict):
+                return jsonify({
+                    'status': 'error',
+                    'message': f'Medical system error: expected dict, got {type(test_specialties)}'
+                }), 500
+                
+            logger.info("Testing get_available_symptoms_for_specialty()...")
+            test_symptoms = get_available_symptoms_for_specialty(specialty)
+            logger.info(f"get_available_symptoms_for_specialty() returned type: {type(test_symptoms)}")
+            
+            if not isinstance(test_symptoms, list):
+                return jsonify({
+                    'status': 'error', 
+                    'message': f'Medical system error: expected list, got {type(test_symptoms)}'
+                }), 500
+                
+        except Exception as e:
+            logger.error(f"Error testing medical functions: {e}", exc_info=True)
             return jsonify({
                 'status': 'error',
-                'message': f'Failed to generate AI case: {ai_result["message"]}',
-                'ai_error_details': ai_result
+                'message': f'Medical system validation error: {str(e)}'
             }), 500
-        
-        # Extract the generated patient data
-        generated_patient_data = ai_result['patient_data']
-        
-        # Clear conversation history for new patient
-        conversation_history = []
-        
-        # Set current patient simulation to indicate AI-generated patient
-        current_patient_simulation = '__ai_generated__'
-        
-        # Create new conversation with descriptive title for AI-generated cases
-        specialty_name = available_specialties[case_params['specialty']]['name']
-        title = f"AI {specialty_name} Case - {demographics['gender']}, {demographics['age']}"
-        
-        # Create conversation in database
-        current_conversation_id = create_conversation(title, '__ai_generated__')
-        
-        # Store the AI-generated patient data in the database
-        store_conversation_data(current_conversation_id, 'patient_data', generated_patient_data)
-        
-        # Log successful generation
-        case_summary = ai_result['case_summary']
-        logger.info(f"Successfully created AI-generated patient case {current_conversation_id}: {case_summary['diagnosis']}")
-        
-        # Prepare response with patient details (excluding diagnosis)
-        patient_details_for_ui = {
-            'age': generated_patient_data['patient_details']['age'],
-            'gender': generated_patient_data['patient_details']['gender'],
-            'occupation': generated_patient_data['patient_details']['occupation'],
-            'medical_history': generated_patient_data['patient_details']['medical_history'],
-            'recent_exposure': generated_patient_data['patient_details']['recent_exposure'],
-            'specialty': case_params['specialty'],
-            'presenting_symptoms': symptoms,
-            'severity': case_params['severity']
-            # Note: illness/diagnosis is intentionally excluded from response for UI display
-        }
-        
-        response_data = {
-            'status': 'success',
-            'message': f'AI patient case generated successfully for {specialty_name}',
-            'conversation_id': current_conversation_id,
-            'patient_details': patient_details_for_ui,
-            'case_metadata': {
-                'difficulty': case_summary.get('difficulty'),
-                'learning_objectives': case_summary.get('learning_objectives', []),
-                'generation_warnings': ai_result.get('warnings', [])
-            }
-        }
-        
-        # Add warnings to response if any
-        if ai_result.get('warnings'):
-            response_data['warnings'] = ai_result['warnings']
-        
-        return jsonify(response_data)
-        
+
+        # Generate the patient case
+        logger.info("Calling generate_patient_case()...")
+        result = generate_patient_case(specialty, symptoms, demographics, severity)
+        logger.info(f"generate_patient_case() returned: {result.get('status', 'unknown')}")
+
+        if result.get('status') == 'success':
+            patient_data = result['patient_data']
+            
+            # Initialize with the generated patient data
+            global current_patient_simulation, current_conversation_id, conversation_history
+            
+            # Store the patient data globally
+            initialize_patient_data(custom_data=patient_data)
+            
+            # Create a new conversation for this case
+            case_title = f"AI Case: {result['case_summary'].get('diagnosis', 'Unknown')}"
+            current_conversation_id = create_conversation(case_title, current_patient_simulation)
+            conversation_history = []
+            
+            # Log successful generation
+            logger.info(f"Successfully generated AI patient case: {case_title}")
+            
+            return jsonify({
+                'status': 'success',
+                'message': 'AI patient case generated successfully',
+                'patient_data': patient_data,
+                'case_summary': result.get('case_summary', {}),
+                'warnings': result.get('warnings', []),
+                'conversation_id': current_conversation_id
+            })
+        else:
+            logger.error(f"AI case generation failed: {result.get('message', 'Unknown error')}")
+            return jsonify({
+                'status': 'error',
+                'message': f"Error generating AI patient case: {result.get('message', 'Unknown error')}"
+            }), 500
+            
     except Exception as e:
-        logger.error(f"Error generating AI patient case: {str(e)}", exc_info=True)
+        logger.error(f"Error in generate_patient_case_route: {str(e)}", exc_info=True)
         return jsonify({
             'status': 'error',
             'message': f'Error generating AI patient case: {str(e)}'
