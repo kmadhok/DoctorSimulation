@@ -717,6 +717,30 @@ textarea.form-control {
     color: #333;
 }
 
+/* Button link styles for Select All / Clear All */
+.btn-link {
+    background: none;
+    border: none;
+    color: #007bff;
+    cursor: pointer;
+    text-decoration: underline;
+    font-size: 0.9rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 3px;
+    transition: all 0.2s ease;
+}
+
+.btn-link:hover {
+    background-color: rgba(0, 123, 255, 0.1);
+    color: #0056b3;
+    text-decoration: none;
+}
+
+.btn-link:focus {
+    outline: 2px solid rgba(0, 123, 255, 0.5);
+    outline-offset: 2px;
+}
+
 /* Loading state for form submission */
 .btn.loading {
     position: relative;
@@ -819,17 +843,38 @@ textarea.form-control {
     overflow-y: auto;
 }
 
-.symptoms-instructions {
+.symptoms-controls {
     margin-bottom: 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.symptoms-instructions {
     padding: 0.5rem;
     background-color: #e7f3ff;
     border-radius: 6px;
     border-left: 3px solid #007bff;
+    flex: 1;
+    min-width: 200px;
 }
 
 .symptoms-instructions small {
     color: #495057;
     font-weight: 500;
+}
+
+.symptoms-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.symptoms-checkboxes {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 0.5rem;
 }
 
 .symptom-checkbox {
@@ -950,6 +995,20 @@ textarea.form-control {
     
     .symptoms-container {
         max-height: 200px;
+    }
+    
+    .symptoms-controls {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .symptoms-actions {
+        justify-content: center;
+        margin-top: 0.5rem;
+    }
+    
+    .symptoms-checkboxes {
+        grid-template-columns: 1fr;
     }
     
     .symptom-checkbox {

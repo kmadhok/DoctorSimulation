@@ -16,6 +16,20 @@ document.addEventListener('DOMContentLoaded', async () => {
     let currentAudioSource = null; // Track current audio source for interruption
     let microphoneSetup = false;
 
+    // Form state management for AI case generation
+    let formState = {
+        selectedSpecialty: null,
+        selectedSymptoms: [],
+        isLoading: false,
+        realTimeValidation: true
+    };
+
+    // Medical knowledge data - will be populated from backend
+    let medicalKnowledge = {
+        specialties: {},
+        all_symptoms: {}
+    };
+
     // Get DOM elements
     // const autoListenBtn = document.getElementById('autoListenBtn');
     // const statusElement = document.getElementById('status');
@@ -121,6 +135,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     const customPatientFormFields = document.getElementById('customPatientFormFields');
     const cancelCustomPatientBtn = document.getElementById('cancelCustomPatient');
     const createCustomPatientBtn = document.getElementById('createCustomPatient');
+    
+    // Additional DOM elements for AI case generation
+    const medicalSpecialtySelect = document.getElementById('medicalSpecialty');
+    const symptomsContainer = document.getElementById('symptomsContainer');
+    const specialtyDescription = document.getElementById('specialtyDescription');
+    const symptomsInstructions = document.getElementById('symptomsInstructions');
+    const aiGenerationLoading = document.getElementById('aiGenerationLoading');
+    const formValidationSummary = document.getElementById('formValidationSummary');
+    const validationErrorsList = document.getElementById('validationErrorsList');
     
     if (autoListenBtn) {
         autoListenBtn.addEventListener('click', async (event) => {
@@ -255,59 +278,61 @@ document.addEventListener('DOMContentLoaded', async () => {
         customPatientFormFields.addEventListener('submit', async (event) => {
             event.preventDefault();
             
-            // Validate form
+            // Validate form using new AI validation system
             if (!validateCustomPatientForm()) {
                 updateStatus('Please fix the errors in the form');
                 return;
             }
             
-            // Show loading state
+            // Show loading state with enhanced UI
             setFormLoading(true);
-            updateStatus('Creating custom patient...');
+            updateStatus('Generating AI patient case...');
             
             try {
-                // Collect form data
+                // Collect form data using new structure
                 const customPatientData = collectCustomPatientData();
-                console.log('Creating custom patient with data:', customPatientData);
+                console.log('Creating AI patient case with data:', customPatientData);
                 
-                // Call the backend API to create custom patient
+                // Call the backend API to generate custom patient case
                 const success = await createCustomPatient(customPatientData);
                 
                 if (success) {
-                    updateStatus('Custom patient created successfully!');
+                    updateStatus('AI patient case generated successfully!');
                     setFormLoading(false);
                     // Hide form and refresh conversation list
                     hideCustomPatientForm();
                     await loadConversationHistory();
                 } else {
-                    updateStatus('Error creating custom patient');
+                    updateStatus('Error generating patient case');
                     setFormLoading(false);
                 }
             } catch (error) {
-                console.error('Error creating custom patient:', error);
-                updateStatus('Error creating custom patient');
+                console.error('Error generating patient case:', error);
+                updateStatus('Error generating patient case');
                 setFormLoading(false);
             }
         });
-        
-        // Real-time validation feedback
+
+        // Enhanced real-time validation feedback
         const formInputs = customPatientFormFields.querySelectorAll('.form-control');
         formInputs.forEach(input => {
+            // Blur validation
             input.addEventListener('blur', () => {
-                // Only validate this specific field on blur
-                validateSingleField(input);
-            });
-            
-            input.addEventListener('input', () => {
-                // Clear error state when user starts typing
-                const fieldName = input.name;
-                const errorElement = document.getElementById(fieldName + 'Error');
-                if (errorElement && errorElement.textContent) {
-                    errorElement.textContent = '';
-                    input.classList.remove('error');
+                if (formState.realTimeValidation) {
+                    validateSingleField(input);
                 }
             });
+            
+            // Input validation (clear errors)
+            input.addEventListener('input', () => {
+                clearSingleFieldError(input);
+            });
         });
+
+        // Specialty change handler for dynamic symptom loading
+        if (medicalSpecialtySelect) {
+            medicalSpecialtySelect.addEventListener('change', handleSpecialtyChange);
+        }
     }
    
       
@@ -790,40 +815,66 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     function validateCustomPatientForm() {
         let isValid = true;
-        const errors = {};
-        
+        const errors = [];
+
+        // Clear previous validation
+        clearAllErrors();
+
         // Get form data
         const formData = new FormData(customPatientFormFields);
         const data = Object.fromEntries(formData.entries());
-        
+
         // Age validation
         const age = parseInt(data.age);
         if (!data.age || isNaN(age) || age < 1 || age > 120) {
-            errors.age = 'Please enter a valid age between 1 and 120';
+            showFieldError('ageError', 'Age must be between 1 and 120');
+            errors.push('Valid age is required');
             isValid = false;
         }
-        
+
         // Gender validation
         if (!data.gender) {
-            errors.gender = 'Please select a gender';
+            showFieldError('genderError', 'Gender selection is required');
+            errors.push('Gender selection is required');
             isValid = false;
         }
-        
+
         // Occupation validation
         if (!data.occupation || data.occupation.trim().length < 2) {
-            errors.occupation = 'Please enter an occupation (at least 2 characters)';
+            showFieldError('occupationError', 'Occupation is required (at least 2 characters)');
+            errors.push('Occupation is required');
             isValid = false;
         }
-        
-        // Illness validation (required)
-        if (!data.illness || data.illness.trim().length < 5) {
-            errors.illness = 'Please describe the condition/symptoms (at least 5 characters)';
+
+        // Specialty validation
+        if (!formState.selectedSpecialty) {
+            showFieldError('specialtyError', 'Medical specialty selection is required');
+            errors.push('Medical specialty selection is required');
             isValid = false;
         }
-        
-        // Show/hide error messages
-        showFormErrors(errors);
-        
+
+        // Symptoms validation
+        if (formState.selectedSymptoms.length === 0) {
+            showFieldError('symptomsError', 'At least one symptom must be selected');
+            errors.push('At least one symptom must be selected');
+            isValid = false;
+        }
+
+        // Severity validation
+        const severity = document.getElementById('symptomSeverity')?.value;
+        if (!severity) {
+            showFieldError('severityError', 'Symptom severity selection is required');
+            errors.push('Symptom severity selection is required');
+            isValid = false;
+        }
+
+        // Show validation summary if there are errors
+        if (!isValid) {
+            showValidationSummary(errors);
+        } else {
+            hideValidationSummary();
+        }
+
         return isValid;
     }
     
@@ -858,20 +909,23 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
     
+    // Updated data collection for AI case generation
     function collectCustomPatientData() {
         const formData = new FormData(customPatientFormFields);
         const data = Object.fromEntries(formData.entries());
         
-        // Structure the data to match the expected patient simulation format
+        // Structure the data for AI case generation API
+        // Backend expects all fields in case_parameters
         return {
-            type: 'custom',
-            patient_details: {
-                age: data.age,
+            type: 'ai_generated',
+            case_parameters: {
+                age: parseInt(data.age),
                 gender: data.gender,
                 occupation: data.occupation,
-                medical_history: data.medical_history || 'No significant medical history',
-                illness: data.illness,
-                recent_exposure: data.recent_exposure || 'None reported'
+                medical_history: data.medical_history || '',
+                specialty: formState.selectedSpecialty,
+                symptoms: formState.selectedSymptoms,
+                severity: data.severity
             }
         };
     }
@@ -879,24 +933,76 @@ document.addEventListener('DOMContentLoaded', async () => {
     function clearCustomPatientForm() {
         if (customPatientFormFields) {
             customPatientFormFields.reset();
-            clearAllErrorMessages();
+            
+            // Reset form state
+            formState.selectedSpecialty = null;
+            formState.selectedSymptoms = [];
+            
+            // Clear specialty-related UI
+            if (specialtyDescription) {
+                specialtyDescription.textContent = '';
+                specialtyDescription.style.display = 'none';
+            }
+            
+            if (symptomsContainer) {
+                symptomsContainer.style.display = 'none';
+                symptomsContainer.innerHTML = '';
+            }
+            
+            if (symptomsInstructions) {
+                symptomsInstructions.style.display = 'block';
+                symptomsInstructions.textContent = 'Select a specialty above to see available symptoms';
+                symptomsInstructions.style.color = '';
+            }
+            
+            clearAllErrors();
         }
     }
     
     function setFormLoading(isLoading) {
+        formState.isLoading = isLoading;
+        
         const submitBtn = createCustomPatientBtn;
         const cancelBtn = cancelCustomPatientBtn;
-        
+        const loadingDiv = aiGenerationLoading;
+        const formFields = customPatientFormFields;
+        const buttonText = submitBtn?.querySelector('.button-text');
+        const buttonSpinner = submitBtn?.querySelector('.button-spinner');
+
         if (isLoading) {
-            submitBtn.disabled = true;
-            submitBtn.classList.add('loading');
-            submitBtn.textContent = 'Creating...';
-            cancelBtn.disabled = true;
+            // Show loading overlay
+            if (loadingDiv) loadingDiv.style.display = 'block';
+            
+            // Disable form
+            if (formFields) {
+                formFields.style.opacity = '0.6';
+                formFields.style.pointerEvents = 'none';
+            }
+            
+            // Update button states
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                if (buttonText) buttonText.style.display = 'none';
+                if (buttonSpinner) buttonSpinner.style.display = 'inline';
+            }
+            if (cancelBtn) cancelBtn.disabled = true;
         } else {
-            submitBtn.disabled = false;
-            submitBtn.classList.remove('loading');
-            submitBtn.textContent = 'Create Patient';
-            cancelBtn.disabled = false;
+            // Hide loading overlay
+            if (loadingDiv) loadingDiv.style.display = 'none';
+            
+            // Enable form
+            if (formFields) {
+                formFields.style.opacity = '1';
+                formFields.style.pointerEvents = 'auto';
+            }
+            
+            // Update button states
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                if (buttonText) buttonText.style.display = 'inline';
+                if (buttonSpinner) buttonSpinner.style.display = 'none';
+            }
+            if (cancelBtn) cancelBtn.disabled = false;
         }
     }
     
@@ -922,34 +1028,34 @@ document.addEventListener('DOMContentLoaded', async () => {
                     error = 'Please enter an occupation (at least 2 characters)';
                 }
                 break;
-            case 'illness':
-                if (!value || value.length < 5) {
-                    error = 'Please describe the condition/symptoms (at least 5 characters)';
+            case 'specialty':
+                if (!formState.selectedSpecialty) {
+                    error = 'Please select a medical specialty';
                 }
                 break;
-            // medical_history and recent_exposure are optional, so no validation needed
+            case 'severity':
+                if (!value) {
+                    error = 'Please select symptom severity';
+                }
+                break;
+            // medical_history is optional, so no validation needed
         }
         
         // Show/hide error for this field
-        const errorElement = document.getElementById(fieldName + 'Error');
-        if (errorElement) {
-            errorElement.textContent = error;
-        }
-        
         if (error) {
-            input.classList.add('error');
+            showFieldError(fieldName + 'Error', error);
+            return false;
         } else {
-            input.classList.remove('error');
+            clearFieldError(fieldName + 'Error');
+            return true;
         }
-        
-        return !error;
     }
     
     async function createCustomPatient(customPatientData) {
         try {
-            console.log('Sending custom patient data to backend:', customPatientData);
+            console.log('Sending AI patient case data to backend:', customPatientData);
             
-            const response = await fetch('/api/create-custom-patient', {
+            const response = await fetch('/api/generate-patient-case', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -980,7 +1086,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     });
                 }
                 
-                // Display patient details (excluding illness for UI)
+                // Display patient details (excluding diagnosis for UI)
                 if (data.patient_details) {
                     displayPatientDetails(data.patient_details);
                 }
@@ -988,17 +1094,24 @@ document.addEventListener('DOMContentLoaded', async () => {
                 // Clear conversation display for new conversation
                 conversationElement.innerHTML = '';
                 
-                console.log('Custom patient created successfully with conversation ID:', currentConversationId);
+                console.log('AI patient case generated successfully with conversation ID:', currentConversationId);
                 return true;
             } else {
                 console.error('Backend error:', data.message);
                 updateStatus(`Error: ${data.message}`);
+                
+                // Show specific validation errors if available
+                if (data.validation_errors) {
+                    showValidationSummary(data.validation_errors);
+                }
+                
                 return false;
             }
             
         } catch (error) {
-            console.error('Network error creating custom patient:', error);
+            console.error('Network error generating patient case:', error);
             updateStatus('Network error - please check your connection');
+            showFormError('Network error occurred. Please check your connection and try again.');
             return false;
         }
     }
@@ -1445,6 +1558,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Initialize the app
     updateStatus('Ready');
     
+    // Initialize medical knowledge for AI case generation
+    initializeMedicalKnowledge();
+    
     // Audio system diagnostic will run when user clicks Auto Listen button
     
     // Listen for script loading errors
@@ -1521,5 +1637,275 @@ document.addEventListener('DOMContentLoaded', async () => {
             
             console.log('==== DIAGNOSTIC COMPLETE ====');
         }, 0);
+    }
+
+    // Initialize medical knowledge and form functionality
+    async function initializeMedicalKnowledge() {
+        try {
+            const response = await fetch('/api/medical-knowledge');
+            const data = await response.json();
+            
+            if (data.status === 'success') {
+                medicalKnowledge = data;
+                populateSpecialtySelector();
+                console.log('Medical knowledge loaded:', medicalKnowledge);
+            } else {
+                console.error('Failed to load medical knowledge:', data.message);
+                showFormError('Failed to load medical specialties. Please refresh the page.');
+            }
+        } catch (error) {
+            console.error('Error loading medical knowledge:', error);
+            showFormError('Failed to load medical specialties. Please check your connection and refresh.');
+        }
+    }
+
+    // Populate specialty selector with options
+    function populateSpecialtySelector() {
+        if (!medicalSpecialtySelect) return;
+
+        // Clear existing options (except the first one)
+        while (medicalSpecialtySelect.options.length > 1) {
+            medicalSpecialtySelect.removeChild(medicalSpecialtySelect.lastChild);
+        }
+
+        // Add specialty options
+        Object.entries(medicalKnowledge.specialties).forEach(([key, specialty]) => {
+            const option = document.createElement('option');
+            option.value = key;
+            option.textContent = specialty.name;
+            option.dataset.description = specialty.description;
+            medicalSpecialtySelect.appendChild(option);
+        });
+    }
+
+    // Handle specialty selection change for dynamic symptom loading
+    function handleSpecialtyChange(event) {
+        const selectedKey = event.target.value;
+        
+        formState.selectedSpecialty = selectedKey;
+        formState.selectedSymptoms = []; // Reset selected symptoms
+
+        if (selectedKey && medicalKnowledge.specialties[selectedKey]) {
+            const specialty = medicalKnowledge.specialties[selectedKey];
+            
+            // Show specialty description
+            if (specialtyDescription) {
+                specialtyDescription.textContent = specialty.description;
+                specialtyDescription.style.display = 'block';
+            }
+            
+            // Populate symptoms for this specialty
+            populateSymptoms(specialty.symptoms);
+            
+            // Show symptoms container
+            if (symptomsInstructions) symptomsInstructions.style.display = 'none';
+            if (symptomsContainer) symptomsContainer.style.display = 'block';
+        } else {
+            // Clear everything
+            if (specialtyDescription) {
+                specialtyDescription.textContent = '';
+                specialtyDescription.style.display = 'none';
+            }
+            if (symptomsContainer) symptomsContainer.style.display = 'none';
+            if (symptomsInstructions) {
+                symptomsInstructions.style.display = 'block';
+                symptomsInstructions.textContent = 'Select a specialty above to see available symptoms';
+            }
+        }
+
+        // Clear any previous validation errors
+        clearFieldError('specialtyError');
+        clearFieldError('symptomsError');
+    }
+
+    // Populate symptoms checkboxes for selected specialty
+    function populateSymptoms(symptomKeys) {
+        if (!symptomsContainer) return;
+
+        // Clear existing checkboxes
+        symptomsContainer.innerHTML = '';
+
+        // Add instructions and controls
+        const controlsDiv = document.createElement('div');
+        controlsDiv.className = 'symptoms-controls';
+        controlsDiv.innerHTML = `
+            <div class="symptoms-instructions">
+                <small>Select one or more symptoms that the patient should present with:</small>
+            </div>
+            <div class="symptoms-actions">
+                <button type="button" class="btn-link" id="selectAllSymptoms">Select All</button>
+                <button type="button" class="btn-link" id="clearAllSymptoms">Clear All</button>
+            </div>
+        `;
+        symptomsContainer.appendChild(controlsDiv);
+
+        // Create symptom checkboxes
+        const checkboxesDiv = document.createElement('div');
+        checkboxesDiv.className = 'symptoms-checkboxes';
+        
+        symptomKeys.forEach(symptomKey => {
+            const symptomName = medicalKnowledge.all_symptoms[symptomKey] || symptomKey;
+            
+            const checkboxDiv = document.createElement('div');
+            checkboxDiv.className = 'symptom-checkbox';
+            
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.id = `symptom_${symptomKey}`;
+            checkbox.value = symptomKey;
+            checkbox.addEventListener('change', handleSymptomChange);
+            
+            const label = document.createElement('label');
+            label.htmlFor = `symptom_${symptomKey}`;
+            label.textContent = symptomName;
+            
+            checkboxDiv.appendChild(checkbox);
+            checkboxDiv.appendChild(label);
+            checkboxesDiv.appendChild(checkboxDiv);
+        });
+
+        symptomsContainer.appendChild(checkboxesDiv);
+
+        // Add event listeners for Select All / Clear All
+        const selectAllBtn = document.getElementById('selectAllSymptoms');
+        const clearAllBtn = document.getElementById('clearAllSymptoms');
+
+        if (selectAllBtn) {
+            selectAllBtn.addEventListener('click', () => {
+                const checkboxes = symptomsContainer.querySelectorAll('input[type="checkbox"]');
+                checkboxes.forEach(checkbox => {
+                    checkbox.checked = true;
+                    handleSymptomChange({ target: checkbox });
+                });
+            });
+        }
+
+        if (clearAllBtn) {
+            clearAllBtn.addEventListener('click', () => {
+                const checkboxes = symptomsContainer.querySelectorAll('input[type="checkbox"]');
+                checkboxes.forEach(checkbox => {
+                    checkbox.checked = false;
+                    handleSymptomChange({ target: checkbox });
+                });
+            });
+        }
+    }
+
+    // Handle symptom checkbox changes
+    function handleSymptomChange(event) {
+        const symptomKey = event.target.value;
+        
+        if (event.target.checked) {
+            if (!formState.selectedSymptoms.includes(symptomKey)) {
+                formState.selectedSymptoms.push(symptomKey);
+            }
+        } else {
+            formState.selectedSymptoms = formState.selectedSymptoms.filter(s => s !== symptomKey);
+        }
+
+        console.log('Selected symptoms:', formState.selectedSymptoms);
+        
+        // Clear symptoms validation error if at least one selected
+        if (formState.selectedSymptoms.length > 0) {
+            clearFieldError('symptomsError');
+        }
+
+        // Real-time validation feedback
+        if (formState.realTimeValidation) {
+            validateSymptomSelection();
+        }
+    }
+
+    // Validate symptom selection in real-time
+    function validateSymptomSelection() {
+        if (formState.selectedSymptoms.length === 0 && formState.selectedSpecialty) {
+            showFieldError('symptomsError', 'At least one symptom must be selected');
+            return false;
+        } else {
+            clearFieldError('symptomsError');
+            return true;
+        }
+    }
+
+    // Show form error message
+    function showFormError(message) {
+        if (symptomsInstructions) {
+            symptomsInstructions.textContent = message;
+            symptomsInstructions.style.color = 'red';
+        }
+    }
+
+    // Clear all validation errors
+    function clearAllErrors() {
+        clearAllErrorMessages();
+        hideValidationSummary();
+    }
+
+    // Show individual field error
+    function showFieldError(elementId, message) {
+        const errorElement = document.getElementById(elementId);
+        if (errorElement) {
+            errorElement.textContent = message;
+            errorElement.style.display = 'block';
+        }
+
+        // Also add error class to corresponding input
+        const fieldName = elementId.replace('Error', '');
+        const inputElement = document.getElementById('patient' + fieldName.charAt(0).toUpperCase() + fieldName.slice(1)) ||
+                           document.getElementById(fieldName) ||
+                           document.querySelector(`[name="${fieldName}"]`);
+        if (inputElement) {
+            inputElement.classList.add('error');
+        }
+    }
+
+    // Clear individual field error
+    function clearFieldError(elementId) {
+        const errorElement = document.getElementById(elementId);
+        if (errorElement) {
+            errorElement.textContent = '';
+            errorElement.style.display = 'none';
+        }
+
+        // Also remove error class from corresponding input
+        const fieldName = elementId.replace('Error', '');
+        const inputElement = document.getElementById('patient' + fieldName.charAt(0).toUpperCase() + fieldName.slice(1)) ||
+                           document.getElementById(fieldName) ||
+                           document.querySelector(`[name="${fieldName}"]`);
+        if (inputElement) {
+            inputElement.classList.remove('error');
+        }
+    }
+
+    // Clear single field error (used in real-time validation)
+    function clearSingleFieldError(input) {
+        const fieldName = input.name;
+        const errorElement = document.getElementById(fieldName + 'Error');
+        if (errorElement && errorElement.textContent) {
+            errorElement.textContent = '';
+            errorElement.style.display = 'none';
+            input.classList.remove('error');
+        }
+    }
+
+    // Show validation summary
+    function showValidationSummary(errors) {
+        if (formValidationSummary && validationErrorsList) {
+            validationErrorsList.innerHTML = '';
+            errors.forEach(error => {
+                const li = document.createElement('li');
+                li.textContent = error;
+                validationErrorsList.appendChild(li);
+            });
+            formValidationSummary.style.display = 'block';
+            formValidationSummary.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+    }
+
+    // Hide validation summary
+    function hideValidationSummary() {
+        if (formValidationSummary) {
+            formValidationSummary.style.display = 'none';
+        }
     }
 }); 
