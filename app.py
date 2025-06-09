@@ -1031,7 +1031,18 @@ def get_current_patient_details():
 def get_medical_knowledge():
     """Get medical specialties and symptoms for the frontend form"""
     try:
+        # Debug: Check what we're getting from the chain
+        logger.info("Calling get_all_specialties()...")
         specialties = get_all_specialties()
+        logger.info(f"get_all_specialties() returned type: {type(specialties)}")
+        
+        # Validate data type before processing
+        if not isinstance(specialties, dict):
+            logger.error(f"Expected dict but got {type(specialties)}: {specialties}")
+            return jsonify({
+                'status': 'error',
+                'message': f'Invalid data type from medical system: expected dict, got {type(specialties)}'
+            }), 500
         
         # Build response with specialties and their associated symptoms
         response_data = {
@@ -1040,13 +1051,19 @@ def get_medical_knowledge():
             'all_symptoms': {}
         }
         
-        # Add specialty information
-        for specialty_key, specialty_data in specialties.items():
-            response_data['specialties'][specialty_key] = {
-                'name': specialty_data['name'],
-                'description': specialty_data['description'],
-                'symptoms': get_available_symptoms_for_specialty(specialty_key)
-            }
+        # Add specialty information with error handling for each specialty
+        for specialty_key, specialty_name in specialties.items():
+            try:
+                logger.debug(f"Processing specialty: {specialty_key}")
+                response_data['specialties'][specialty_key] = {
+                    'name': specialty_name,
+                    'description': specialty_name,  # Fallback if description lookup fails
+                    'symptoms': get_available_symptoms_for_specialty(specialty_key)
+                }
+            except Exception as e:
+                logger.error(f"Error processing specialty {specialty_key}: {e}")
+                # Continue with other specialties instead of failing completely
+                continue
         
         # Add all symptoms with human-readable names
         symptom_mapping = {
@@ -1097,6 +1114,7 @@ def get_medical_knowledge():
         
         response_data['all_symptoms'] = symptom_mapping
         
+        logger.info(f"Successfully built medical knowledge response with {len(response_data['specialties'])} specialties")
         return jsonify(response_data)
         
     except Exception as e:
