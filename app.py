@@ -43,7 +43,7 @@ from utils.groq_integration import get_groq_response
 from utils.groq_transcribe import transcribe_audio_data
 from utils.groq_tts_speech import generate_speech_audio
 from utils.patient_simulation import load_patient_simulation, get_patient_system_prompt
-from utils.database import init_db, create_conversation, add_message, get_conversations, get_conversation, delete_conversation, update_conversation_title, store_conversation_data, get_conversation_data
+from utils.database import init_db, create_conversation, add_message, get_conversations, get_conversation, delete_conversation, update_conversation_title, store_conversation_data, get_conversation_data, validate_patient_data_structure
 from utils.ai_case_generator import generate_patient_case, get_all_specialties, get_available_symptoms_for_specialty, validate_symptom_specialty_combination
 
 # Add template folder check before app creation
@@ -792,7 +792,10 @@ def delete_conversation_by_id(conversation_id):
 
 @app.route('/api/conversations/<int:conversation_id>/load', methods=['POST'])
 def load_conversation_by_id(conversation_id):
-    """Load a conversation into the active session"""
+    """
+    Load a conversation into the active session.
+    ✅ PHASE 4.1: Enhanced loading for AI-generated patient conversations.
+    """
     global conversation_history, current_conversation_id, current_patient_simulation, patient_data
     
     try:
@@ -805,29 +808,92 @@ def load_conversation_by_id(conversation_id):
             
         # Update current conversation ID
         current_conversation_id = conversation_id
+        logger.info(f"Loading conversation {conversation_id}: {conversation.get('title', 'Untitled')}")
         
-        # Load the simulation file if available
+        # ✅ PHASE 4.1: Enhanced patient data loading with type detection
         simulation_file = conversation.get('simulation_file')
-        if simulation_file and os.path.exists(simulation_file):
-            patient_data = initialize_patient_data(simulation_file)
+        retrieved_patient_data = get_conversation_data(conversation_id, 'patient_data')
         
-        # Get the voice ID if available
+        if retrieved_patient_data:
+            # Use stored patient data (AI-generated or custom)
+            patient_data = retrieved_patient_data
+            
+            # ✅ PHASE 4.1: Validate retrieved data structure
+            is_valid, validation_errors = validate_patient_data_structure(retrieved_patient_data)
+            if not is_valid:
+                logger.warning(f"Invalid patient data structure in conversation {conversation_id}: {validation_errors}")
+                # Continue with fallback handling
+            
+            patient_type = retrieved_patient_data.get('type', 'unknown')
+            logger.info(f"Loaded {patient_type} patient data from database for conversation {conversation_id}")
+            
+            # Set simulation file path for display purposes
+            if patient_type == 'ai_generated':
+                current_patient_simulation = 'AI Generated Case'
+            elif patient_type == 'custom':
+                current_patient_simulation = 'Custom Patient'
+            else:
+                current_patient_simulation = simulation_file or 'Unknown'
+                
+        elif simulation_file and os.path.exists(simulation_file):
+            # Load from file-based simulation
+            patient_data = initialize_patient_data(simulation_file)
+            current_patient_simulation = simulation_file
+            logger.info(f"Loaded file-based patient data from {simulation_file}")
+            
+        else:
+            # No patient data available
+            logger.warning(f"No patient data found for conversation {conversation_id}")
+            patient_data = None
+            current_patient_simulation = None
+        
+        # ✅ PHASE 4.1: Get additional conversation metadata
         voice_id = get_conversation_data(conversation_id, 'voice_id')
+        all_conversation_data = get_all_conversation_data(conversation_id)
         
         # Convert database messages to conversation history format
         conversation_history = [
             {"role": msg["role"], "content": msg["content"]}
-            for msg in conversation["messages"]
+            for msg in conversation.get("messages", [])
         ]
-            
-        return jsonify({
+        
+        # ✅ PHASE 4.1: Build enhanced response with detailed metadata
+        response_data = {
             'status': 'success',
             'message': f'Conversation {conversation_id} loaded successfully',
             'conversation': conversation,
-            'voice_id': voice_id
-        })
+            'voice_id': voice_id,
+            'message_count': len(conversation_history),
+            'has_patient_data': patient_data is not None
+        }
+        
+        # Add patient type information if available
+        if patient_data:
+            response_data['patient_type'] = patient_data.get('type', 'unknown')
+            
+            # Add AI-generated case info for display
+            if patient_data.get('type') == 'ai_generated':
+                generation_metadata = patient_data.get('generation_metadata', {})
+                response_data['ai_case_summary'] = {
+                    'specialty': generation_metadata.get('specialty', 'Unknown'),
+                    'symptoms': generation_metadata.get('input_symptoms', []),
+                    'severity': generation_metadata.get('severity', 'Unknown'),
+                    'difficulty': generation_metadata.get('difficulty_level', 'intermediate')
+                }
+            
+            # Add migration info if available
+            if 'migration_metadata' in patient_data:
+                response_data['migration_info'] = patient_data['migration_metadata']
+        
+        # Add any additional stored data keys (for debugging/admin purposes)
+        if all_conversation_data:
+            response_data['stored_data_keys'] = list(all_conversation_data.keys())
+            
+        logger.info(f"Successfully loaded conversation {conversation_id} with {len(conversation_history)} messages")
+        return jsonify(response_data)
+        
     except Exception as e:
-        logger.error(f"Error loading conversation: {str(e)}", exc_info=True)
+        logger.error(f"Error loading conversation {conversation_id}: {str(e)}", exc_info=True)
         return jsonify({
             'status': 'error',
             'message': f'Error loading conversation: {str(e)}'
@@ -868,7 +934,10 @@ def diagnose_api():
 
 @app.route('/api/current-patient-details', methods=['GET'])
 def get_current_patient_details():
-    """Get details of the currently selected patient simulation"""
+    """
+    Get details of the currently selected patient simulation.
+    ✅ PHASE 4.1: Enhanced retrieval logic for AI-generated cases.
+    """
     try:
         # Check if we have an active conversation with patient data
         if current_conversation_id:
@@ -876,18 +945,27 @@ def get_current_patient_details():
             retrieved_patient_data = get_conversation_data(current_conversation_id, 'patient_data')
             if retrieved_patient_data:
                 patient_data_to_use = retrieved_patient_data
+                logger.debug(f"Retrieved patient data from database for conversation {current_conversation_id}")
             else:
                 patient_data_to_use = patient_data
+                logger.debug("Using in-memory patient data")
         else:
             patient_data_to_use = patient_data
+            logger.debug("Using global patient data")
         
         if not patient_data_to_use or not patient_data_to_use.get('patient_details'):
             return jsonify({
                 'status': 'error',
                 'message': 'No patient simulation selected or invalid simulation data'
             }), 404
-            
-        # Get patient details, excluding the 'illness' field
+        
+        # ✅ PHASE 4.1: Validate patient data structure before processing
+        is_valid, validation_errors = validate_patient_data_structure(patient_data_to_use)
+        if not is_valid:
+            logger.warning(f"Invalid patient data structure: {validation_errors}")
+            # Continue with fallback handling rather than failing
+        
+        # Get patient details, excluding the 'illness' field (hidden diagnosis)
         details = patient_data_to_use.get('patient_details', {}).copy()
         if 'illness' in details:
             del details['illness']  # Remove illness field (hidden diagnosis)
@@ -899,19 +977,21 @@ def get_current_patient_details():
             'patient_type': patient_data_to_use.get('type', 'unknown')
         }
         
-        # Add AI-generated case metadata if available
+        # ✅ PHASE 4.1: Enhanced handling for AI-generated cases
         if patient_data_to_use.get('type') == 'ai_generated':
             generation_metadata = patient_data_to_use.get('generation_metadata', {})
             response_data['ai_case_info'] = {
-                'specialty': generation_metadata.get('specialty'),
+                'specialty': generation_metadata.get('specialty', 'Unknown'),
                 'input_symptoms': generation_metadata.get('input_symptoms', []),
-                'severity': generation_metadata.get('severity'),
-                'difficulty_level': generation_metadata.get('difficulty_level'),
+                'severity': generation_metadata.get('severity', 'Unknown'),
+                'difficulty_level': generation_metadata.get('difficulty_level', 'intermediate'),
                 'learning_objectives': generation_metadata.get('learning_objectives', []),
+                'differential_diagnoses': generation_metadata.get('differential_diagnoses', []),
+                'clinical_notes': generation_metadata.get('clinical_notes', ''),
                 'generation_warnings': generation_metadata.get('generation_warnings', [])
             }
             
-            # Add human-readable symptom names
+            # ✅ PHASE 4.1: Enhanced symptom mapping with validation
             symptom_mapping = {
                 'chest_pain': 'Chest pain',
                 'shortness_breath': 'Shortness of breath',
@@ -958,10 +1038,18 @@ def get_current_patient_details():
                 'high_blood_pressure': 'High blood pressure'
             }
             
+            # Map symptoms to display names with fallback
+            input_symptoms = generation_metadata.get('input_symptoms', [])
             response_data['ai_case_info']['symptom_display_names'] = [
-                symptom_mapping.get(symptom, symptom) for symptom in generation_metadata.get('input_symptoms', [])
+                symptom_mapping.get(symptom, symptom.replace('_', ' ').title()) 
+                for symptom in input_symptoms
             ]
         
+        # ✅ PHASE 4.1: Add migration info if available
+        if 'migration_metadata' in patient_data_to_use:
+            response_data['migration_info'] = patient_data_to_use['migration_metadata']
+        
+        logger.debug(f"Successfully retrieved patient details for type: {patient_data_to_use.get('type', 'unknown')}")
         return jsonify(response_data)
         
     except Exception as e:
