@@ -766,8 +766,81 @@ How you should present: {patient_presentation}""",
                 "case_data": case_data
             }
         
-        # Log successful generation
+        # ===== COMPREHENSIVE CASE GENERATION LOGGING =====
+        # Log detailed information about the generated case for debugging and monitoring
         diagnosis = case_data.get('diagnosis', 'Unknown')
+        
+        logger.info("=" * 60)
+        logger.info("🏥 AI PATIENT CASE GENERATED SUCCESSFULLY")
+        logger.info("=" * 60)
+        
+        # Log case summary
+        logger.info(f"📋 CASE SUMMARY:")
+        logger.info(f"   Diagnosis: {diagnosis}")
+        logger.info(f"   Specialty: {specialty}")
+        logger.info(f"   Patient: {demographics.get('gender', 'Unknown')}, Age {demographics.get('age', 'Unknown')}")
+        logger.info(f"   Occupation: {demographics.get('occupation', 'Unknown')}")
+        logger.info(f"   Severity: {severity}")
+        logger.info(f"   Difficulty: {case_data.get('difficulty_level', 'intermediate')}")
+        
+        # Log symptoms
+        logger.info(f"🔍 SYMPTOMS:")
+        logger.info(f"   Input Symptoms: {', '.join(symptoms)}")
+        logger.info(f"   Additional Symptoms: {case_data.get('additional_symptoms', 'None')}")
+        
+        # Log patient presentation (how they'll describe symptoms)
+        logger.info(f"🗣️ PATIENT PRESENTATION:")
+        patient_presentation = case_data.get('patient_presentation', '')
+        # Truncate if too long for logging
+        if len(patient_presentation) > 200:
+            logger.info(f"   {patient_presentation[:200]}...")
+        else:
+            logger.info(f"   {patient_presentation}")
+        
+        # Log medical details
+        logger.info(f"📖 MEDICAL DETAILS:")
+        logger.info(f"   Medical History: {case_data.get('medical_history', 'None')}")
+        logger.info(f"   Recent Exposure: {case_data.get('recent_exposure', 'None')}")
+        logger.info(f"   Clinical Notes: {case_data.get('clinical_notes', 'None')}")
+        
+        # Log learning objectives
+        learning_objectives = case_data.get('learning_objectives', [])
+        if learning_objectives:
+            logger.info(f"🎯 LEARNING OBJECTIVES:")
+            for i, objective in enumerate(learning_objectives, 1):
+                logger.info(f"   {i}. {objective}")
+        
+        # Log differential diagnoses
+        differentials = case_data.get('differential_diagnoses', [])
+        if differentials:
+            logger.info(f"🔬 DIFFERENTIAL DIAGNOSES:")
+            for i, diff in enumerate(differentials, 1):
+                logger.info(f"   {i}. {diff}")
+        
+        # Log warnings if any
+        if warnings:
+            logger.info(f"⚠️ GENERATION WARNINGS:")
+            for warning in warnings:
+                logger.info(f"   - {warning}")
+        
+        # Log the prompt template that will be used
+        logger.info(f"💬 PATIENT SIMULATION PROMPT TEMPLATE:")
+        logger.info("   Template will use the following variables:")
+        for key, value in patient_data['patient_details'].items():
+            if key == 'illness':
+                logger.info(f"   - {key}: [HIDDEN FROM STUDENT - {value}]")
+            else:
+                # Truncate long values
+                if isinstance(value, str) and len(value) > 100:
+                    logger.info(f"   - {key}: {value[:100]}...")
+                else:
+                    logger.info(f"   - {key}: {value}")
+        
+        logger.info("=" * 60)
+        logger.info("✅ Case ready for conversation attachment")
+        logger.info("=" * 60)
+        
+        # Log successful generation
         logger.info(f"Successfully generated case: {diagnosis} for {demographics.get('gender', 'unknown')}, {demographics.get('age', 'unknown')} in {specialty}")
         
         return {

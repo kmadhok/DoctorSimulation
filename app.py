@@ -392,19 +392,69 @@ def generate_patient_case_route():
         if result.get('status') == 'success':
             patient_data = result['patient_data']
             
+            # ===== CONVERSATION ATTACHMENT LOGGING =====
+            logger.info("🔗 ATTACHING AI CASE TO CONVERSATION")
+            logger.info(f"   Patient Data Type: {patient_data.get('type', 'unknown')}")
+            logger.info(f"   Generation Metadata Available: {bool(patient_data.get('generation_metadata'))}")
+            
             # Initialize with the generated patient data
             global current_patient_simulation, current_conversation_id, conversation_history
             
             # Store the patient data globally
             initialize_patient_data(custom_data=patient_data)
+            logger.info("✅ Patient data stored globally")
             
             # Create a new conversation for this case
             case_title = f"AI Case: {result['case_summary'].get('diagnosis', 'Unknown')}"
             current_conversation_id = create_conversation(case_title, current_patient_simulation)
             conversation_history = []
             
-            # Log successful generation
-            logger.info(f"Successfully generated AI patient case: {case_title}")
+            logger.info("💾 CONVERSATION CREATED & ATTACHED")
+            logger.info(f"   Conversation ID: {current_conversation_id}")
+            logger.info(f"   Conversation Title: {case_title}")
+            logger.info(f"   Conversation History Reset: True")
+            
+            # Log what will be included in the actual patient prompt
+            logger.info("🎭 PATIENT SIMULATION READY")
+            logger.info("   The following prompt will be sent to AI when doctor asks questions:")
+            
+            # Build the actual prompt that will be used (simulate the formatting)
+            if 'prompt_template' in patient_data and 'patient_details' in patient_data:
+                try:
+                    formatted_prompt = patient_data['prompt_template'].format(**patient_data['patient_details'])
+                    # Log first 300 characters of the formatted prompt
+                    logger.info(f"   Formatted Prompt Preview: {formatted_prompt[:300]}...")
+                    logger.info(f"   Full Prompt Length: {len(formatted_prompt)} characters")
+                except Exception as prompt_error:
+                    logger.warning(f"   Could not format prompt preview: {prompt_error}")
+            
+            # Log voice settings
+            voice_id = patient_data.get('voice_id', 'Unknown')
+            logger.info(f"🔊 Voice ID for TTS: {voice_id}")
+            
+            # Log for Heroku monitoring (structured format)
+            case_summary = result.get('case_summary', {})
+            generation_metadata = patient_data.get('generation_metadata', {})
+            
+            logger.info("📊 HEROKU_MONITORING_DATA: " + json.dumps({
+                'event': 'ai_case_generated',
+                'conversation_id': current_conversation_id,
+                'case_diagnosis': case_summary.get('diagnosis', 'Unknown'),
+                'specialty': generation_metadata.get('specialty', 'Unknown'),
+                'input_symptoms': generation_metadata.get('input_symptoms', []),
+                'severity': generation_metadata.get('severity', 'Unknown'),
+                'difficulty': case_summary.get('difficulty', 'Unknown'),
+                'patient_age': patient_data.get('patient_details', {}).get('age', 'Unknown'),
+                'patient_gender': patient_data.get('patient_details', {}).get('gender', 'Unknown'),
+                'patient_occupation': patient_data.get('patient_details', {}).get('occupation', 'Unknown'),
+                'warnings_count': len(result.get('warnings', [])),
+                'learning_objectives_count': len(case_summary.get('learning_objectives', [])),
+                'timestamp': datetime.now().isoformat()
+            }))
+            
+            # Log successful generation with final summary
+            logger.info(f"🎉 AI PATIENT CASE FULLY DEPLOYED: {case_title}")
+            logger.info("   Case is now active and ready for doctor-patient simulation")
             
             return jsonify({
                 'status': 'success',
