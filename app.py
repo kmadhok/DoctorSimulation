@@ -43,7 +43,7 @@ from utils.groq_integration import get_groq_response
 from utils.groq_transcribe import transcribe_audio_data
 from utils.groq_tts_speech import generate_speech_audio
 from utils.patient_simulation import load_patient_simulation, get_patient_system_prompt
-from utils.database import init_db, create_conversation, add_message, get_conversations, get_conversation, delete_conversation, update_conversation_title, store_conversation_data, get_conversation_data, validate_patient_data_structure
+from utils.database import init_db, create_conversation, add_message, get_conversations, get_conversation, delete_conversation, update_conversation_title, store_conversation_data, get_conversation_data, validate_patient_data_structure, get_all_conversation_data
 from utils.ai_case_generator import generate_patient_case, get_all_specialties, get_available_symptoms_for_specialty, validate_symptom_specialty_combination
 
 # Add template folder check before app creation
@@ -640,16 +640,93 @@ def process_audio():
             patient_data = {}  # Default empty patient data
             logger.info(f"Created new conversation with ID: {current_conversation_id}")
         else:
-            # Retrieve patient data from database
-            logger.info(f"Retrieving patient data for conversation: {current_conversation_id}")
+            # ===== ENHANCED CONVERSATION DATA RETRIEVAL LOGGING =====
+            logger.info("🔄 RETRIEVING CONVERSATION DATA FROM DATABASE")
+            logger.info(f"   Conversation ID: {current_conversation_id}")
+            
+            # Get all conversation data for comprehensive logging
+            all_conversation_data = get_all_conversation_data(current_conversation_id)
+            logger.info(f"   Available Data Keys: {list(all_conversation_data.keys()) if all_conversation_data else 'None'}")
+            
+            # Retrieve patient data specifically
             retrieved_data = get_conversation_data(current_conversation_id, 'patient_data')
             if retrieved_data:
                 patient_data = retrieved_data
-                logger.info(f"Successfully retrieved patient_data: {patient_data}")
+                
+                # Log detailed patient data information
+                logger.info("✅ PATIENT DATA RETRIEVED SUCCESSFULLY")
+                logger.info(f"   Patient Type: {patient_data.get('type', 'unknown')}")
+                
+                if patient_data.get('type') == 'ai_generated':
+                    generation_metadata = patient_data.get('generation_metadata', {})
+                    logger.info("   🏥 AI-Generated Case Details:")
+                    logger.info(f"      Specialty: {generation_metadata.get('specialty', 'Unknown')}")
+                    logger.info(f"      Input Symptoms: {generation_metadata.get('input_symptoms', [])}")
+                    logger.info(f"      Severity: {generation_metadata.get('severity', 'Unknown')}")
+                    logger.info(f"      Difficulty: {generation_metadata.get('difficulty_level', 'Unknown')}")
+                    
+                    patient_details = patient_data.get('patient_details', {})
+                    logger.info("   👤 Patient Demographics:")
+                    logger.info(f"      Age: {patient_details.get('age', 'Unknown')}")
+                    logger.info(f"      Gender: {patient_details.get('gender', 'Unknown')}")
+                    logger.info(f"      Occupation: {patient_details.get('occupation', 'Unknown')}")
+                    logger.info(f"      Medical History: {patient_details.get('medical_history', 'None')}")
+                    logger.info(f"      Hidden Diagnosis: {patient_details.get('illness', 'Unknown')}")
+                    
+                elif patient_data.get('type') == 'custom':
+                    patient_details = patient_data.get('patient_details', {})
+                    logger.info("   👤 Custom Patient Details:")
+                    logger.info(f"      Age: {patient_details.get('age', 'Unknown')}")
+                    logger.info(f"      Gender: {patient_details.get('gender', 'Unknown')}")
+                    logger.info(f"      Occupation: {patient_details.get('occupation', 'Unknown')}")
+                    logger.info(f"      Illness: {patient_details.get('illness', 'Unknown')}")
+                    
+                # Log prompt template information
+                if 'prompt_template' in patient_data:
+                    template_length = len(patient_data['prompt_template'])
+                    logger.info(f"   💬 Prompt Template: {template_length} characters")
+                    
+                # Log voice settings
+                voice_id = patient_data.get('voice_id', 'Unknown')
+                logger.info(f"   🔊 Voice ID: {voice_id}")
+                
+                # Log for Heroku monitoring 
+                logger.info("📊 HEROKU_CONVERSATION_DATA: " + json.dumps({
+                    'event': 'conversation_data_retrieved',
+                    'conversation_id': current_conversation_id,
+                    'patient_type': patient_data.get('type', 'unknown'),
+                    'has_patient_data': True,
+                    'data_keys_available': list(all_conversation_data.keys()) if all_conversation_data else [],
+                    'patient_age': patient_details.get('age', 'Unknown') if 'patient_details' in patient_data else 'N/A',
+                    'patient_gender': patient_details.get('gender', 'Unknown') if 'patient_details' in patient_data else 'N/A',
+                    'timestamp': datetime.now().isoformat()
+                }))
+                
             else:
                 patient_data = {}
-                logger.warning(f"No patient data found for conversation {current_conversation_id}")
-            
+                logger.warning("❌ NO PATIENT DATA FOUND")
+                logger.info(f"   Conversation {current_conversation_id} has no associated patient simulation")
+                
+                # Check if there are any other data keys
+                if all_conversation_data:
+                    logger.info(f"   Other data available: {list(all_conversation_data.keys())}")
+                    for key, value in all_conversation_data.items():
+                        if key != 'patient_data':
+                            value_preview = str(value)[:100] + "..." if len(str(value)) > 100 else str(value)
+                            logger.info(f"      {key}: {value_preview}")
+                else:
+                    logger.info("   No data stored for this conversation")
+                
+                # Log for Heroku monitoring 
+                logger.info("📊 HEROKU_CONVERSATION_DATA: " + json.dumps({
+                    'event': 'conversation_data_retrieved',
+                    'conversation_id': current_conversation_id,
+                    'patient_type': 'none',
+                    'has_patient_data': False,
+                    'data_keys_available': list(all_conversation_data.keys()) if all_conversation_data else [],
+                    'timestamp': datetime.now().isoformat()
+                }))
+        
         logger.info(f"Using patient_data: {patient_data}")
 
         # If voice_id was received from form data, store it in the database right away
@@ -862,44 +939,122 @@ def load_conversation_by_id(conversation_id):
         
         # ✅ PHASE 4.1: Enhanced patient data loading with type detection
         simulation_file = conversation.get('simulation_file')
+        
+        # ===== ENHANCED CONVERSATION LOADING LOGGING =====
+        logger.info("📁 LOADING CONVERSATION DATA")
+        logger.info(f"   Conversation ID: {conversation_id}")
+        logger.info(f"   Title: {conversation.get('title', 'Untitled')}")
+        logger.info(f"   Simulation File: {simulation_file or 'None'}")
+        logger.info(f"   Created: {conversation.get('created_at', 'Unknown')}")
+        logger.info(f"   Message Count: {len(conversation.get('messages', []))}")
+        
+        # Get all conversation data for comprehensive logging
+        all_conversation_data = get_all_conversation_data(conversation_id)
+        logger.info(f"   Stored Data Keys: {list(all_conversation_data.keys()) if all_conversation_data else 'None'}")
+        
+        # Log conversation history overview
+        messages = conversation.get('messages', [])
+        if messages:
+            logger.info("📜 CONVERSATION HISTORY OVERVIEW:")
+            logger.info(f"   Total Messages: {len(messages)}")
+            
+            # Log first few messages for context
+            for i, msg in enumerate(messages[:3]):  # First 3 messages
+                role = msg.get('role', 'unknown')
+                content = msg.get('content', '')
+                preview = content[:50] + "..." if len(content) > 50 else content
+                logger.info(f"   {i+1}. {role.upper()}: {preview}")
+            
+            if len(messages) > 6:
+                logger.info(f"   ... [{len(messages)-6} messages omitted] ...")
+                
+                # Show last few messages if we have many
+                for i, msg in enumerate(messages[-3:], len(messages)-2):
+                    role = msg.get('role', 'unknown')
+                    content = msg.get('content', '')
+                    preview = content[:50] + "..." if len(content) > 50 else content
+                    logger.info(f"   {i}. {role.upper()}: {preview}")
+        
         retrieved_patient_data = get_conversation_data(conversation_id, 'patient_data')
         
         if retrieved_patient_data:
             # Use stored patient data (AI-generated or custom)
             patient_data = retrieved_patient_data
             
+            logger.info(f"✅ PATIENT SIMULATION DATA LOADED")
+            patient_type = retrieved_patient_data.get('type', 'unknown')
+            logger.info(f"   Patient Type: {patient_type}")
+            
+            if patient_type == 'ai_generated':
+                generation_metadata = retrieved_patient_data.get('generation_metadata', {})
+                patient_details = retrieved_patient_data.get('patient_details', {})
+                
+                logger.info(f"   🏥 AI Case Information:")
+                logger.info(f"      Specialty: {generation_metadata.get('specialty', 'Unknown')}")
+                logger.info(f"      Diagnosis: {patient_details.get('illness', 'Unknown')}")
+                logger.info(f"      Patient: {patient_details.get('gender', 'Unknown')}, Age {patient_details.get('age', 'Unknown')}")
+                logger.info(f"      Occupation: {patient_details.get('occupation', 'Unknown')}")
+                logger.info(f"      Symptoms: {generation_metadata.get('input_symptoms', [])}")
+                logger.info(f"      Severity: {generation_metadata.get('severity', 'Unknown')}")
+                logger.info(f"      Difficulty: {generation_metadata.get('difficulty_level', 'Unknown')}")
+                
+                learning_objectives = generation_metadata.get('learning_objectives', [])
+                if learning_objectives:
+                    logger.info(f"      Learning Objectives: {len(learning_objectives)} defined")
+                    for i, obj in enumerate(learning_objectives[:3], 1):
+                        logger.info(f"         {i}. {obj}")
+                
+                current_patient_simulation = 'AI Generated Case'
+                
+            elif patient_type == 'custom':
+                patient_details = retrieved_patient_data.get('patient_details', {})
+                logger.info(f"   👤 Custom Patient Information:")
+                logger.info(f"      Age: {patient_details.get('age', 'Unknown')}")
+                logger.info(f"      Gender: {patient_details.get('gender', 'Unknown')}")
+                logger.info(f"      Occupation: {patient_details.get('occupation', 'Unknown')}")
+                logger.info(f"      Medical History: {patient_details.get('medical_history', 'None')}")
+                logger.info(f"      Condition: {patient_details.get('illness', 'Unknown')}")
+                current_patient_simulation = 'Custom Patient'
+                
+            else:
+                logger.info(f"   📄 File-based or Other Patient Type")
+                current_patient_simulation = simulation_file or 'Unknown'
+            
             # ✅ PHASE 4.1: Validate retrieved data structure
             is_valid, validation_errors = validate_patient_data_structure(retrieved_patient_data)
             if not is_valid:
-                logger.warning(f"Invalid patient data structure in conversation {conversation_id}: {validation_errors}")
-                # Continue with fallback handling
-            
-            patient_type = retrieved_patient_data.get('type', 'unknown')
-            logger.info(f"Loaded {patient_type} patient data from database for conversation {conversation_id}")
-            
-            # Set simulation file path for display purposes
-            if patient_type == 'ai_generated':
-                current_patient_simulation = 'AI Generated Case'
-            elif patient_type == 'custom':
-                current_patient_simulation = 'Custom Patient'
+                logger.warning(f"⚠️ PATIENT DATA VALIDATION ISSUES:")
+                for error in validation_errors:
+                    logger.warning(f"      - {error}")
             else:
-                current_patient_simulation = simulation_file or 'Unknown'
+                logger.info(f"✅ Patient data structure validation passed")
                 
         elif simulation_file and os.path.exists(simulation_file):
             # Load from file-based simulation
+            logger.info(f"📂 LOADING FILE-BASED SIMULATION")
+            logger.info(f"   File Path: {simulation_file}")
             patient_data = initialize_patient_data(simulation_file)
             current_patient_simulation = simulation_file
-            logger.info(f"Loaded file-based patient data from {simulation_file}")
+            
+            if patient_data:
+                logger.info(f"✅ File-based patient data loaded successfully")
+                patient_details = patient_data.get('patient_details', {})
+                logger.info(f"   Patient Age: {patient_details.get('age', 'Unknown')}")
+                logger.info(f"   Patient Gender: {patient_details.get('gender', 'Unknown')}")
+                logger.info(f"   Patient Condition: {patient_details.get('illness', 'Unknown')}")
+            else:
+                logger.warning(f"❌ Failed to load file-based patient data")
             
         else:
             # No patient data available
-            logger.warning(f"No patient data found for conversation {conversation_id}")
+            logger.warning(f"❌ NO PATIENT DATA AVAILABLE")
+            logger.info(f"   No stored patient data found")
+            logger.info(f"   No valid simulation file: {simulation_file}")
             patient_data = None
             current_patient_simulation = None
         
         # ✅ PHASE 4.1: Get additional conversation metadata
         voice_id = get_conversation_data(conversation_id, 'voice_id')
-        all_conversation_data = get_all_conversation_data(conversation_id)
         
         # Convert database messages to conversation history format
         conversation_history = [
