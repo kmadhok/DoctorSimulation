@@ -30,6 +30,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         all_symptoms: {}
     };
 
+    // NEW: Diagnosis panel variables
+    let diagnosisPanelVisible = false;
+    let currentPatientDiagnosis = null;
+    let diagnosisAttemptCount = 0;
+    const maxDiagnosisAttempts = 3;
+
     // Get DOM elements
     // const autoListenBtn = document.getElementById('autoListenBtn');
     // const statusElement = document.getElementById('status');
@@ -1909,4 +1915,335 @@ document.addEventListener('DOMContentLoaded', async () => {
             formValidationSummary.style.display = 'none';
         }
     }
-}); 
+
+    // Initialize diagnosis panel functionality
+    initializeDiagnosisPanel();
+});
+
+// NEW: Diagnosis Panel Functions
+
+function initializeDiagnosisPanel() {
+    const submitBtn = document.getElementById('submitDiagnosisBtn');
+    const clearBtn = document.getElementById('clearDiagnosisBtn');
+    const tryAgainBtn = document.getElementById('tryAgainBtn');
+    const showAnswerBtn = document.getElementById('showAnswerBtn');
+    const diagnosisToggle = document.getElementById('diagnosisToggle');
+    
+    // Event listeners
+    if (diagnosisToggle) {
+        diagnosisToggle.addEventListener('click', toggleDiagnosisPanel);
+    }
+    
+    if (submitBtn) {
+        submitBtn.addEventListener('click', submitDiagnosis);
+    }
+    
+    if (clearBtn) {
+        clearBtn.addEventListener('click', clearDiagnosis);
+    }
+    
+    if (tryAgainBtn) {
+        tryAgainBtn.addEventListener('click', resetDiagnosisForm);
+    }
+    
+    if (showAnswerBtn) {
+        showAnswerBtn.addEventListener('click', showCorrectAnswer);
+    }
+    
+    // Enable Enter key submission in textarea
+    const diagnosisInput = document.getElementById('diagnosisInput');
+    if (diagnosisInput) {
+        diagnosisInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && e.ctrlKey) {
+                e.preventDefault();
+                submitDiagnosis();
+            }
+        });
+    }
+}
+
+function toggleDiagnosisPanel() {
+    const panel = document.getElementById('diagnosisPanel');
+    const container = document.querySelector('.container');
+    const toggle = document.getElementById('diagnosisToggle');
+    
+    if (!panel || !container || !toggle) return;
+    
+    if (diagnosisPanelVisible) {
+        // Hide panel
+        panel.style.display = 'none';
+        container.classList.remove('with-diagnosis');
+        toggle.classList.remove('panel-open');
+        toggle.textContent = 'Submit Diagnosis';
+        diagnosisPanelVisible = false;
+    } else {
+        // Show panel
+        panel.style.display = 'flex';
+        container.classList.add('with-diagnosis');
+        toggle.classList.add('panel-open');
+        toggle.textContent = 'Hide Panel';
+        diagnosisPanelVisible = true;
+        
+        // Update patient details and reset form
+        updatePatientDetailsInDiagnosis();
+        resetDiagnosisAttempts();
+    }
+}
+
+async function submitDiagnosis() {
+    const diagnosisInput = document.getElementById('diagnosisInput');
+    const submitBtn = document.getElementById('submitDiagnosisBtn');
+    const buttonText = submitBtn.querySelector('.button-text');
+    const buttonSpinner = submitBtn.querySelector('.button-spinner');
+    
+    if (!diagnosisInput || !submitBtn) return;
+    
+    const userDiagnosis = diagnosisInput.value.trim();
+    
+    // Validation
+    if (!userDiagnosis) {
+        showDiagnosisFeedback('Please enter a diagnosis before submitting.', 'incorrect');
+        diagnosisInput.focus();
+        return;
+    }
+    
+    if (!currentConversationId) {
+        showDiagnosisFeedback('No active conversation. Please start a conversation first.', 'incorrect');
+        return;
+    }
+    
+    // Check attempt limit
+    if (diagnosisAttemptCount >= maxDiagnosisAttempts) {
+        showDiagnosisFeedback('Maximum attempts reached. Please see the correct answer.', 'incorrect');
+        return;
+    }
+    
+    // Update UI - loading state
+    submitBtn.disabled = true;
+    buttonText.textContent = 'Checking...';
+    buttonSpinner.style.display = 'inline';
+    
+    try {
+        const response = await fetch('/api/submit-diagnosis', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                conversation_id: currentConversationId,
+                user_diagnosis: userDiagnosis
+            })
+        });
+        
+        const result = await response.json();
+        
+        diagnosisAttemptCount++;
+        
+        if (response.ok && result.status === 'success') {
+            displayDiagnosisResult(result);
+        } else {
+            showDiagnosisFeedback(result.message || 'Error checking diagnosis', 'incorrect');
+        }
+    } catch (error) {
+        console.error('Error submitting diagnosis:', error);
+        showDiagnosisFeedback('Network error. Please try again.', 'incorrect');
+    } finally {
+        // Reset UI
+        submitBtn.disabled = false;
+        buttonText.textContent = 'Submit Diagnosis';
+        buttonSpinner.style.display = 'none';
+    }
+}
+
+function displayDiagnosisResult(result) {
+    const feedbackDiv = document.getElementById('diagnosisFeedback');
+    const messageDiv = document.getElementById('feedbackMessage');
+    const detailsDiv = document.getElementById('feedbackDetails');
+    
+    if (!feedbackDiv || !messageDiv || !detailsDiv) return;
+    
+    // Show feedback section
+    feedbackDiv.style.display = 'block';
+    
+    // Clear previous classes
+    feedbackDiv.className = 'diagnosis-feedback';
+    
+    // Set feedback based on result
+    let message = '';
+    let details = '';
+    
+    if (result.is_correct) {
+        feedbackDiv.classList.add('correct');
+        message = '🎉 Correct! Well done!';
+        details = 'You successfully identified the condition.';
+        
+        // Disable further submissions
+        disableDiagnosisInput();
+        
+    } else if (result.is_close) {
+        feedbackDiv.classList.add('close');
+        message = '⚠️ Close! You\'re on the right track.';
+        details = `Similarity: ${Math.round(result.similarity_score * 100)}%\n${result.feedback || ''}`;
+        
+    } else {
+        feedbackDiv.classList.add('incorrect');
+        message = '❌ Not quite right.';
+        details = result.feedback || 'Try again or consider other possibilities.';
+    }
+    
+    // Add attempt info
+    const remainingAttempts = maxDiagnosisAttempts - diagnosisAttemptCount;
+    if (!result.is_correct && remainingAttempts > 0) {
+        details += `\n\nAttempts remaining: ${remainingAttempts}`;
+    } else if (!result.is_correct && remainingAttempts === 0) {
+        details += '\n\nNo more attempts remaining.';
+        disableDiagnosisInput();
+    }
+    
+    messageDiv.textContent = message;
+    detailsDiv.textContent = details;
+    
+    // Store the correct diagnosis for potential reveal
+    currentPatientDiagnosis = result.correct_diagnosis;
+    
+    // Update button visibility
+    updateFeedbackButtons(result.is_correct, remainingAttempts === 0);
+}
+
+function showDiagnosisFeedback(message, type) {
+    const feedbackDiv = document.getElementById('diagnosisFeedback');
+    const messageDiv = document.getElementById('feedbackMessage');
+    const detailsDiv = document.getElementById('feedbackDetails');
+    
+    if (!feedbackDiv || !messageDiv || !detailsDiv) return;
+    
+    feedbackDiv.style.display = 'block';
+    feedbackDiv.className = `diagnosis-feedback ${type}`;
+    messageDiv.textContent = message;
+    detailsDiv.textContent = '';
+    
+    // Show only try again button for simple feedback
+    updateFeedbackButtons(false, false);
+}
+
+function updateFeedbackButtons(isCorrect, maxAttemptsReached) {
+    const tryAgainBtn = document.getElementById('tryAgainBtn');
+    const showAnswerBtn = document.getElementById('showAnswerBtn');
+    
+    if (!tryAgainBtn || !showAnswerBtn) return;
+    
+    if (isCorrect) {
+        // Hide both buttons if correct
+        tryAgainBtn.style.display = 'none';
+        showAnswerBtn.style.display = 'none';
+    } else if (maxAttemptsReached) {
+        // Hide try again, show answer
+        tryAgainBtn.style.display = 'none';
+        showAnswerBtn.style.display = 'inline-block';
+    } else {
+        // Show both buttons
+        tryAgainBtn.style.display = 'inline-block';
+        showAnswerBtn.style.display = 'inline-block';
+    }
+}
+
+function clearDiagnosis() {
+    const diagnosisInput = document.getElementById('diagnosisInput');
+    const feedbackDiv = document.getElementById('diagnosisFeedback');
+    
+    if (diagnosisInput) {
+        diagnosisInput.value = '';
+        diagnosisInput.disabled = false;
+    }
+    
+    if (feedbackDiv) {
+        feedbackDiv.style.display = 'none';
+    }
+    
+    // Re-enable submit button
+    const submitBtn = document.getElementById('submitDiagnosisBtn');
+    if (submitBtn) {
+        submitBtn.disabled = false;
+    }
+}
+
+function resetDiagnosisForm() {
+    clearDiagnosis();
+    const diagnosisInput = document.getElementById('diagnosisInput');
+    if (diagnosisInput) {
+        diagnosisInput.focus();
+    }
+}
+
+function resetDiagnosisAttempts() {
+    diagnosisAttemptCount = 0;
+    currentPatientDiagnosis = null;
+    clearDiagnosis();
+}
+
+function disableDiagnosisInput() {
+    const diagnosisInput = document.getElementById('diagnosisInput');
+    const submitBtn = document.getElementById('submitDiagnosisBtn');
+    
+    if (diagnosisInput) {
+        diagnosisInput.disabled = true;
+    }
+    
+    if (submitBtn) {
+        submitBtn.disabled = true;
+    }
+}
+
+function showCorrectAnswer() {
+    if (currentPatientDiagnosis) {
+        const detailsDiv = document.getElementById('feedbackDetails');
+        if (detailsDiv) {
+            const currentText = detailsDiv.textContent;
+            detailsDiv.innerHTML = `${currentText}<br><br><strong>Correct Answer:</strong> ${currentPatientDiagnosis}`;
+        }
+        
+        // Hide the show answer button
+        const showAnswerBtn = document.getElementById('showAnswerBtn');
+        if (showAnswerBtn) {
+            showAnswerBtn.style.display = 'none';
+        }
+    }
+}
+
+function updatePatientDetailsInDiagnosis() {
+    const summaryDiv = document.getElementById('patientSummary');
+    if (!summaryDiv) return;
+    
+    // Clear existing content
+    summaryDiv.innerHTML = '';
+    
+    // Check if we have an active conversation with patient data
+    if (currentConversationId) {
+        // Try to get current patient details from the main panel
+        const mainPatientPanel = document.querySelector('.patient-details-panel');
+        
+        if (mainPatientPanel && mainPatientPanel.innerHTML.trim() !== '') {
+            // Clone the content but exclude any illness/diagnosis information
+            const clonedContent = mainPatientPanel.cloneNode(true);
+            
+            // Remove any elements that might contain diagnosis info
+            const diagnosisElements = clonedContent.querySelectorAll('*');
+            diagnosisElements.forEach(el => {
+                const text = el.textContent.toLowerCase();
+                if (text.includes('illness') || text.includes('diagnosis') || text.includes('condition')) {
+                    // Don't include diagnosis-related info
+                    if (el.parentNode) {
+                        el.parentNode.removeChild(el);
+                    }
+                }
+            });
+            
+            summaryDiv.appendChild(clonedContent);
+        } else {
+            // Fallback: show basic info if available
+            summaryDiv.innerHTML = '<p>Patient simulation active - details available during conversation</p>';
+        }
+    } else {
+        summaryDiv.innerHTML = '<p>No patient simulation active</p>';
+    }
+} 

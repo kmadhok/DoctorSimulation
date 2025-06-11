@@ -7,6 +7,11 @@ import json
 import glob
 import logging
 from datetime import datetime
+import secrets
+# NEW: Import for diagnosis evaluation
+from difflib import SequenceMatcher
+import re
+from typing import Dict, Tuple, Any
 
 # Load environment variables first
 from dotenv import load_dotenv
@@ -35,7 +40,7 @@ else:
     print("Groq client patch applied successfully")
 
 # Initialize Flask only after patching
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, request, jsonify, render_template, session
 import json
 
 # Import our refactored modules - after patching
@@ -57,6 +62,7 @@ if not os.path.exists(template_dir):
 
 # Initialize Flask app with explicit template folder
 app = Flask(__name__, template_folder=template_dir)
+app.secret_key = secrets.token_urlsafe(24)
 
 # Add request logging
 @app.before_request
@@ -89,6 +95,30 @@ current_patient_simulation = None
 
 # Global variable for current conversation ID
 current_conversation_id = None
+
+# NEW: Medical synonyms dictionary for diagnosis evaluation
+MEDICAL_SYNONYMS = {
+    'heart attack': ['myocardial infarction', 'mi', 'acute mi', 'acute myocardial infarction', 'stemi', 'nstemi'],
+    'stroke': ['cva', 'cerebrovascular accident', 'brain attack', 'cerebral infarction'],
+    'pneumonia': ['lung infection', 'pulmonary infection', 'chest infection'],
+    'appendicitis': ['acute appendicitis', 'inflamed appendix'],
+    'migraine': ['migraine headache', 'severe headache', 'vascular headache'],
+    'diabetes': ['diabetes mellitus', 'dm', 'type 1 diabetes', 'type 2 diabetes'],
+    'hypertension': ['high blood pressure', 'elevated blood pressure', 'htn'],
+    'asthma': ['bronchial asthma', 'reactive airway disease'],
+    'copd': ['chronic obstructive pulmonary disease', 'emphysema', 'chronic bronchitis'],
+    'uti': ['urinary tract infection', 'bladder infection', 'cystitis'],
+    'gastritis': ['stomach inflammation', 'gastric inflammation'],
+    'bronchitis': ['acute bronchitis', 'chest cold'],
+    'sinusitis': ['sinus infection', 'acute sinusitis'],
+    'pharyngitis': ['sore throat', 'throat infection', 'strep throat'],
+    'cellulitis': ['skin infection', 'soft tissue infection'],
+    'gout': ['gouty arthritis', 'acute gout'],
+    'kidney stones': ['renal calculi', 'nephrolithiasis', 'kidney stone'],
+    'gallstones': ['cholelithiasis', 'gallbladder stones'],
+    'acid reflux': ['gerd', 'gastroesophageal reflux disease', 'heartburn'],
+    'panic attack': ['anxiety attack', 'panic disorder']
+}
 
 def get_available_patient_simulations():
     """Get list of available patient simulation files"""
@@ -1382,6 +1412,289 @@ def get_medical_knowledge():
             'status': 'error',
             'message': f'Error getting medical knowledge: {str(e)}'
         }), 500
+
+# NEW: Diagnosis submission endpoint
+@app.route('/api/submit-diagnosis', methods=['POST'])
+def submit_diagnosis():
+    """Submit a diagnosis for evaluation against the correct answer"""
+    try:
+        data = request.get_json()
+        conversation_id = data.get('conversation_id')
+        user_diagnosis = data.get('user_diagnosis', '').strip()
+        
+        logger.info(f"Diagnosis submission received for conversation {conversation_id}")
+        logger.info(f"User diagnosis: '{user_diagnosis}'")
+        
+        # Validation
+        if not conversation_id:
+            logger.warning("No conversation ID provided in diagnosis submission")
+            return jsonify({
+                'status': 'error',
+                'message': 'No conversation ID provided'
+            }), 400
+            
+        if not user_diagnosis:
+            logger.warning("Empty diagnosis submitted")
+            return jsonify({
+                'status': 'error',
+                'message': 'No diagnosis provided'
+            }), 400
+        
+        # Get the correct diagnosis from patient data
+        patient_data = get_conversation_data(conversation_id, 'patient_data')
+        if not patient_data:
+            logger.error(f"No patient data found for conversation {conversation_id}")
+            return jsonify({
+                'status': 'error',
+                'message': 'No patient data found for this conversation'
+            }), 404
+            
+        correct_diagnosis = patient_data.get('patient_details', {}).get('illness')
+        if not correct_diagnosis:
+            logger.error(f"No diagnosis available for conversation {conversation_id}")
+            return jsonify({
+                'status': 'error',
+                'message': 'No diagnosis available for this patient'
+            }), 404
+        
+        logger.info(f"Correct diagnosis: '{correct_diagnosis}'")
+        
+        # Evaluate the diagnosis
+        evaluation_result = evaluate_diagnosis(user_diagnosis, correct_diagnosis)
+        
+        logger.info(f"Evaluation result: {evaluation_result}")
+        
+        # Store the diagnosis attempt in the database
+        attempt_data = {
+            'user_diagnosis': user_diagnosis,
+            'correct_diagnosis': correct_diagnosis,
+            'timestamp': datetime.now().isoformat(),
+            'similarity_score': evaluation_result['similarity_score'],
+            'is_correct': evaluation_result['is_correct'],
+            'is_close': evaluation_result['is_close']
+        }
+        
+        # Get existing attempts or create new list
+        existing_attempts = get_conversation_data(conversation_id, 'diagnosis_attempts') or []
+        existing_attempts.append(attempt_data)
+        store_conversation_data(conversation_id, 'diagnosis_attempts', existing_attempts)
+        
+        logger.info(f"Diagnosis attempt stored for conversation {conversation_id}")
+        
+        # Prepare response
+        response_data = {
+            'status': 'success',
+            'is_correct': evaluation_result['is_correct'],
+            'is_close': evaluation_result['is_close'],
+            'similarity_score': evaluation_result['similarity_score'],
+            'feedback': evaluation_result['feedback']
+        }
+        
+        # Only include correct diagnosis in response if user was correct
+        if evaluation_result['is_correct']:
+            response_data['correct_diagnosis'] = correct_diagnosis
+        
+        return jsonify(response_data)
+        
+    except Exception as e:
+        logger.error(f"Error in submit_diagnosis: {str(e)}", exc_info=True)
+        return jsonify({
+            'status': 'error',
+            'message': f'Error processing diagnosis: {str(e)}'
+        }), 500
+
+def evaluate_diagnosis(user_diagnosis: str, correct_diagnosis: str) -> Dict[str, Any]:
+    """
+    Evaluate user diagnosis against correct diagnosis using fuzzy matching
+    
+    Returns:
+        Dict with evaluation results including similarity score and feedback
+    """
+    try:
+        logger.info(f"Evaluating diagnosis: '{user_diagnosis}' vs '{correct_diagnosis}'")
+        
+        # Normalize both diagnoses for comparison
+        user_clean = normalize_diagnosis(user_diagnosis)
+        correct_clean = normalize_diagnosis(correct_diagnosis)
+        
+        logger.debug(f"Normalized user: '{user_clean}' | Normalized correct: '{correct_clean}'")
+        
+        # Calculate similarity scores using multiple methods
+        sequence_similarity = SequenceMatcher(None, user_clean, correct_clean).ratio()
+        
+        # Check for keyword matches and synonyms
+        keyword_similarity = calculate_keyword_similarity(user_clean, correct_clean)
+        synonym_similarity = calculate_synonym_similarity(user_diagnosis, correct_diagnosis)
+        
+        # Combined score (weighted)
+        combined_score = max(
+            (sequence_similarity * 0.4) + (keyword_similarity * 0.3) + (synonym_similarity * 0.3),
+            sequence_similarity,  # Don't let combined score be lower than direct match
+            synonym_similarity    # Or synonym match
+        )
+        
+        logger.debug(f"Similarity scores - Sequence: {sequence_similarity:.3f}, Keyword: {keyword_similarity:.3f}, Synonym: {synonym_similarity:.3f}, Combined: {combined_score:.3f}")
+        
+        # Determine result thresholds
+        is_correct = combined_score >= 0.85
+        is_close = 0.60 <= combined_score < 0.85
+        
+        # Generate feedback
+        feedback = generate_diagnosis_feedback(
+            user_diagnosis, 
+            correct_diagnosis, 
+            combined_score, 
+            is_correct, 
+            is_close
+        )
+        
+        result = {
+            'is_correct': is_correct,
+            'is_close': is_close,
+            'similarity_score': combined_score,
+            'feedback': feedback,
+            'sequence_similarity': sequence_similarity,
+            'keyword_similarity': keyword_similarity,
+            'synonym_similarity': synonym_similarity
+        }
+        
+        logger.info(f"Evaluation complete - Correct: {is_correct}, Close: {is_close}, Score: {combined_score:.3f}")
+        return result
+        
+    except Exception as e:
+        logger.error(f"Error in evaluate_diagnosis: {str(e)}", exc_info=True)
+        return {
+            'is_correct': False,
+            'is_close': False,
+            'similarity_score': 0.0,
+            'feedback': 'Error evaluating diagnosis. Please try again.',
+            'sequence_similarity': 0.0,
+            'keyword_similarity': 0.0,
+            'synonym_similarity': 0.0
+        }
+
+def normalize_diagnosis(diagnosis: str) -> str:
+    """Normalize diagnosis text for comparison"""
+    try:
+        # Convert to lowercase
+        normalized = diagnosis.lower().strip()
+        
+        # Remove common medical prefixes/suffixes that don't affect core meaning
+        common_removals = [
+            'acute', 'chronic', 'mild', 'moderate', 'severe',
+            'primary', 'secondary', 'syndrome', 'disease',
+            'disorder', 'condition', 'episode', 'attack'
+        ]
+        
+        # Split into words and filter
+        words = normalized.split()
+        filtered_words = []
+        
+        for word in words:
+            # Remove punctuation from word
+            clean_word = re.sub(r'[^\w]', '', word)
+            # Keep word if it's not in removal list and not empty
+            if clean_word and clean_word not in common_removals:
+                filtered_words.append(clean_word)
+        
+        # Rejoin words
+        normalized = ' '.join(filtered_words)
+        
+        logger.debug(f"Normalized '{diagnosis}' to '{normalized}'")
+        return normalized
+        
+    except Exception as e:
+        logger.error(f"Error normalizing diagnosis '{diagnosis}': {str(e)}")
+        return diagnosis.lower().strip()
+
+def calculate_keyword_similarity(user_diagnosis: str, correct_diagnosis: str) -> float:
+    """Calculate similarity based on key medical terms"""
+    try:
+        user_words = set(user_diagnosis.split())
+        correct_words = set(correct_diagnosis.split())
+        
+        if not correct_words:
+            return 0.0
+        
+        intersection = user_words.intersection(correct_words)
+        union = user_words.union(correct_words)
+        
+        # Jaccard similarity
+        jaccard = len(intersection) / len(union) if union else 0.0
+        
+        # Also check overlap ratio (how much of correct diagnosis is covered)
+        overlap = len(intersection) / len(correct_words) if correct_words else 0.0
+        
+        # Return the better of the two scores
+        return max(jaccard, overlap)
+        
+    except Exception as e:
+        logger.error(f"Error calculating keyword similarity: {str(e)}")
+        return 0.0
+
+def calculate_synonym_similarity(user_diagnosis: str, correct_diagnosis: str) -> float:
+    """Calculate similarity based on medical synonyms"""
+    try:
+        user_clean = user_diagnosis.lower().strip()
+        correct_clean = correct_diagnosis.lower().strip()
+        
+        # Check if they're already similar enough
+        if user_clean == correct_clean:
+            return 1.0
+        
+        # Check synonyms
+        max_similarity = 0.0
+        
+        for condition, synonyms in MEDICAL_SYNONYMS.items():
+            all_terms = [condition] + synonyms
+            
+            user_match = any(term in user_clean for term in all_terms)
+            correct_match = any(term in correct_clean for term in all_terms)
+            
+            if user_match and correct_match:
+                # Both diagnoses match this condition group
+                max_similarity = max(max_similarity, 0.9)
+            elif user_match or correct_match:
+                # Check if one is a broader/narrower term of the other
+                if condition in user_clean or condition in correct_clean:
+                    max_similarity = max(max_similarity, 0.7)
+        
+        return max_similarity
+        
+    except Exception as e:
+        logger.error(f"Error calculating synonym similarity: {str(e)}")
+        return 0.0
+
+def generate_diagnosis_feedback(
+    user_diagnosis: str, 
+    correct_diagnosis: str, 
+    similarity_score: float,
+    is_correct: bool,
+    is_close: bool
+) -> str:
+    """Generate helpful feedback for the diagnosis attempt"""
+    
+    try:
+        if is_correct:
+            return "Excellent! You correctly identified the condition."
+        
+        elif is_close:
+            if similarity_score > 0.75:
+                return "Very close! You're on the right track. Consider being more specific or check your spelling."
+            else:
+                return "You're thinking in the right direction. The condition is related to what you've identified."
+        
+        else:
+            if similarity_score > 0.4:
+                return "Some elements of your diagnosis are relevant, but the overall condition is different. Review the primary symptoms and their pattern."
+            elif similarity_score > 0.2:
+                return "Your diagnosis touches on relevant medical areas, but doesn't match the patient's condition. Consider other possibilities."
+            else:
+                return "This diagnosis doesn't match the patient's condition. Review the symptoms, patient history, and examination findings more carefully."
+                
+    except Exception as e:
+        logger.error(f"Error generating feedback: {str(e)}")
+        return "Unable to generate feedback. Please try again."
 
 # Keep the if __name__ == '__main__' block for running the app
 if __name__ == '__main__':

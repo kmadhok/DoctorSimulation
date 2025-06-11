@@ -204,8 +204,68 @@
                 <p>Powered by Groq API</p>
             </footer>
         </div>
+
+        <!-- NEW: Diagnosis Panel -->
+        <aside class="diagnosis-panel" id="diagnosisPanel" style="display: none;">
+            <div class="diagnosis-header">
+                <h3>Submit Diagnosis</h3>
+                <div class="diagnosis-instructions">
+                    <p>What is your diagnosis for this patient?</p>
+                </div>
+            </div>
+            
+            <div class="diagnosis-content">
+                <div class="form-group">
+                    <label for="diagnosisInput">Your Diagnosis:</label>
+                    <textarea 
+                        id="diagnosisInput" 
+                        placeholder="e.g., Acute appendicitis, Migraine headache, Pneumonia..."
+                        rows="3"
+                        class="diagnosis-textarea"
+                    ></textarea>
+                </div>
+                
+                <div class="diagnosis-actions">
+                    <button id="submitDiagnosisBtn" class="btn btn-primary diagnosis-submit">
+                        <span class="button-text">Submit Diagnosis</span>
+                        <span class="button-spinner" style="display: none;">🔄</span>
+                    </button>
+                    <button id="clearDiagnosisBtn" class="btn btn-secondary">
+                        Clear
+                    </button>
+                </div>
+                
+                <!-- Feedback Section -->
+                <div id="diagnosisFeedback" class="diagnosis-feedback" style="display: none;">
+                    <div class="feedback-header">
+                        <h4>Diagnosis Result</h4>
+                    </div>
+                    <div class="feedback-content">
+                        <div id="feedbackMessage" class="feedback-message"></div>
+                        <div id="feedbackDetails" class="feedback-details"></div>
+                    </div>
+                    <div class="feedback-actions">
+                        <button id="tryAgainBtn" class="btn btn-secondary">Try Again</button>
+                        <button id="showAnswerBtn" class="btn btn-link">Show Correct Answer</button>
+                    </div>
+                </div>
+                
+                <!-- Patient Details Summary -->
+                <div class="diagnosis-patient-details" id="diagnosisPatientDetails">
+                    <h4>Patient Information</h4>
+                    <div id="patientSummary">
+                        <p>No patient simulation active</p>
+                    </div>
+                </div>
+            </div>
+        </aside>
     </div>
-    
+
+    <!-- Floating Diagnosis Toggle Button -->
+    <button id="diagnosisToggle" class="diagnosis-toggle">
+        Submit Diagnosis
+    </button>
+
     <!-- Add logging div for debugging -->
     <div id="vadLogs" style="display: none; position: fixed; bottom: 0; right: 0; max-height: 300px; overflow-y: auto; background: rgba(0,0,0,0.8); color: white; padding: 10px; font-family: monospace; font-size: 12px;">
         <div style="margin-bottom: 10px;">
