@@ -1306,6 +1306,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const formData = new FormData();
             formData.append('audio', audioBlob);
             formData.append('voice_id', currentVoiceId);
+            formData.append('conversation_id', currentConversationId);
             console.log(`processAudio: Using voice_id: ${currentVoiceId}`);
             
             console.log('processAudio: Sending audio to server...');

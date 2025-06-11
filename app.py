@@ -631,6 +631,16 @@ def process_audio():
     try:
         logger.info("=== Starting audio processing ===")
         
+        # Get conversation ID from form data if provided
+        form_conversation_id = request.form.get('conversation_id')
+        if form_conversation_id:
+            try:
+                form_conversation_id = int(form_conversation_id)
+                current_conversation_id = form_conversation_id
+                logger.info(f"Using conversation_id from form: {current_conversation_id}")
+            except (ValueError, TypeError):
+                logger.warning(f"Invalid conversation_id in form: {form_conversation_id}")
+        
         # Log all form data keys for debugging
         logger.info(f"Form data keys: {list(request.form.keys())}")
         
