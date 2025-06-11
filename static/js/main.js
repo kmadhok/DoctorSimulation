@@ -33,6 +33,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         realTimeValidation: true
     };
 
+    // Wizard state management
+    let wizardState = {
+        currentStep: 1,
+        totalSteps: 4,
+        formData: {},
+        selectedSpecialty: null,
+        selectedSymptoms: []
+    };
+
     // Medical knowledge data - will be populated from backend
     let medicalKnowledge = {
         specialties: {},
@@ -351,6 +360,48 @@ document.addEventListener('DOMContentLoaded', async () => {
             medicalSpecialtySelect.addEventListener('change', handleSpecialtyChange);
         }
     }
+
+    // Wizard Event Listeners
+    const wizardBackBtn = document.getElementById('wizardBackBtn');
+    const wizardNextBtn = document.getElementById('wizardNextBtn');
+    const wizardGenerateBtn = document.getElementById('wizardGenerateBtn');
+    const closeWizardBtn = document.getElementById('closeWizardBtn');
+    const wizardBackdrop = document.querySelector('.wizard-backdrop');
+    const wizardSpecialtySelect = document.getElementById('wizardSpecialty');
+
+    if (wizardBackBtn) {
+        wizardBackBtn.addEventListener('click', previousWizardStep);
+    }
+
+    if (wizardNextBtn) {
+        wizardNextBtn.addEventListener('click', nextWizardStep);
+    }
+
+    if (wizardGenerateBtn) {
+        wizardGenerateBtn.addEventListener('click', generatePatientCaseFromWizard);
+    }
+
+    if (closeWizardBtn) {
+        closeWizardBtn.addEventListener('click', hidePatientWizard);
+    }
+
+    if (wizardBackdrop) {
+        wizardBackdrop.addEventListener('click', hidePatientWizard);
+    }
+
+    if (wizardSpecialtySelect) {
+        wizardSpecialtySelect.addEventListener('change', handleWizardSpecialtyChange);
+    }
+
+    // Handle Escape key to close wizard
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') {
+            const wizardModal = document.getElementById('patientCaseWizard');
+            if (wizardModal && wizardModal.style.display === 'flex') {
+                hidePatientWizard();
+            }
+        }
+    });
    
       
     
@@ -638,12 +689,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         
         // Check if custom patient is selected
         if (selectedSimulation === '__custom__') {
-            console.log('Custom patient selected - showing form');
-            showCustomPatientForm();
+            console.log('Custom patient selected - showing wizard');
+            showPatientWizard();
             statusElement.textContent = 'Create your custom patient';
             patientDetailsPanel.innerHTML = '';
             return;
         }
+        
+        // Hide wizard if it was shown
+        hidePatientWizard();
         
         // Hide custom patient form if it was shown
         hideCustomPatientForm();
@@ -2253,4 +2307,555 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Initialize the diagnosis panel functionality
     initializeDiagnosisPanel();
+
+    // ========== CUSTOM PATIENT FORM FUNCTIONS ==========
+    
+    function showCustomPatientForm() {
+        if (customPatientForm) {
+            customPatientForm.style.display = 'block';
+            customPatientForm.classList.add('show');
+            clearCustomPatientForm(); // Start with a clean form
+        }
+    }
+    
+    function hideCustomPatientForm() {
+        if (customPatientForm) {
+            customPatientForm.style.display = 'none';
+            customPatientForm.classList.remove('show');
+            clearAllErrorMessages();
+        }
+    }
+
+    // ========== WIZARD FUNCTIONS ==========
+    
+    function showPatientWizard() {
+        const wizardModal = document.getElementById('patientCaseWizard');
+        if (wizardModal) {
+            // Reset wizard state
+            resetWizardState();
+            
+            // Show modal with animation
+            wizardModal.style.display = 'flex';
+            document.body.style.overflow = 'hidden'; // Prevent background scrolling
+            
+            // Populate specialty options
+            populateWizardSpecialtySelector();
+            
+            // Initialize first step
+            updateWizardStep();
+            
+            console.log('Patient wizard opened');
+        }
+    }
+    
+    function hidePatientWizard() {
+        const wizardModal = document.getElementById('patientCaseWizard');
+        if (wizardModal) {
+            wizardModal.style.display = 'none';
+            document.body.style.overflow = ''; // Restore scrolling
+            
+            // Reset simulation selection
+            simulationSelect.value = '';
+            
+            console.log('Patient wizard closed');
+        }
+    }
+    
+    function resetWizardState() {
+        wizardState = {
+            currentStep: 1,
+            totalSteps: 4,
+            formData: {},
+            selectedSpecialty: null,
+            selectedSymptoms: []
+        };
+        
+        // Clear all form fields
+        const wizardForm = document.getElementById('wizardForm');
+        if (wizardForm) {
+            wizardForm.reset();
+        }
+        
+        // Clear error messages
+        clearAllWizardErrors();
+        
+        // Hide loading state
+        const loadingDiv = document.getElementById('wizardLoading');
+        if (loadingDiv) {
+            loadingDiv.style.display = 'none';
+        }
+    }
+    
+    function updateWizardStep() {
+        const steps = document.querySelectorAll('.wizard-step');
+        const progressFill = document.getElementById('wizardProgress');
+        const stepText = document.getElementById('currentStepText');
+        const backBtn = document.getElementById('wizardBackBtn');
+        const nextBtn = document.getElementById('wizardNextBtn');
+        const generateBtn = document.getElementById('wizardGenerateBtn');
+        
+        // Update step visibility
+        steps.forEach((step, index) => {
+            step.classList.toggle('active', index + 1 === wizardState.currentStep);
+        });
+        
+        // Update progress bar
+        const progressPercent = (wizardState.currentStep / wizardState.totalSteps) * 100;
+        if (progressFill) {
+            progressFill.style.width = progressPercent + '%';
+        }
+        
+        // Update step text
+        const stepTitles = [
+            'Patient Demographics',
+            'Medical Specialty',
+            'Presenting Symptoms',
+            'Case Parameters'
+        ];
+        
+        if (stepText) {
+            stepText.textContent = `Step ${wizardState.currentStep} of ${wizardState.totalSteps}: ${stepTitles[wizardState.currentStep - 1]}`;
+        }
+        
+        // Update navigation buttons
+        if (backBtn) {
+            backBtn.disabled = wizardState.currentStep === 1;
+        }
+        
+        if (nextBtn && generateBtn) {
+            if (wizardState.currentStep === wizardState.totalSteps) {
+                nextBtn.style.display = 'none';
+                generateBtn.style.display = 'inline-block';
+            } else {
+                nextBtn.style.display = 'inline-block';
+                generateBtn.style.display = 'none';
+            }
+        }
+        
+        // Update case preview if on last step
+        if (wizardState.currentStep === wizardState.totalSteps) {
+            updateCasePreview();
+        }
+    }
+    
+    function nextWizardStep() {
+        // Validate current step
+        if (!validateWizardStep(wizardState.currentStep)) {
+            return false;
+        }
+        
+        // Save current step data
+        saveCurrentStepData();
+        
+        // Move to next step
+        if (wizardState.currentStep < wizardState.totalSteps) {
+            wizardState.currentStep++;
+            updateWizardStep();
+            
+            // Handle specialty change for symptoms step
+            if (wizardState.currentStep === 3) {
+                handleWizardSpecialtyChange();
+            }
+        }
+        
+        return true;
+    }
+    
+    function previousWizardStep() {
+        if (wizardState.currentStep > 1) {
+            wizardState.currentStep--;
+            updateWizardStep();
+        }
+    }
+    
+    function validateWizardStep(stepNumber) {
+        clearAllWizardErrors();
+        let isValid = true;
+        
+        switch (stepNumber) {
+            case 1: // Demographics
+                isValid = validateWizardDemographics();
+                break;
+            case 2: // Specialty
+                isValid = validateWizardSpecialty();
+                break;
+            case 3: // Symptoms
+                isValid = validateWizardSymptoms();
+                break;
+            case 4: // Parameters
+                isValid = validateWizardParameters();
+                break;
+        }
+        
+        return isValid;
+    }
+    
+    function validateWizardDemographics() {
+        let isValid = true;
+        
+        const age = document.getElementById('wizardAge').value;
+        const gender = document.getElementById('wizardGender').value;
+        const occupation = document.getElementById('wizardOccupation').value;
+        
+        if (!age || age < 1 || age > 120) {
+            showWizardFieldError('wizardAgeError', 'Age must be between 1 and 120');
+            isValid = false;
+        }
+        
+        if (!gender) {
+            showWizardFieldError('wizardGenderError', 'Gender selection is required');
+            isValid = false;
+        }
+        
+        if (!occupation || occupation.trim().length < 2) {
+            showWizardFieldError('wizardOccupationError', 'Occupation is required (at least 2 characters)');
+            isValid = false;
+        }
+        
+        return isValid;
+    }
+    
+    function validateWizardSpecialty() {
+        const specialty = document.getElementById('wizardSpecialty').value;
+        
+        if (!specialty) {
+            showWizardFieldError('wizardSpecialtyError', 'Medical specialty selection is required');
+            return false;
+        }
+        
+        wizardState.selectedSpecialty = specialty;
+        return true;
+    }
+    
+    function validateWizardSymptoms() {
+        if (wizardState.selectedSymptoms.length === 0) {
+            showWizardFieldError('wizardSymptomsError', 'At least one symptom must be selected');
+            return false;
+        }
+        
+        return true;
+    }
+    
+    function validateWizardParameters() {
+        const severity = document.getElementById('wizardSeverity').value;
+        
+        if (!severity) {
+            showWizardFieldError('wizardSeverityError', 'Symptom severity selection is required');
+            return false;
+        }
+        
+        return true;
+    }
+    
+    function saveCurrentStepData() {
+        switch (wizardState.currentStep) {
+            case 1:
+                wizardState.formData.age = document.getElementById('wizardAge').value;
+                wizardState.formData.gender = document.getElementById('wizardGender').value;
+                wizardState.formData.occupation = document.getElementById('wizardOccupation').value;
+                wizardState.formData.medical_history = document.getElementById('wizardMedicalHistory').value;
+                break;
+            case 2:
+                wizardState.formData.specialty = document.getElementById('wizardSpecialty').value;
+                wizardState.selectedSpecialty = wizardState.formData.specialty;
+                break;
+            case 3:
+                wizardState.formData.symptoms = [...wizardState.selectedSymptoms];
+                break;
+            case 4:
+                wizardState.formData.severity = document.getElementById('wizardSeverity').value;
+                break;
+        }
+    }
+    
+    function updateCasePreview() {
+        const previewContainer = document.getElementById('casePreviewContent');
+        if (!previewContainer) return;
+        
+        const previewData = [
+            { label: 'Age', value: wizardState.formData.age || '-' },
+            { label: 'Gender', value: wizardState.formData.gender || '-' },
+            { label: 'Occupation', value: wizardState.formData.occupation || '-' },
+            { label: 'Specialty', value: getSpecialtyDisplayName(wizardState.formData.specialty) || '-' },
+            { label: 'Symptoms', value: getSelectedSymptomsDisplay() || '-' },
+            { label: 'Severity', value: wizardState.formData.severity || '-' }
+        ];
+        
+        if (previewData.every(item => item.value !== '-')) {
+            previewContainer.innerHTML = previewData.map(item => 
+                `<div class="case-preview-item">
+                    <span class="preview-label">${item.label}:</span>
+                    <span class="preview-value">${item.value}</span>
+                </div>`
+            ).join('');
+        } else {
+            previewContainer.innerHTML = '<p class="preview-placeholder">Complete all steps to see a preview of your case</p>';
+        }
+    }
+    
+    function getSpecialtyDisplayName(specialtyKey) {
+        if (!specialtyKey || !medicalKnowledge.specialties[specialtyKey]) {
+            return specialtyKey;
+        }
+        return medicalKnowledge.specialties[specialtyKey].name || specialtyKey;
+    }
+    
+    function getSelectedSymptomsDisplay() {
+        if (wizardState.selectedSymptoms.length === 0) {
+            return '';
+        }
+        
+        return wizardState.selectedSymptoms.map(symptomKey => 
+            medicalKnowledge.all_symptoms[symptomKey] || symptomKey
+        ).join(', ');
+    }
+    
+    function populateWizardSpecialtySelector() {
+        const specialtySelect = document.getElementById('wizardSpecialty');
+        if (!specialtySelect || !medicalKnowledge.specialties) return;
+
+        // Clear existing options (except the first one)
+        while (specialtySelect.options.length > 1) {
+            specialtySelect.removeChild(specialtySelect.lastChild);
+        }
+
+        // Add specialty options
+        Object.entries(medicalKnowledge.specialties).forEach(([key, specialty]) => {
+            const option = document.createElement('option');
+            option.value = key;
+            option.textContent = specialty.name;
+            option.dataset.description = specialty.description;
+            specialtySelect.appendChild(option);
+        });
+    }
+    
+    function handleWizardSpecialtyChange() {
+        const specialtySelect = document.getElementById('wizardSpecialty');
+        const selectedKey = specialtySelect?.value || wizardState.selectedSpecialty;
+        
+        if (selectedKey && medicalKnowledge.specialties[selectedKey]) {
+            const specialty = medicalKnowledge.specialties[selectedKey];
+            
+            // Show specialty description
+            const descriptionDiv = document.getElementById('wizardSpecialtyDescription');
+            if (descriptionDiv) {
+                descriptionDiv.textContent = specialty.description || specialty.name;
+                descriptionDiv.style.display = 'block';
+            }
+            
+            // Populate symptoms for this specialty if we're on the symptoms step
+            if (wizardState.currentStep === 3) {
+                populateWizardSymptoms(specialty.symptoms);
+            }
+        }
+    }
+    
+    function populateWizardSymptoms(symptomKeys) {
+        const container = document.getElementById('wizardSymptomsContainer');
+        const instructionsDiv = document.getElementById('wizardSymptomsInstructions');
+        
+        if (!container) return;
+
+        // Clear existing symptoms
+        wizardState.selectedSymptoms = [];
+        
+        if (!symptomKeys || symptomKeys.length === 0) {
+            container.style.display = 'none';
+            if (instructionsDiv) {
+                instructionsDiv.textContent = 'No symptoms available for this specialty';
+            }
+            return;
+        }
+
+        // Show container and update instructions
+        container.style.display = 'block';
+        if (instructionsDiv) {
+            instructionsDiv.textContent = 'Select one or more symptoms that the patient will present with:';
+        }
+
+        // Create symptom checkboxes
+        container.innerHTML = symptomKeys.map(symptomKey => {
+            const symptomName = medicalKnowledge.all_symptoms[symptomKey] || symptomKey;
+            return `
+                <div class="symptom-checkbox">
+                    <input type="checkbox" 
+                           id="wizardSymptom_${symptomKey}" 
+                           value="${symptomKey}"
+                           onchange="handleWizardSymptomChange(this)">
+                    <label for="wizardSymptom_${symptomKey}">${symptomName}</label>
+                </div>
+            `;
+        }).join('');
+    }
+    
+    function handleWizardSymptomChange(checkbox) {
+        const symptomKey = checkbox.value;
+        
+        if (checkbox.checked) {
+            if (!wizardState.selectedSymptoms.includes(symptomKey)) {
+                wizardState.selectedSymptoms.push(symptomKey);
+            }
+        } else {
+            wizardState.selectedSymptoms = wizardState.selectedSymptoms.filter(s => s !== symptomKey);
+        }
+        
+        // Clear symptoms validation error if at least one selected
+        if (wizardState.selectedSymptoms.length > 0) {
+            clearWizardFieldError('wizardSymptomsError');
+        }
+        
+        console.log('Selected symptoms:', wizardState.selectedSymptoms);
+    }
+    
+    function showWizardFieldError(elementId, message) {
+        const errorElement = document.getElementById(elementId);
+        if (errorElement) {
+            errorElement.textContent = message;
+            errorElement.style.display = 'block';
+        }
+    }
+    
+    function clearWizardFieldError(elementId) {
+        const errorElement = document.getElementById(elementId);
+        if (errorElement) {
+            errorElement.textContent = '';
+            errorElement.style.display = 'none';
+        }
+    }
+    
+    function clearAllWizardErrors() {
+        const errorElements = document.querySelectorAll('#patientCaseWizard .error-message');
+        errorElements.forEach(element => {
+            element.textContent = '';
+            element.style.display = 'none';
+        });
+    }
+    
+    async function generatePatientCaseFromWizard() {
+        // Final validation
+        if (!validateWizardStep(wizardState.currentStep)) {
+            return;
+        }
+        
+        // Save final step data
+        saveCurrentStepData();
+        
+        // Show loading state
+        const loadingDiv = document.getElementById('wizardLoading');
+        const generateBtn = document.getElementById('wizardGenerateBtn');
+        const buttonText = generateBtn?.querySelector('.button-text');
+        const buttonSpinner = generateBtn?.querySelector('.button-spinner');
+        
+        if (loadingDiv) loadingDiv.style.display = 'flex';
+        if (generateBtn) generateBtn.disabled = true;
+        if (buttonText) buttonText.style.display = 'none';
+        if (buttonSpinner) buttonSpinner.style.display = 'inline';
+        
+        try {
+            // Prepare data for backend
+            const caseData = {
+                type: 'ai_generated',
+                case_parameters: {
+                    age: parseInt(wizardState.formData.age),
+                    gender: wizardState.formData.gender,
+                    occupation: wizardState.formData.occupation,
+                    medical_history: wizardState.formData.medical_history || '',
+                    specialty: wizardState.formData.specialty,
+                    symptoms: wizardState.formData.symptoms,
+                    severity: wizardState.formData.severity
+                }
+            };
+            
+            console.log('Generating AI patient case with data:', caseData);
+            
+            // Call the backend API
+            const response = await fetch('/api/generate-patient-case', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(caseData)
+            });
+            
+            const result = await response.json();
+            
+            if (result.status === 'success') {
+                // Success! Close wizard and update UI
+                hidePatientWizard();
+                
+                // Update global state
+                currentConversationId = result.conversation_id;
+                currentSimulation = '__custom__';
+                
+                // Update voice preference
+                if (currentConversationId) {
+                    await fetch('/api/update-voice', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            voice_id: currentVoiceId,
+                            conversation_id: currentConversationId
+                        })
+                    });
+                }
+                
+                // Display patient details
+                if (result.patient_details) {
+                    displayPatientDetails(result.patient_details);
+                }
+                
+                // Clear conversation display for new conversation
+                conversationElement.innerHTML = '';
+                
+                // Reset diagnosis panel for new AI patient case
+                resetDiagnosisPanel();
+                
+                // Refresh conversation list
+                await loadConversationHistory();
+                
+                updateStatus('AI patient case generated successfully!');
+                
+            } else {
+                throw new Error(result.message || 'Failed to generate patient case');
+            }
+            
+        } catch (error) {
+            console.error('Error generating patient case:', error);
+            updateStatus('Error generating patient case');
+            
+            // Show error message in wizard
+            alert('Error generating patient case: ' + error.message);
+            
+        } finally {
+            // Hide loading state
+            if (loadingDiv) loadingDiv.style.display = 'none';
+            if (generateBtn) generateBtn.disabled = false;
+            if (buttonText) buttonText.style.display = 'inline';
+            if (buttonSpinner) buttonSpinner.style.display = 'none';
+        }
+    }
+
+    // ========== END WIZARD FUNCTIONS ==========
+
+    // Make wizard functions globally accessible for dynamic HTML
+    window.handleWizardSymptomChange = function(checkbox) {
+        const symptomKey = checkbox.value;
+        
+        if (checkbox.checked) {
+            if (!wizardState.selectedSymptoms.includes(symptomKey)) {
+                wizardState.selectedSymptoms.push(symptomKey);
+            }
+        } else {
+            wizardState.selectedSymptoms = wizardState.selectedSymptoms.filter(s => s !== symptomKey);
+        }
+        
+        // Clear symptoms validation error if at least one selected
+        if (wizardState.selectedSymptoms.length > 0) {
+            clearWizardFieldError('wizardSymptomsError');
+        }
+        
+        console.log('Selected symptoms:', wizardState.selectedSymptoms);
+    };
 }); 

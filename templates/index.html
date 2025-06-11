@@ -169,6 +169,199 @@
                         </div>
                     </form>
                 </div>
+
+                <!-- Patient Case Wizard Modal -->
+                <div id="patientCaseWizard" class="wizard-modal" style="display: none;">
+                    <div class="wizard-backdrop"></div>
+                    <div class="wizard-container">
+                        <!-- Wizard Header -->
+                        <div class="wizard-header">
+                            <h2>Create Your Patient Case</h2>
+                            <button class="wizard-close" id="closeWizardBtn">
+                                <span>&times;</span>
+                            </button>
+                            
+                            <!-- Progress Indicator -->
+                            <div class="progress-container">
+                                <div class="progress-bar">
+                                    <div class="progress-fill" id="wizardProgress"></div>
+                                </div>
+                                <div class="step-indicator">
+                                    <span id="currentStepText">Step 1 of 4: Patient Demographics</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Wizard Content -->
+                        <div class="wizard-content">
+                            <form id="wizardForm">
+                                <!-- Step 1: Patient Demographics -->
+                                <div class="wizard-step active" id="step1">
+                                    <div class="step-card">
+                                        <div class="step-header">
+                                            <h3>Patient Demographics</h3>
+                                            <p>Basic information about your patient</p>
+                                        </div>
+                                        
+                                        <div class="step-content">
+                                            <div class="form-row">
+                                                <div class="form-group">
+                                                    <label for="wizardAge">Age <span class="required">*</span></label>
+                                                    <input 
+                                                        type="number" 
+                                                        id="wizardAge" 
+                                                        name="age" 
+                                                        min="1" 
+                                                        max="120" 
+                                                        required 
+                                                        placeholder="e.g., 45"
+                                                        class="form-control"
+                                                    >
+                                                    <div class="error-message" id="wizardAgeError"></div>
+                                                </div>
+                                                
+                                                <div class="form-group">
+                                                    <label for="wizardGender">Gender <span class="required">*</span></label>
+                                                    <select id="wizardGender" name="gender" required class="form-control">
+                                                        <option value="">Select gender</option>
+                                                        <option value="Male">Male</option>
+                                                        <option value="Female">Female</option>
+                                                        <option value="Non-binary">Non-binary</option>
+                                                        <option value="Other">Other</option>
+                                                    </select>
+                                                    <div class="error-message" id="wizardGenderError"></div>
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="form-group">
+                                                <label for="wizardOccupation">Occupation <span class="required">*</span></label>
+                                                <input 
+                                                    type="text" 
+                                                    id="wizardOccupation" 
+                                                    name="occupation" 
+                                                    required 
+                                                    placeholder="e.g., Office manager, Teacher, Retired"
+                                                    class="form-control"
+                                                >
+                                                <div class="error-message" id="wizardOccupationError"></div>
+                                            </div>
+                                            
+                                            <div class="form-group">
+                                                <label for="wizardMedicalHistory">Medical History</label>
+                                                <textarea 
+                                                    id="wizardMedicalHistory" 
+                                                    name="medical_history" 
+                                                    rows="3" 
+                                                    placeholder="e.g., Hypertension controlled with medication, No significant history"
+                                                    class="form-control"
+                                                ></textarea>
+                                                <div class="error-message" id="wizardMedicalHistoryError"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Step 2: Medical Specialty -->
+                                <div class="wizard-step" id="step2">
+                                    <div class="step-card">
+                                        <div class="step-header">
+                                            <h3>Medical Specialty</h3>
+                                            <p>Choose the medical specialty for this case</p>
+                                        </div>
+                                        
+                                        <div class="step-content">
+                                            <div class="form-group">
+                                                <label for="wizardSpecialty">Medical Specialty <span class="required">*</span></label>
+                                                <select id="wizardSpecialty" name="specialty" required class="form-control">
+                                                    <option value="">Select medical specialty</option>
+                                                    <!-- Options will be populated dynamically -->
+                                                </select>
+                                                <div class="specialty-description" id="wizardSpecialtyDescription"></div>
+                                                <div class="error-message" id="wizardSpecialtyError"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Step 3: Symptom Selection -->
+                                <div class="wizard-step" id="step3">
+                                    <div class="step-card">
+                                        <div class="step-header">
+                                            <h3>Presenting Symptoms</h3>
+                                            <p>Select the symptoms your patient will present with</p>
+                                        </div>
+                                        
+                                        <div class="step-content">
+                                            <div class="symptoms-info">
+                                                <p id="wizardSymptomsInstructions">Select a specialty in the previous step to see available symptoms</p>
+                                            </div>
+                                            <div id="wizardSymptomsContainer" class="symptoms-container" style="display: none;">
+                                                <!-- Dynamic symptom checkboxes will be populated here -->
+                                            </div>
+                                            <div class="error-message" id="wizardSymptomsError"></div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Step 4: Case Parameters -->
+                                <div class="wizard-step" id="step4">
+                                    <div class="step-card">
+                                        <div class="step-header">
+                                            <h3>Case Parameters</h3>
+                                            <p>Final details for your patient case</p>
+                                        </div>
+                                        
+                                        <div class="step-content">
+                                            <div class="form-group">
+                                                <label for="wizardSeverity">Symptom Severity <span class="required">*</span></label>
+                                                <select id="wizardSeverity" name="severity" required class="form-control">
+                                                    <option value="">Select severity level</option>
+                                                    <option value="mild">Mild - Symptoms are noticeable but not significantly impacting daily activities</option>
+                                                    <option value="moderate">Moderate - Symptoms are affecting daily activities and causing concern</option>
+                                                    <option value="severe">Severe - Symptoms are severely limiting function and causing significant distress</option>
+                                                </select>
+                                                <div class="error-message" id="wizardSeverityError"></div>
+                                            </div>
+
+                                            <!-- Case Preview -->
+                                            <div class="case-preview">
+                                                <h4>Case Preview</h4>
+                                                <div id="casePreviewContent">
+                                                    <p class="preview-placeholder">Complete all steps to see a preview of your case</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </form>
+
+                            <!-- Loading state for wizard -->
+                            <div id="wizardLoading" class="wizard-loading" style="display: none;">
+                                <div class="loading-content">
+                                    <div class="spinner"></div>
+                                    <h3>Generating AI Patient Case</h3>
+                                    <p>This may take a few moments...</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Wizard Footer -->
+                        <div class="wizard-footer">
+                            <div class="footer-actions">
+                                <button type="button" id="wizardBackBtn" class="btn btn-secondary" disabled>
+                                    ← Back
+                                </button>
+                                <button type="button" id="wizardNextBtn" class="btn btn-primary">
+                                    Next →
+                                </button>
+                                <button type="button" id="wizardGenerateBtn" class="btn btn-success" style="display: none;">
+                                    <span class="button-text">Generate Case</span>
+                                    <span class="button-spinner" style="display: none;">🔄</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
                 
                 <div class="voice-selector">
                     <label for="voiceSelect">Select Voice:</label>
