@@ -41,133 +41,435 @@
                 
                 <!-- Custom Patient Form (initially hidden) -->
                 <div id="customPatientForm" class="custom-patient-form" style="display: none;">
-                    <h3>Generate AI Patient Case</h3>
-                    <div class="form-description">
-                        <p>Create a realistic medical case by selecting a specialty, symptoms, and patient details. Our AI will generate a comprehensive patient scenario for your simulation.</p>
+                    <!-- Form Wizard Header -->
+                    <div class="wizard-header">
+                        <h3>🏥 Generate AI Patient Case</h3>
+                        <p class="wizard-subtitle">Create a realistic medical scenario for training and simulation</p>
+                        
+                        <!-- Progress Indicator -->
+                        <div class="wizard-progress">
+                            <div class="wizard-step active" data-step="1">
+                                <div class="step-indicator">
+                                    <span class="step-number">1</span>
+                                    <div class="step-line"></div>
+                                </div>
+                                <span class="step-title">Templates</span>
+                            </div>
+                            <div class="wizard-step" data-step="2">
+                                <div class="step-indicator">
+                                    <span class="step-number">2</span>
+                                    <div class="step-line"></div>
+                                </div>
+                                <span class="step-title">Patient Info</span>
+                            </div>
+                            <div class="wizard-step" data-step="3">
+                                <div class="step-indicator">
+                                    <span class="step-number">3</span>
+                                    <div class="step-line"></div>
+                                </div>
+                                <span class="step-title">Medical Case</span>
+                            </div>
+                            <div class="wizard-step" data-step="4">
+                                <div class="step-indicator">
+                                    <span class="step-number">4</span>
+                                </div>
+                                <span class="step-title">Review</span>
+                            </div>
+                        </div>
                     </div>
-                    
-                    <!-- Loading state -->
-                    <div id="aiGenerationLoading" class="loading-state" style="display: none;">
-                        <div class="spinner"></div>
-                        <p>Generating AI patient case... This may take a few moments.</p>
+
+                    <!-- Enhanced Loading State -->
+                    <div id="aiGenerationLoading" class="loading-state enhanced" style="display: none;">
+                        <div class="loading-content">
+                            <div class="loading-animation">
+                                <div class="pulse-rings">
+                                    <div class="pulse-ring"></div>
+                                    <div class="pulse-ring"></div>
+                                    <div class="pulse-ring"></div>
+                                </div>
+                                <div class="medical-icon">🧬</div>
+                            </div>
+                            <h4>Generating Your AI Patient Case</h4>
+                            <div class="generation-steps">
+                                <div class="generation-step" id="step-analyzing">
+                                    <div class="step-icon">🔍</div>
+                                    <span>Analyzing medical parameters...</span>
+                                    <div class="step-status"></div>
+                                </div>
+                                <div class="generation-step" id="step-creating">
+                                    <div class="step-icon">🧠</div>
+                                    <span>Creating patient profile...</span>
+                                    <div class="step-status"></div>
+                                </div>
+                                <div class="generation-step" id="step-symptoms">
+                                    <div class="step-icon">📋</div>
+                                    <span>Developing symptom presentation...</span>
+                                    <div class="step-status"></div>
+                                </div>
+                                <div class="generation-step" id="step-finalizing">
+                                    <div class="step-icon">✨</div>
+                                    <span>Finalizing case scenario...</span>
+                                    <div class="step-status"></div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    
-                    <form id="customPatientFormFields">
-                        <!-- Patient Demographics Section -->
-                        <div class="form-section">
-                            <h4>Patient Demographics</h4>
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label for="patientAge">Age <span class="required">*</span></label>
-                                    <input 
-                                        type="number" 
-                                        id="patientAge" 
-                                        name="age" 
-                                        min="1" 
-                                        max="120" 
-                                        required 
-                                        placeholder="e.g., 45"
-                                        class="form-control"
-                                    >
-                                    <div class="error-message" id="ageError"></div>
+
+                    <!-- Form Content Container -->
+                    <div class="wizard-content">
+                        <form id="customPatientFormFields">
+                            
+                            <!-- Step 1: Quick Start Templates -->
+                            <div class="wizard-panel active" data-panel="1">
+                                <div class="panel-header">
+                                    <h4>🚀 Quick Start Templates</h4>
+                                    <p>Choose a template to get started quickly, or skip to create from scratch</p>
                                 </div>
                                 
-                                <div class="form-group">
-                                    <label for="patientGender">Gender <span class="required">*</span></label>
-                                    <select id="patientGender" name="gender" required class="form-control">
-                                        <option value="">Select gender</option>
-                                        <option value="Male">Male</option>
-                                        <option value="Female">Female</option>
-                                        <option value="Non-binary">Non-binary</option>
-                                        <option value="Other">Other</option>
-                                    </select>
-                                    <div class="error-message" id="genderError"></div>
+                                <div class="templates-grid">
+                                    <div class="template-card" data-template="emergency-cardiac">
+                                        <div class="template-icon">🫀</div>
+                                        <h5>Emergency: Cardiac Event</h5>
+                                        <p>Chest pain, shortness of breath, typical emergency presentation</p>
+                                        <div class="template-tags">
+                                            <span class="tag severity-high">High Severity</span>
+                                            <span class="tag specialty-cardiology">Cardiology</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="template-card" data-template="routine-headache">
+                                        <div class="template-icon">🧠</div>
+                                        <h5>Routine: Neurological</h5>
+                                        <p>Persistent headaches, routine office visit scenario</p>
+                                        <div class="template-tags">
+                                            <span class="tag severity-moderate">Moderate</span>
+                                            <span class="tag specialty-neurology">Neurology</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="template-card" data-template="respiratory-infection">
+                                        <div class="template-icon">🫁</div>
+                                        <h5>Respiratory: Infection</h5>
+                                        <p>Cough, fever, breathing difficulties</p>
+                                        <div class="template-tags">
+                                            <span class="tag severity-moderate">Moderate</span>
+                                            <span class="tag specialty-pulmonology">Pulmonology</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="template-card" data-template="gi-symptoms">
+                                        <div class="template-icon">🫄</div>
+                                        <h5>GI: Abdominal Pain</h5>
+                                        <p>Abdominal pain, nausea, digestive issues</p>
+                                        <div class="template-tags">
+                                            <span class="tag severity-moderate">Moderate</span>
+                                            <span class="tag specialty-gastroenterology">GI</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="template-card custom-template" data-template="custom">
+                                        <div class="template-icon">⚙️</div>
+                                        <h5>Custom Case</h5>
+                                        <p>Build your own case from scratch with full customization</p>
+                                        <div class="template-tags">
+                                            <span class="tag custom">Custom</span>
+                                        </div>
+                                    </div>
                                 </div>
+                                
+                                <div class="template-selection-info" id="templateSelectionInfo" style="display: none;">
+                                    <div class="selection-summary">
+                                        <h6>Selected Template:</h6>
+                                        <div id="selectedTemplateDetails"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Step 2: Patient Demographics -->
+                            <div class="wizard-panel" data-panel="2">
+                                <div class="panel-header">
+                                    <h4>👤 Patient Demographics</h4>
+                                    <p>Define the basic characteristics of your virtual patient</p>
+                                </div>
+                                
+                                <div class="form-grid">
+                                    <div class="form-card">
+                                        <h5>Basic Information</h5>
+                                        <div class="form-row">
+                                            <div class="form-group">
+                                                <label for="patientAge">Age <span class="required">*</span></label>
+                                                <div class="input-with-help">
+                                                    <input 
+                                                        type="number" 
+                                                        id="patientAge" 
+                                                        name="age" 
+                                                        min="1" 
+                                                        max="120" 
+                                                        required 
+                                                        placeholder="e.g., 45"
+                                                        class="form-control enhanced"
+                                                    >
+                                                    <div class="field-help" data-help="age">
+                                                        <i class="help-icon">ℹ️</i>
+                                                        <div class="help-tooltip">
+                                                            Patient age affects disease likelihood and presentation patterns
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="error-message enhanced" id="ageError"></div>
+                                            </div>
+                                            
+                                            <div class="form-group">
+                                                <label for="patientGender">Gender <span class="required">*</span></label>
+                                                <select id="patientGender" name="gender" required class="form-control enhanced">
+                                                    <option value="">Select gender</option>
+                                                    <option value="Male">Male</option>
+                                                    <option value="Female">Female</option>
+                                                    <option value="Non-binary">Non-binary</option>
+                                                    <option value="Other">Other</option>
+                                                </select>
+                                                <div class="error-message enhanced" id="genderError"></div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="form-group">
+                                            <label for="patientOccupation">Occupation <span class="required">*</span></label>
+                                            <div class="autocomplete-wrapper">
+                                                <input 
+                                                    type="text" 
+                                                    id="patientOccupation" 
+                                                    name="occupation" 
+                                                    required 
+                                                    placeholder="Start typing or select from suggestions..."
+                                                    class="form-control enhanced"
+                                                    list="occupationSuggestions"
+                                                    autocomplete="off"
+                                                >
+                                                <datalist id="occupationSuggestions">
+                                                    <option value="Teacher">
+                                                    <option value="Nurse">
+                                                    <option value="Engineer">
+                                                    <option value="Office Manager">
+                                                    <option value="Student">
+                                                    <option value="Retired">
+                                                    <option value="Doctor">
+                                                    <option value="Sales Representative">
+                                                    <option value="Accountant">
+                                                    <option value="Construction Worker">
+                                                    <option value="Chef">
+                                                    <option value="Police Officer">
+                                                    <option value="Firefighter">
+                                                    <option value="Lawyer">
+                                                    <option value="Mechanic">
+                                                </datalist>
+                                                <div class="suggestion-pills" id="occupationPills"></div>
+                                            </div>
+                                            <div class="error-message enhanced" id="occupationError"></div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="form-card">
+                                        <h5>Medical Background</h5>
+                                        <div class="form-group">
+                                            <label for="patientMedicalHistory">Medical History</label>
+                                            <textarea 
+                                                id="patientMedicalHistory" 
+                                                name="medical_history" 
+                                                rows="3" 
+                                                placeholder="e.g., Hypertension controlled with medication, No significant medical history, Previous surgery..."
+                                                class="form-control enhanced"
+                                            ></textarea>
+                                            <div class="field-note">Optional: Existing conditions that might influence the case</div>
+                                            <div class="error-message enhanced" id="medicalHistoryError"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Step 3: Medical Case Parameters -->
+                            <div class="wizard-panel" data-panel="3">
+                                <div class="panel-header">
+                                    <h4>🏥 Medical Case Parameters</h4>
+                                    <p>Define the clinical presentation and complexity</p>
+                                </div>
+                                
+                                <div class="form-grid">
+                                    <div class="form-card">
+                                        <h5>Clinical Specialty</h5>
+                                        <div class="form-group">
+                                            <label for="medicalSpecialty">Medical Specialty <span class="required">*</span></label>
+                                            <select id="medicalSpecialty" name="specialty" required class="form-control enhanced">
+                                                <option value="">Choose medical field...</option>
+                                                <!-- Options will be populated dynamically -->
+                                            </select>
+                                            <div class="specialty-description enhanced" id="specialtyDescription"></div>
+                                            <div class="error-message enhanced" id="specialtyError"></div>
+                                        </div>
+                                        
+                                        <div class="form-group">
+                                            <label for="symptomSeverity">Case Complexity <span class="required">*</span></label>
+                                            <div class="severity-selector">
+                                                <div class="severity-option" data-severity="mild">
+                                                    <input type="radio" id="severity-mild" name="severity" value="mild" required>
+                                                    <label for="severity-mild">
+                                                        <div class="severity-icon">🟢</div>
+                                                        <div class="severity-info">
+                                                            <strong>Mild</strong>
+                                                            <small>Routine case, clear presentation</small>
+                                                        </div>
+                                                    </label>
+                                                </div>
+                                                <div class="severity-option" data-severity="moderate">
+                                                    <input type="radio" id="severity-moderate" name="severity" value="moderate" required>
+                                                    <label for="severity-moderate">
+                                                        <div class="severity-icon">🟡</div>
+                                                        <div class="severity-info">
+                                                            <strong>Moderate</strong>
+                                                            <small>Some diagnostic challenge</small>
+                                                        </div>
+                                                    </label>
+                                                </div>
+                                                <div class="severity-option" data-severity="severe">
+                                                    <input type="radio" id="severity-severe" name="severity" value="severe" required>
+                                                    <label for="severity-severe">
+                                                        <div class="severity-icon">🔴</div>
+                                                        <div class="severity-info">
+                                                            <strong>Severe</strong>
+                                                            <small>Complex, emergency scenario</small>
+                                                        </div>
+                                                    </label>
+                                                </div>
+                                            </div>
+                                            <div class="error-message enhanced" id="severityError"></div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="form-card">
+                                        <h5>Presenting Symptoms</h5>
+                                        <div class="form-group">
+                                            <label>Select Symptoms <span class="required">*</span></label>
+                                            <div class="symptoms-info">
+                                                <p id="symptomsInstructions">Select a specialty above to see available symptoms</p>
+                                            </div>
+                                            <div id="symptomsContainer" class="symptoms-container enhanced" style="display: none;">
+                                                <!-- Dynamic symptom selection will be populated here -->
+                                            </div>
+                                            <div class="error-message enhanced" id="symptomsError"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Step 4: Review & Generate -->
+                            <div class="wizard-panel" data-panel="4">
+                                <div class="panel-header">
+                                    <h4>📋 Review & Generate</h4>
+                                    <p>Review your case parameters and generate the AI patient</p>
+                                </div>
+                                
+                                <div class="review-container">
+                                    <div class="case-preview-card">
+                                        <h5>📊 Case Summary</h5>
+                                        <div class="preview-grid">
+                                            <div class="preview-section">
+                                                <h6>Patient Profile</h6>
+                                                <div class="preview-items">
+                                                    <div class="preview-item">
+                                                        <span class="label">Age:</span>
+                                                        <span class="value" id="previewAge">-</span>
+                                                    </div>
+                                                    <div class="preview-item">
+                                                        <span class="label">Gender:</span>
+                                                        <span class="value" id="previewGender">-</span>
+                                                    </div>
+                                                    <div class="preview-item">
+                                                        <span class="label">Occupation:</span>
+                                                        <span class="value" id="previewOccupation">-</span>
+                                                    </div>
+                                                    <div class="preview-item" id="previewMedicalHistoryItem" style="display: none;">
+                                                        <span class="label">Medical History:</span>
+                                                        <span class="value" id="previewMedicalHistory">-</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="preview-section">
+                                                <h6>Clinical Parameters</h6>
+                                                <div class="preview-items">
+                                                    <div class="preview-item">
+                                                        <span class="label">Specialty:</span>
+                                                        <span class="value" id="previewSpecialty">-</span>
+                                                    </div>
+                                                    <div class="preview-item">
+                                                        <span class="label">Complexity:</span>
+                                                        <span class="value" id="previewSeverity">-</span>
+                                                    </div>
+                                                    <div class="preview-item">
+                                                        <span class="label">Symptoms:</span>
+                                                        <div class="symptoms-preview" id="previewSymptoms">
+                                                            <span class="no-symptoms">None selected</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="generation-info">
+                                            <div class="info-card">
+                                                <div class="info-icon">⏱️</div>
+                                                <div class="info-content">
+                                                    <strong>Generation Time:</strong>
+                                                    <small>Typically 10-30 seconds</small>
+                                                </div>
+                                            </div>
+                                            <div class="info-card">
+                                                <div class="info-icon">🎯</div>
+                                                <div class="info-content">
+                                                    <strong>AI Features:</strong>
+                                                    <small>Realistic symptoms, medical history, and responses</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Enhanced Navigation -->
+                            <div class="wizard-navigation">
+                                <button type="button" id="wizardPrevBtn" class="btn btn-secondary" style="display: none;">
+                                    <span class="btn-icon">←</span>
+                                    Previous
+                                </button>
+                                
+                                <div class="nav-center">
+                                    <button type="button" id="cancelCustomPatient" class="btn btn-ghost">
+                                        Cancel
+                                    </button>
+                                </div>
+                                
+                                <button type="button" id="wizardNextBtn" class="btn btn-primary">
+                                    Next
+                                    <span class="btn-icon">→</span>
+                                </button>
+                                
+                                <button type="submit" id="createCustomPatient" class="btn btn-success" style="display: none;">
+                                    <span class="btn-icon">✨</span>
+                                    <span class="button-text">Generate Patient Case</span>
+                                    <span class="button-spinner" style="display: none;">🔄</span>
+                                </button>
                             </div>
                             
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label for="patientOccupation">Occupation <span class="required">*</span></label>
-                                    <input 
-                                        type="text" 
-                                        id="patientOccupation" 
-                                        name="occupation" 
-                                        required 
-                                        placeholder="e.g., Office manager, Teacher, Retired"
-                                        class="form-control"
-                                    >
-                                    <div class="error-message" id="occupationError"></div>
-                                </div>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label for="patientMedicalHistory">Medical History</label>
-                                <textarea 
-                                    id="patientMedicalHistory" 
-                                    name="medical_history" 
-                                    rows="2" 
-                                    placeholder="e.g., Hypertension controlled with medication, No significant history"
-                                    class="form-control"
-                                ></textarea>
-                                <div class="error-message" id="medicalHistoryError"></div>
-                            </div>
-                        </div>
-
-                        <!-- Medical Case Generation Section -->
-                        <div class="form-section">
-                            <h4>Medical Case Parameters</h4>
-                            
-                            <!-- Specialty Selection -->
-                            <div class="form-group">
-                                <label for="medicalSpecialty">Medical Specialty <span class="required">*</span></label>
-                                <select id="medicalSpecialty" name="specialty" required class="form-control">
-                                    <option value="">Select medical specialty</option>
-                                    <!-- Options will be populated dynamically -->
-                                </select>
-                                <div class="specialty-description" id="specialtyDescription"></div>
-                                <div class="error-message" id="specialtyError"></div>
-                            </div>
-
-                            <!-- Dynamic Symptom Selection -->
-                            <div class="form-group">
-                                <label>Presenting Symptoms <span class="required">*</span></label>
-                                <div class="symptoms-info">
-                                    <p id="symptomsInstructions">Select a specialty above to see available symptoms</p>
-                                </div>
-                                <div id="symptomsContainer" class="symptoms-container" style="display: none;">
-                                    <!-- Dynamic symptom checkboxes will be populated here -->
-                                </div>
-                                <div class="error-message" id="symptomsError"></div>
-                            </div>
-
-                            <!-- Severity Selection -->
-                            <div class="form-group">
-                                <label for="symptomSeverity">Symptom Severity <span class="required">*</span></label>
-                                <select id="symptomSeverity" name="severity" required class="form-control">
-                                    <option value="">Select severity level</option>
-                                    <option value="mild">Mild - Symptoms are noticeable but not significantly impacting daily activities</option>
-                                    <option value="moderate">Moderate - Symptoms are affecting daily activities and causing concern</option>
-                                    <option value="severe">Severe - Symptoms are severely limiting function and causing significant distress</option>
-                                </select>
-                                <div class="error-message" id="severityError"></div>
-                            </div>
-                        </div>
-
-                        <!-- Form Actions -->
-                        <div class="form-actions">
-                            <button type="button" id="cancelCustomPatient" class="btn btn-secondary">Cancel</button>
-                            <button type="submit" id="createCustomPatient" class="btn btn-primary">
-                                <span class="button-text">Generate AI Patient Case</span>
-                                <span class="button-spinner" style="display: none;">🔄</span>
-                            </button>
-                        </div>
+                        </form>
                         
-                        <!-- Form Validation Summary -->
-                        <div id="formValidationSummary" class="validation-summary" style="display: none;">
-                            <h5>Please correct the following errors:</h5>
-                            <ul id="validationErrorsList"></ul>
+                        <!-- Enhanced Validation Summary -->
+                        <div id="formValidationSummary" class="validation-summary enhanced" style="display: none;">
+                            <div class="validation-header">
+                                <span class="validation-icon">⚠️</span>
+                                <h5>Please review the following:</h5>
+                            </div>
+                            <ul id="validationErrorsList" class="validation-list"></ul>
                         </div>
-                    </form>
+                    </div>
                 </div>
                 
                 <div class="voice-selector">

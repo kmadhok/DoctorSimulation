@@ -2253,4 +2253,821 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Initialize the diagnosis panel functionality
     initializeDiagnosisPanel();
+
+    // Enhanced form state management for wizard
+    let wizardState = {
+        currentStep: 1,
+        totalSteps: 4,
+        selectedTemplate: null,
+        completedSteps: [],
+        formData: {}
+    };
+
+    // Template definitions
+    const templateDefinitions = {
+        'emergency-cardiac': {
+            name: 'Emergency: Cardiac Event',
+            demographics: { age: 55, gender: 'Male', occupation: 'Construction worker', medical_history: 'Hypertension, smoking history' },
+            specialty: 'cardiology',
+            symptoms: ['chest_pain', 'shortness_breath', 'palpitations'],
+            severity: 'severe'
+        },
+        'routine-headache': {
+            name: 'Routine: Neurological',
+            demographics: { age: 32, gender: 'Female', occupation: 'Office worker', medical_history: 'No significant medical history' },
+            specialty: 'neurology',
+            symptoms: ['headache', 'fatigue'],
+            severity: 'moderate'
+        },
+        'respiratory-infection': {
+            name: 'Respiratory: Infection',
+            demographics: { age: 28, gender: 'Male', occupation: 'Teacher', medical_history: 'Asthma' },
+            specialty: 'pulmonology',
+            symptoms: ['cough', 'fever', 'difficulty_breathing'],
+            severity: 'moderate'
+        },
+        'gi-symptoms': {
+            name: 'GI: Abdominal Pain',
+            demographics: { age: 45, gender: 'Female', occupation: 'Chef', medical_history: 'GERD' },
+            specialty: 'gastroenterology',
+            symptoms: ['abdominal_pain', 'nausea', 'vomiting'],
+            severity: 'moderate'
+        }
+    };
+
+    // Enhanced DOM elements for wizard
+    const wizardNextBtn = document.getElementById('wizardNextBtn');
+    const wizardPrevBtn = document.getElementById('wizardPrevBtn');
+    
+    // Initialize enhanced wizard functionality
+    function initializeWizard() {
+        console.log('Initializing enhanced wizard functionality...');
+        
+        // Set up wizard navigation
+        if (wizardNextBtn) {
+            wizardNextBtn.addEventListener('click', navigateNext);
+        }
+        
+        if (wizardPrevBtn) {
+            wizardPrevBtn.addEventListener('click', navigatePrevious);
+        }
+        
+        // Set up template selection
+        setupTemplateSelection();
+        
+        // Set up enhanced form interactions
+        setupEnhancedFormInteractions();
+        
+        // Set up real-time preview updates
+        setupRealtimePreview();
+        
+        // Set up occupation suggestions
+        setupOccupationSuggestions();
+        
+        console.log('Enhanced wizard initialized successfully');
+    }
+    
+    function navigateNext() {
+        console.log(`Navigating from step ${wizardState.currentStep} to next step`);
+        
+        // Validate current step before proceeding
+        if (!validateCurrentStep()) {
+            console.log('Current step validation failed');
+            return;
+        }
+        
+        // Mark current step as completed
+        if (!wizardState.completedSteps.includes(wizardState.currentStep)) {
+            wizardState.completedSteps.push(wizardState.currentStep);
+        }
+        
+        // Move to next step
+        if (wizardState.currentStep < wizardState.totalSteps) {
+            wizardState.currentStep++;
+            updateWizardDisplay();
+            updateRealtimePreview();
+        }
+    }
+    
+    function navigatePrevious() {
+        console.log(`Navigating from step ${wizardState.currentStep} to previous step`);
+        
+        if (wizardState.currentStep > 1) {
+            wizardState.currentStep--;
+            updateWizardDisplay();
+        }
+    }
+    
+    function updateWizardDisplay() {
+        console.log(`Updating wizard display for step ${wizardState.currentStep}`);
+        
+        // Update progress indicator
+        document.querySelectorAll('.wizard-step').forEach((step, index) => {
+            const stepNumber = index + 1;
+            step.classList.remove('active', 'completed');
+            
+            if (stepNumber === wizardState.currentStep) {
+                step.classList.add('active');
+            } else if (wizardState.completedSteps.includes(stepNumber)) {
+                step.classList.add('completed');
+            }
+        });
+        
+        // Update panels
+        document.querySelectorAll('.wizard-panel').forEach((panel, index) => {
+            const panelNumber = index + 1;
+            panel.classList.toggle('active', panelNumber === wizardState.currentStep);
+        });
+        
+        // Update navigation buttons
+        updateNavigationButtons();
+        
+        // Trigger panel-specific setup
+        onStepActivated(wizardState.currentStep);
+    }
+    
+    function updateNavigationButtons() {
+        // Previous button
+        if (wizardPrevBtn) {
+            wizardPrevBtn.style.display = wizardState.currentStep > 1 ? 'inline-flex' : 'none';
+        }
+        
+        // Next button
+        if (wizardNextBtn) {
+            if (wizardState.currentStep < wizardState.totalSteps) {
+                wizardNextBtn.style.display = 'inline-flex';
+                wizardNextBtn.textContent = 'Next';
+                wizardNextBtn.querySelector('.btn-icon').textContent = '→';
+            } else {
+                wizardNextBtn.style.display = 'none';
+            }
+        }
+        
+        // Create/Generate button
+        if (createCustomPatientBtn) {
+            createCustomPatientBtn.style.display = wizardState.currentStep === wizardState.totalSteps ? 'inline-flex' : 'none';
+        }
+    }
+    
+    function onStepActivated(stepNumber) {
+        console.log(`Step ${stepNumber} activated`);
+        
+        switch (stepNumber) {
+            case 1:
+                // Templates step - no additional setup needed
+                break;
+            case 2:
+                // Patient demographics - setup autocomplete if not already done
+                break;
+            case 3:
+                // Medical case - ensure specialty options are loaded
+                if (!medicalKnowledge.specialties || Object.keys(medicalKnowledge.specialties).length === 0) {
+                    initializeMedicalKnowledge();
+                }
+                break;
+            case 4:
+                // Review step - update preview
+                updateRealtimePreview();
+                break;
+        }
+    }
+    
+    function setupTemplateSelection() {
+        console.log('Setting up template selection...');
+        
+        const templateCards = document.querySelectorAll('.template-card');
+        templateCards.forEach(card => {
+            card.addEventListener('click', () => {
+                const templateId = card.dataset.template;
+                selectTemplate(templateId);
+            });
+        });
+    }
+    
+    function selectTemplate(templateId) {
+        console.log(`Template selected: ${templateId}`);
+        
+        // Update visual selection
+        document.querySelectorAll('.template-card').forEach(card => {
+            card.classList.remove('selected');
+        });
+        
+        const selectedCard = document.querySelector(`[data-template="${templateId}"]`);
+        if (selectedCard) {
+            selectedCard.classList.add('selected');
+        }
+        
+        // Store selection
+        wizardState.selectedTemplate = templateId;
+        
+        // Show selection info
+        const selectionInfo = document.getElementById('templateSelectionInfo');
+        const selectionDetails = document.getElementById('selectedTemplateDetails');
+        
+        if (selectionInfo && selectionDetails) {
+            if (templateId && templateId !== 'custom') {
+                const template = templateDefinitions[templateId];
+                if (template) {
+                    selectionDetails.innerHTML = `
+                        <div class="selected-template-card">
+                            <h6>${template.name}</h6>
+                            <p>This will pre-fill the form with realistic parameters for this type of case.</p>
+                        </div>
+                    `;
+                    selectionInfo.style.display = 'block';
+                }
+            } else {
+                selectionInfo.style.display = 'none';
+            }
+        }
+        
+        // Enable next button if template is selected
+        if (wizardNextBtn) {
+            wizardNextBtn.disabled = false;
+        }
+    }
+    
+    function applyTemplate(templateId) {
+        if (!templateId || templateId === 'custom') {
+            console.log('Custom template selected, no pre-filling needed');
+            return;
+        }
+        
+        const template = templateDefinitions[templateId];
+        if (!template) {
+            console.error(`Template ${templateId} not found`);
+            return;
+        }
+        
+        console.log(`Applying template: ${templateId}`, template);
+        
+        // Apply demographics
+        const demographics = template.demographics;
+        if (demographics.age) {
+            const ageInput = document.getElementById('patientAge');
+            if (ageInput) ageInput.value = demographics.age;
+        }
+        
+        if (demographics.gender) {
+            const genderSelect = document.getElementById('patientGender');
+            if (genderSelect) genderSelect.value = demographics.gender;
+        }
+        
+        if (demographics.occupation) {
+            const occupationInput = document.getElementById('patientOccupation');
+            if (occupationInput) occupationInput.value = demographics.occupation;
+        }
+        
+        if (demographics.medical_history) {
+            const historyTextarea = document.getElementById('patientMedicalHistory');
+            if (historyTextarea) historyTextarea.value = demographics.medical_history;
+        }
+        
+        // Apply medical case parameters
+        if (template.specialty) {
+            const specialtySelect = document.getElementById('medicalSpecialty');
+            if (specialtySelect) {
+                specialtySelect.value = template.specialty;
+                // Trigger specialty change event
+                handleSpecialtyChange({ target: specialtySelect });
+                
+                // Wait a bit for symptoms to load, then select them
+                setTimeout(() => {
+                    if (template.symptoms) {
+                        template.symptoms.forEach(symptom => {
+                            const checkbox = document.getElementById(`symptom_${symptom}`);
+                            if (checkbox) {
+                                checkbox.checked = true;
+                                handleSymptomChange({ target: checkbox });
+                            }
+                        });
+                    }
+                }, 500);
+            }
+        }
+        
+        if (template.severity) {
+            const severityRadio = document.getElementById(`severity-${template.severity}`);
+            if (severityRadio) {
+                severityRadio.checked = true;
+            }
+        }
+        
+        // Update form state
+        formState.selectedSpecialty = template.specialty;
+        formState.selectedSymptoms = [...(template.symptoms || [])];
+        
+        console.log('Template applied successfully');
+    }
+    
+    function validateCurrentStep() {
+        switch (wizardState.currentStep) {
+            case 1:
+                // Templates step - require template selection
+                if (!wizardState.selectedTemplate) {
+                    showEnhancedError('Please select a template or choose "Custom Case" to continue.');
+                    return false;
+                }
+                
+                // Apply template if not custom
+                if (wizardState.selectedTemplate !== 'custom') {
+                    applyTemplate(wizardState.selectedTemplate);
+                }
+                
+                return true;
+                
+            case 2:
+                // Patient demographics validation
+                return validatePatientDemographics();
+                
+            case 3:
+                // Medical case validation
+                return validateMedicalCase();
+                
+            case 4:
+                // Review step - no validation needed
+                return true;
+                
+            default:
+                return true;
+        }
+    }
+    
+    function validatePatientDemographics() {
+        let isValid = true;
+        const errors = [];
+        
+        // Age validation
+        const age = parseInt(document.getElementById('patientAge')?.value);
+        if (!age || age < 1 || age > 120) {
+            showEnhancedFieldError('ageError', 'Please enter a valid age between 1 and 120');
+            errors.push('Valid age is required');
+            isValid = false;
+        } else {
+            clearEnhancedFieldError('ageError');
+        }
+        
+        // Gender validation
+        const gender = document.getElementById('patientGender')?.value;
+        if (!gender) {
+            showEnhancedFieldError('genderError', 'Please select a gender');
+            errors.push('Gender selection is required');
+            isValid = false;
+        } else {
+            clearEnhancedFieldError('genderError');
+        }
+        
+        // Occupation validation
+        const occupation = document.getElementById('patientOccupation')?.value?.trim();
+        if (!occupation || occupation.length < 2) {
+            showEnhancedFieldError('occupationError', 'Please enter an occupation (at least 2 characters)');
+            errors.push('Occupation is required');
+            isValid = false;
+        } else {
+            clearEnhancedFieldError('occupationError');
+        }
+        
+        if (!isValid) {
+            showEnhancedValidationSummary(errors);
+        } else {
+            hideEnhancedValidationSummary();
+        }
+        
+        return isValid;
+    }
+    
+    function validateMedicalCase() {
+        let isValid = true;
+        const errors = [];
+        
+        // Specialty validation
+        if (!formState.selectedSpecialty) {
+            showEnhancedFieldError('specialtyError', 'Please select a medical specialty');
+            errors.push('Medical specialty selection is required');
+            isValid = false;
+        } else {
+            clearEnhancedFieldError('specialtyError');
+        }
+        
+        // Symptoms validation
+        if (formState.selectedSymptoms.length === 0) {
+            showEnhancedFieldError('symptomsError', 'Please select at least one symptom');
+            errors.push('At least one symptom must be selected');
+            isValid = false;
+        } else {
+            clearEnhancedFieldError('symptomsError');
+        }
+        
+        // Severity validation
+        const severity = document.querySelector('input[name="severity"]:checked')?.value;
+        if (!severity) {
+            showEnhancedFieldError('severityError', 'Please select the case complexity level');
+            errors.push('Case complexity selection is required');
+            isValid = false;
+        } else {
+            clearEnhancedFieldError('severityError');
+        }
+        
+        if (!isValid) {
+            showEnhancedValidationSummary(errors);
+        } else {
+            hideEnhancedValidationSummary();
+        }
+        
+        return isValid;
+    }
+    
+    function setupEnhancedFormInteractions() {
+        console.log('Setting up enhanced form interactions...');
+        
+        // Enhanced input focus effects
+        document.querySelectorAll('.form-control.enhanced').forEach(input => {
+            input.addEventListener('focus', () => {
+                input.parentElement.classList.add('focused');
+            });
+            
+            input.addEventListener('blur', () => {
+                input.parentElement.classList.remove('focused');
+                
+                // Real-time validation on blur
+                if (input.value.trim()) {
+                    validateSingleEnhancedField(input);
+                }
+            });
+            
+            input.addEventListener('input', () => {
+                // Clear errors on input
+                const fieldName = input.name || input.id.replace('patient', '').toLowerCase();
+                clearEnhancedFieldError(fieldName + 'Error');
+                
+                // Update preview in real-time
+                updateRealtimePreview();
+            });
+        });
+        
+        // Enhanced severity selector
+        document.querySelectorAll('input[name="severity"]').forEach(radio => {
+            radio.addEventListener('change', () => {
+                clearEnhancedFieldError('severityError');
+                updateRealtimePreview();
+            });
+        });
+    }
+    
+    function setupRealtimePreview() {
+        console.log('Setting up real-time preview...');
+        
+        // Add listeners to all form inputs for real-time updates
+        const inputs = [
+            'patientAge', 'patientGender', 'patientOccupation', 
+            'patientMedicalHistory', 'medicalSpecialty'
+        ];
+        
+        inputs.forEach(inputId => {
+            const element = document.getElementById(inputId);
+            if (element) {
+                element.addEventListener('input', updateRealtimePreview);
+                element.addEventListener('change', updateRealtimePreview);
+            }
+        });
+    }
+    
+    function updateRealtimePreview() {
+        // Update age
+        const age = document.getElementById('patientAge')?.value || '-';
+        const ageElement = document.getElementById('previewAge');
+        if (ageElement) ageElement.textContent = age;
+        
+        // Update gender
+        const gender = document.getElementById('patientGender')?.value || '-';
+        const genderElement = document.getElementById('previewGender');
+        if (genderElement) genderElement.textContent = gender;
+        
+        // Update occupation
+        const occupation = document.getElementById('patientOccupation')?.value || '-';
+        const occupationElement = document.getElementById('previewOccupation');
+        if (occupationElement) occupationElement.textContent = occupation;
+        
+        // Update medical history
+        const medicalHistory = document.getElementById('patientMedicalHistory')?.value;
+        const historyItem = document.getElementById('previewMedicalHistoryItem');
+        const historyElement = document.getElementById('previewMedicalHistory');
+        if (medicalHistory && medicalHistory.trim()) {
+            if (historyItem) historyItem.style.display = 'flex';
+            if (historyElement) historyElement.textContent = medicalHistory.substring(0, 50) + (medicalHistory.length > 50 ? '...' : '');
+        } else {
+            if (historyItem) historyItem.style.display = 'none';
+        }
+        
+        // Update specialty
+        const specialtySelect = document.getElementById('medicalSpecialty');
+        const specialtyText = specialtySelect?.selectedOptions[0]?.textContent || '-';
+        const specialtyElement = document.getElementById('previewSpecialty');
+        if (specialtyElement) specialtyElement.textContent = specialtyText;
+        
+        // Update severity
+        const severityRadio = document.querySelector('input[name="severity"]:checked');
+        const severityText = severityRadio ? severityRadio.nextElementSibling.querySelector('strong').textContent : '-';
+        const severityElement = document.getElementById('previewSeverity');
+        if (severityElement) severityElement.textContent = severityText;
+        
+        // Update symptoms
+        const symptomsPreview = document.getElementById('previewSymptoms');
+        if (symptomsPreview) {
+            symptomsPreview.innerHTML = '';
+            
+            if (formState.selectedSymptoms.length > 0) {
+                formState.selectedSymptoms.forEach(symptom => {
+                    const symptomName = medicalKnowledge.all_symptoms[symptom] || symptom.replace('_', ' ');
+                    const tag = document.createElement('span');
+                    tag.className = 'symptom-tag';
+                    tag.textContent = symptomName;
+                    symptomsPreview.appendChild(tag);
+                });
+            } else {
+                const noSymptoms = document.createElement('span');
+                noSymptoms.className = 'no-symptoms';
+                noSymptoms.textContent = 'None selected';
+                symptomsPreview.appendChild(noSymptoms);
+            }
+        }
+    }
+    
+    function setupOccupationSuggestions() {
+        const occupationInput = document.getElementById('patientOccupation');
+        const pillsContainer = document.getElementById('occupationPills');
+        
+        if (!occupationInput || !pillsContainer) return;
+        
+        const commonOccupations = [
+            'Teacher', 'Nurse', 'Engineer', 'Office Manager', 'Student', 
+            'Retired', 'Doctor', 'Sales Representative', 'Accountant',
+            'Construction Worker', 'Chef', 'Police Officer', 'Firefighter',
+            'Lawyer', 'Mechanic'
+        ];
+        
+        // Create suggestion pills
+        commonOccupations.forEach(occupation => {
+            const pill = document.createElement('span');
+            pill.className = 'suggestion-pill';
+            pill.textContent = occupation;
+            pill.addEventListener('click', () => {
+                occupationInput.value = occupation;
+                updateRealtimePreview();
+                clearEnhancedFieldError('occupationError');
+            });
+            pillsContainer.appendChild(pill);
+        });
+    }
+    
+    // Enhanced error handling functions
+    function showEnhancedFieldError(elementId, message) {
+        const errorElement = document.getElementById(elementId);
+        if (errorElement && errorElement.classList.contains('enhanced')) {
+            errorElement.textContent = message;
+            errorElement.style.display = 'block';
+            
+            // Add error class to corresponding input
+            const fieldName = elementId.replace('Error', '');
+            const inputElement = document.getElementById('patient' + fieldName.charAt(0).toUpperCase() + fieldName.slice(1)) ||
+                               document.getElementById(fieldName) ||
+                               document.querySelector(`[name="${fieldName}"]`);
+            if (inputElement) {
+                inputElement.classList.add('error');
+            }
+        }
+    }
+    
+    function clearEnhancedFieldError(elementId) {
+        const errorElement = document.getElementById(elementId);
+        if (errorElement && errorElement.classList.contains('enhanced')) {
+            errorElement.style.display = 'none';
+            
+            // Remove error class from corresponding input
+            const fieldName = elementId.replace('Error', '');
+            const inputElement = document.getElementById('patient' + fieldName.charAt(0).toUpperCase() + fieldName.slice(1)) ||
+                               document.getElementById(fieldName) ||
+                               document.querySelector(`[name="${fieldName}"]`);
+            if (inputElement) {
+                inputElement.classList.remove('error');
+            }
+        }
+    }
+    
+    function showEnhancedValidationSummary(errors) {
+        const summaryElement = document.getElementById('formValidationSummary');
+        const errorsListElement = document.getElementById('validationErrorsList');
+        
+        if (summaryElement && summaryElement.classList.contains('enhanced') && errorsListElement) {
+            errorsListElement.innerHTML = '';
+            errors.forEach(error => {
+                const li = document.createElement('li');
+                li.textContent = error;
+                errorsListElement.appendChild(li);
+            });
+            summaryElement.style.display = 'block';
+            summaryElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+    }
+    
+    function hideEnhancedValidationSummary() {
+        const summaryElement = document.getElementById('formValidationSummary');
+        if (summaryElement && summaryElement.classList.contains('enhanced')) {
+            summaryElement.style.display = 'none';
+        }
+    }
+    
+    function showEnhancedError(message) {
+        // Show a temporary error message
+        const tempError = document.createElement('div');
+        tempError.className = 'temp-error-message';
+        tempError.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #dc3545;
+            color: white;
+            padding: 1rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(220, 53, 69, 0.3);
+            z-index: 10000;
+            animation: slideInRight 0.3s ease;
+        `;
+        tempError.textContent = message;
+        
+        document.body.appendChild(tempError);
+        
+        setTimeout(() => {
+            tempError.style.animation = 'slideOutRight 0.3s ease';
+            setTimeout(() => tempError.remove(), 300);
+        }, 3000);
+    }
+    
+    function validateSingleEnhancedField(input) {
+        const fieldName = input.name || input.id.replace('patient', '').toLowerCase();
+        const value = input.value.trim();
+        
+        switch (fieldName) {
+            case 'age':
+                const age = parseInt(value);
+                if (!value || isNaN(age) || age < 1 || age > 120) {
+                    showEnhancedFieldError('ageError', 'Please enter a valid age between 1 and 120');
+                    return false;
+                } else {
+                    clearEnhancedFieldError('ageError');
+                    return true;
+                }
+                
+            case 'occupation':
+                if (!value || value.length < 2) {
+                    showEnhancedFieldError('occupationError', 'Please enter an occupation (at least 2 characters)');
+                    return false;
+                } else {
+                    clearEnhancedFieldError('occupationError');
+                    return true;
+                }
+                
+            default:
+                return true;
+        }
+    }
+    
+    // Enhanced loading animation
+    function showEnhancedLoadingAnimation() {
+        console.log('Starting enhanced loading animation...');
+        
+        const loadingDiv = document.getElementById('aiGenerationLoading');
+        if (!loadingDiv) return;
+        
+        loadingDiv.style.display = 'block';
+        
+        // Animate generation steps
+        const steps = ['step-analyzing', 'step-creating', 'step-symptoms', 'step-finalizing'];
+        let currentStepIndex = 0;
+        
+        function animateStep() {
+            if (currentStepIndex > 0) {
+                // Mark previous step as completed
+                const prevStep = document.getElementById(steps[currentStepIndex - 1]);
+                if (prevStep) {
+                    prevStep.classList.remove('active');
+                    prevStep.classList.add('completed');
+                }
+            }
+            
+            if (currentStepIndex < steps.length) {
+                // Mark current step as active
+                const currentStep = document.getElementById(steps[currentStepIndex]);
+                if (currentStep) {
+                    currentStep.classList.add('active');
+                }
+                
+                currentStepIndex++;
+                setTimeout(animateStep, 2000 + Math.random() * 1000); // 2-3 seconds per step
+            }
+        }
+        
+        // Start animation after a brief delay
+        setTimeout(animateStep, 500);
+    }
+    
+    function hideEnhancedLoadingAnimation() {
+        console.log('Hiding enhanced loading animation...');
+        
+        const loadingDiv = document.getElementById('aiGenerationLoading');
+        if (!loadingDiv) return;
+        
+        // Mark final step as completed
+        const finalStep = document.getElementById('step-finalizing');
+        if (finalStep) {
+            finalStep.classList.remove('active');
+            finalStep.classList.add('completed');
+        }
+        
+        // Hide after a brief delay to show completion
+        setTimeout(() => {
+            loadingDiv.style.display = 'none';
+            
+            // Reset steps for next use
+            document.querySelectorAll('.generation-step').forEach(step => {
+                step.classList.remove('active', 'completed');
+            });
+        }, 1000);
+    }
+    
+    // Enhanced form submission
+    async function submitEnhancedForm() {
+        console.log('Submitting enhanced form...');
+        
+        // Show enhanced loading animation
+        showEnhancedLoadingAnimation();
+        
+        try {
+            // Collect all form data
+            const formData = collectEnhancedFormData();
+            console.log('Enhanced form data collected:', formData);
+            
+            // Call the backend API
+            const success = await createCustomPatient(formData);
+            
+            if (success) {
+                updateStatus('AI patient case generated successfully!');
+                hideCustomPatientForm();
+                await loadConversationHistory();
+            } else {
+                updateStatus('Error generating patient case');
+            }
+        } catch (error) {
+            console.error('Error generating patient case:', error);
+            updateStatus('Error generating patient case');
+        } finally {
+            hideEnhancedLoadingAnimation();
+        }
+    }
+    
+    function collectEnhancedFormData() {
+        // Get basic form data
+        const formData = new FormData(customPatientFormFields);
+        const data = Object.fromEntries(formData.entries());
+        
+        // Get severity from radio buttons
+        const severityRadio = document.querySelector('input[name="severity"]:checked');
+        if (severityRadio) {
+            data.severity = severityRadio.value;
+        }
+        
+        // Structure the data for AI case generation API
+        return {
+            type: 'ai_generated',
+            case_parameters: {
+                age: parseInt(data.age),
+                gender: data.gender,
+                occupation: data.occupation,
+                medical_history: data.medical_history || '',
+                specialty: formState.selectedSpecialty,
+                symptoms: formState.selectedSymptoms,
+                severity: data.severity
+            },
+            template_used: wizardState.selectedTemplate
+        };
+    }
+    
+    // Override the existing form submission handler
+    if (customPatientFormFields) {
+        // Remove existing event listener by cloning the element
+        const newForm = customPatientFormFields.cloneNode(true);
+        customPatientFormFields.parentNode.replaceChild(newForm, customPatientFormFields);
+        
+        // Add new enhanced event listener
+        newForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            await submitEnhancedForm();
+        });
+        
+        // Update the reference
+        customPatientFormFields = newForm;
+    }
+    
+    // Initialize the enhanced wizard
+    initializeWizard();
 }); 
