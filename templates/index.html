@@ -31,13 +31,21 @@
         <div class="main-content">
             <header>
                 <h1>Can you guess what's wrong with me?</h1>
-                <div class="simulation-selector">
+                <!-- <div class="simulation-selector">
                     <label for="simulationSelect">Select Patient Simulation (Optional):</label>
                     <select id="simulationSelect">
                         <option value="">No simulation</option>
                         <option value="__custom__">Create Custom Patient</option>
                         <option value="" disabled>Loading simulations...</option>
                     </select>
+                </div> -->
+                
+                <!-- Patient Creation Section -->
+                <div class="patient-creation-section">
+                    <button id="showCustomPatientFormBtn" class="btn btn-primary">
+                        Create AI Patient Case
+                    </button>
+                    <p class="creation-description">Generate a realistic medical case for simulation</p>
                 </div>
                 
                 <!-- Custom Patient Form (initially hidden) -->
