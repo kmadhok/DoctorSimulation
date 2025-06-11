@@ -42,7 +42,9 @@ def format_patient_prompt(patient_data: Dict) -> str:
         occupation=patient_details.get("occupation", ""),
         medical_history=patient_details.get("medical_history", ""),
         illness=patient_details.get("illness", ""),
-        recent_exposure=patient_details.get("recent_exposure", "")
+        recent_exposure=patient_details.get("recent_exposure", ""),
+        additional_symptoms=patient_details.get("additional_symptoms", ""),
+        patient_presentation=patient_details.get("patient_presentation", "")
     )
     
     return formatted_prompt
