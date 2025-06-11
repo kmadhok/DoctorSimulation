@@ -62,8 +62,11 @@ app = Flask(__name__, template_folder=template_dir)
 @app.before_request
 def log_request_info():
     logger.debug('Request: %s %s', request.method, request.path)
-    logger.debug('Headers: %s', request.headers)
-    logger.debug('Body: %s', request.get_data())
+    # Only log headers and body in development, not in production
+    if not os.environ.get('HEROKU'):  # or use another environment check
+        logger.debug('Headers: %s', request.headers)
+        if request.path != '/process_audio':
+            logger.debug('Body: %s', request.get_data())
 
 # Add error handlers
 @app.errorhandler(404)
