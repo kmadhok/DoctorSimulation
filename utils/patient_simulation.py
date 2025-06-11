@@ -1,30 +1,11 @@
-import json
-import os
 from typing import Dict, Optional
-
-def load_patient_simulation(file_path: str) -> Dict:
-    """
-    Load patient simulation data from a JSON file.
-    
-    Args:
-        file_path (str): Path to the patient simulation JSON file
-        
-    Returns:
-        Dict: Patient simulation data
-    """
-    try:
-        with open(file_path, 'r') as f:
-            return json.load(f)
-    except Exception as e:
-        print(f"Error loading patient simulation file: {str(e)}")
-        return {}
 
 def format_patient_prompt(patient_data: Dict) -> str:
     """
     Format the patient prompt template with patient details.
     
     Args:
-        patient_data (Dict): Patient simulation data
+        patient_data (Dict): Patient simulation data (in-memory)
         
     Returns:
         str: Formatted prompt
@@ -54,7 +35,7 @@ def get_patient_system_prompt(patient_data: Dict) -> str:
     Get the system prompt for the patient simulation.
     
     Args:
-        patient_data (Dict): Patient simulation data
+        patient_data (Dict): Patient simulation data (in-memory)
         
     Returns:
         str: System prompt

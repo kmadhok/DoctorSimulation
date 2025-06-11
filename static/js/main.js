@@ -248,6 +248,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     //     }
     // }
     
+    // Load available simulations (now static only)
+    async function loadSimulations() {
+        // No need to fetch from API anymore - simulation options are static in HTML
+        // Just ensure current simulation is properly set if available
+        console.log('Simulation loading complete - using static options only');
+        
+        // Set current simulation if available
+        if (currentSimulation) {
+            simulationSelect.value = currentSimulation;
+        }
+    }
+    
     // Load available simulations
     console.log('<<<<< MAIN.JS: Awaiting loadSimulations... >>>>>');
     await loadSimulations();
@@ -410,41 +422,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             statusElement.classList.add('processing');
         } else if (message.includes('Error')) {
             statusElement.classList.add('error');
-        }
-    }
-    
-    // Load available simulations
-    async function loadSimulations() {
-        try {
-            const response = await fetch('/api/patient-simulations');
-            const data = await response.json();
-            
-            if (data.status === 'success') {
-                // Clear loading option
-                // Keep the "No simulation" and "Create Custom Patient" options and remove all others
-                while (simulationSelect.options.length > 2) {
-                    simulationSelect.remove(2);
-                }
-                
-                // Add simulations to select
-                data.simulations.forEach(simulation => {
-                    const option = document.createElement('option');
-                    option.value = simulation;
-                    option.textContent = simulation;
-                    simulationSelect.appendChild(option);
-                });
-                
-                // Set current simulation if available
-                if (data.current_simulation) {
-                    simulationSelect.value = data.current_simulation;
-                    currentSimulation = data.current_simulation;
-                }
-            } else {
-                throw new Error(data.message || 'Failed to load simulations');
-            }
-        } catch (error) {
-            console.error('Error loading simulations:', error);
-            statusElement.textContent = 'Error loading simulations';
         }
     }
     

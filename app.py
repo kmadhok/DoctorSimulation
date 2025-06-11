@@ -4,7 +4,6 @@ import base64
 import sys
 import argparse
 import json
-import glob
 import logging
 from datetime import datetime
 import secrets
@@ -47,7 +46,7 @@ import json
 from utils.groq_integration import get_groq_response
 from utils.groq_transcribe import transcribe_audio_data
 from utils.groq_tts_speech import generate_speech_audio
-from utils.patient_simulation import load_patient_simulation, get_patient_system_prompt
+from utils.patient_simulation import get_patient_system_prompt
 from utils.database import init_db, create_conversation, add_message, get_conversations, get_conversation, delete_conversation, update_conversation_title, store_conversation_data, get_conversation_data, validate_patient_data_structure, get_all_conversation_data
 from utils.ai_case_generator import generate_patient_case, get_all_specialties, get_available_symptoms_for_specialty, validate_symptom_specialty_combination
 
@@ -120,12 +119,7 @@ MEDICAL_SYNONYMS = {
     'panic attack': ['anxiety attack', 'panic disorder']
 }
 
-def get_available_patient_simulations():
-    """Get list of available patient simulation files"""
-    simulation_files = glob.glob('patient_simulation_*.json')
-    return [os.path.basename(f) for f in simulation_files]
-
-def initialize_patient_data(patient_file=None, custom_data=None):
+def initialize_patient_data(custom_data=None):
     global current_patient_simulation
     patient_data = {}
     
@@ -135,14 +129,6 @@ def initialize_patient_data(patient_file=None, custom_data=None):
         patient_data = custom_data
         current_patient_simulation = '__custom__'
         logger.info(f"Custom patient data initialized: {patient_data}")
-    elif patient_file:
-        # Handle file-based patient data
-        patient_data = load_patient_simulation(patient_file)
-        if patient_data:
-            print(f"Patient simulation data loaded successfully from {patient_file}")
-            current_patient_simulation = patient_file
-        else:
-            print("Warning: Failed to load patient simulation data")
     
     return patient_data
 
@@ -174,13 +160,11 @@ def index():
 
 @app.route('/api/patient-simulations', methods=['GET'])
 def list_patient_simulations():
-    """List available patient simulations"""
-    logger.info('Listing patient simulations')
-    simulations = get_available_patient_simulations()
-    logger.debug('Found simulations: %s', simulations)
+    """List available patient simulation options - only static options"""
+    logger.info('Listing patient simulation options (static only)')
     return jsonify({
         'status': 'success',
-        'simulations': simulations,
+        'simulations': [],  # No file-based simulations
         'current_simulation': current_patient_simulation
     })
 
@@ -213,7 +197,7 @@ def create_new_conversation():
 
 @app.route('/api/select-simulation', methods=['POST'])
 def select_simulation():
-    """Select a patient simulation"""
+    """Select a patient simulation - now only handles custom patients"""
     global patient_data, current_patient_simulation, current_conversation_id, conversation_history
     
     try:
@@ -225,78 +209,43 @@ def select_simulation():
             }), 400
             
         simulation_file = data['simulation_file']
-        logger.info(f"Selecting simulation file: {simulation_file}")
+        logger.info(f"Selecting simulation: {simulation_file}")
         
-        # Handle custom patient selection (redirect to form, don't create conversation yet)
+        # Handle custom patient selection
         if simulation_file == "__custom__":
             logger.info("Custom patient selected - frontend will show form")
-            # Don't create conversation yet, that happens when form is submitted
-            # Just acknowledge the selection
             current_patient_simulation = None
             patient_data = {}
             return jsonify({
                 'status': 'success',
                 'message': 'Custom patient selection acknowledged - please fill out the form',
                 'current_simulation': '__custom__',
-                'conversation_id': None  # No conversation created yet
+                'conversation_id': None
             })
         
-        # Allow empty simulation file to clear the current simulation
+        # Clear simulation (empty string)
         if simulation_file == "":
-            logger.info("Clearing current simulation and voice settings")
+            logger.info("Clearing current simulation")
             current_patient_simulation = None
             patient_data = {}
-        elif not os.path.exists(simulation_file):
-            logger.error(f"Simulation file not found: {simulation_file}")
+            conversation_history = []
+            
+            # Create a new empty conversation
+            title = "New Conversation"
+            current_conversation_id = create_conversation(title, None)
+            
             return jsonify({
-                'status': 'error',
-                'message': f'Simulation file {simulation_file} not found'
-            }), 404
-        else:
-            # Load the selected simulation (file-based)
-            logger.info(f"Loading simulation data from: {simulation_file}")
-            patient_data = initialize_patient_data(simulation_file)
-            
-            # Explicitly log the loaded data for debugging
-            logger.info(f"Loaded patient_data: {patient_data}")
-            
-            # Ensure voice_id is present
-            if patient_data:
-                current_voice = patient_data.get('voice_id')
-                logger.info(f"Loaded voice_id from simulation: {current_voice}")
-                if 'voice_id' not in patient_data:
-                    logger.warning(f"No voice_id found in simulation file: {simulation_file}")
-                    patient_data['voice_id'] = 'Fritz-PlayAI'
-                    logger.info(f"Set default voice_id: {patient_data['voice_id']}")
-            else:
-                logger.warning("No patient data loaded from simulation file")
-                patient_data = {}
+                'status': 'success',
+                'message': 'Simulation cleared',
+                'current_simulation': None,
+                'conversation_id': current_conversation_id
+            })
         
-        # Clear conversation history when changing simulations
-        conversation_history = []
-        
-        # Create a new conversation in the database with a generic title
-        # The title will be updated with actual content after the first message
-        title = "New Conversation"
-        if simulation_file:
-            title = f"Conversation with {os.path.basename(simulation_file)}"
-        
-        # Store the patient_data in the database along with the conversation
-        # This will require modifying your database.py file to store simulation data
-        current_conversation_id = create_conversation(title, simulation_file)
-        
-        # Store the actual patient data in the database (add this function to database.py)
-        if patient_data:
-            # This should be implemented in database.py
-            logger.info("Storing patient data in database for conversation")
-            store_conversation_data(current_conversation_id, 'patient_data', patient_data)
-        
+        # If we get here, it's an unsupported simulation type
         return jsonify({
-            'status': 'success',
-            'message': f'Selected simulation: {simulation_file}',
-            'current_simulation': current_patient_simulation,
-            'conversation_id': current_conversation_id
-        })
+            'status': 'error',
+            'message': 'File-based simulations are no longer supported. Please use Custom Patient or AI-generated cases.'
+        }), 400
         
     except Exception as e:
         logger.error(f"Error selecting simulation: {str(e)}", exc_info=True)
@@ -973,7 +922,7 @@ def delete_conversation_by_id(conversation_id):
 def load_conversation_by_id(conversation_id):
     """
     Load a conversation into the active session.
-    ✅ PHASE 4.1: Enhanced loading for AI-generated patient conversations.
+    Enhanced loading for custom and AI-generated patient conversations only.
     """
     global conversation_history, current_conversation_id, current_patient_simulation, patient_data
     
@@ -989,124 +938,51 @@ def load_conversation_by_id(conversation_id):
         current_conversation_id = conversation_id
         logger.info(f"Loading conversation {conversation_id}: {conversation.get('title', 'Untitled')}")
         
-        # ✅ PHASE 4.1: Enhanced patient data loading with type detection
+        # Enhanced patient data loading - only custom and AI-generated patients
         simulation_file = conversation.get('simulation_file')
         
-        # ===== ENHANCED CONVERSATION LOADING LOGGING =====
-        logger.info("📁 LOADING CONVERSATION DATA")
-        logger.info(f"   Conversation ID: {conversation_id}")
-        logger.info(f"   Title: {conversation.get('title', 'Untitled')}")
-        logger.info(f"   Simulation File: {simulation_file or 'None'}")
-        logger.info(f"   Created: {conversation.get('created_at', 'Unknown')}")
-        logger.info(f"   Message Count: {len(conversation.get('messages', []))}")
-        
-        # Get all conversation data for comprehensive logging
-        all_conversation_data = get_all_conversation_data(conversation_id)
-        logger.info(f"   Stored Data Keys: {list(all_conversation_data.keys()) if all_conversation_data else 'None'}")
-        
-        # Log conversation history overview
-        messages = conversation.get('messages', [])
-        if messages:
-            logger.info("📜 CONVERSATION HISTORY OVERVIEW:")
-            logger.info(f"   Total Messages: {len(messages)}")
-            
-            # Log first few messages for context
-            for i, msg in enumerate(messages[:3]):  # First 3 messages
-                role = msg.get('role', 'unknown')
-                content = msg.get('content', '')
-                preview = content[:50] + "..." if len(content) > 50 else content
-                logger.info(f"   {i+1}. {role.upper()}: {preview}")
-            
-            if len(messages) > 6:
-                logger.info(f"   ... [{len(messages)-6} messages omitted] ...")
-                
-                # Show last few messages if we have many
-                for i, msg in enumerate(messages[-3:], len(messages)-2):
-                    role = msg.get('role', 'unknown')
-                    content = msg.get('content', '')
-                    preview = content[:50] + "..." if len(content) > 50 else content
-                    logger.info(f"   {i}. {role.upper()}: {preview}")
-        
-        retrieved_patient_data = get_conversation_data(conversation_id, 'patient_data')
-        
-        if retrieved_patient_data:
-            # Use stored patient data (AI-generated or custom)
-            patient_data = retrieved_patient_data
-            
-            logger.info(f"✅ PATIENT SIMULATION DATA LOADED")
-            patient_type = retrieved_patient_data.get('type', 'unknown')
-            logger.info(f"   Patient Type: {patient_type}")
-            
-            if patient_type == 'ai_generated':
-                generation_metadata = retrieved_patient_data.get('generation_metadata', {})
-                patient_details = retrieved_patient_data.get('patient_details', {})
-                
-                logger.info(f"   🏥 AI Case Information:")
-                logger.info(f"      Specialty: {generation_metadata.get('specialty', 'Unknown')}")
-                logger.info(f"      Diagnosis: {patient_details.get('illness', 'Unknown')}")
-                logger.info(f"      Patient: {patient_details.get('gender', 'Unknown')}, Age {patient_details.get('age', 'Unknown')}")
-                logger.info(f"      Occupation: {patient_details.get('occupation', 'Unknown')}")
-                logger.info(f"      Symptoms: {generation_metadata.get('input_symptoms', [])}")
-                logger.info(f"      Severity: {generation_metadata.get('severity', 'Unknown')}")
-                logger.info(f"      Difficulty: {generation_metadata.get('difficulty_level', 'Unknown')}")
-                
-                learning_objectives = generation_metadata.get('learning_objectives', [])
-                if learning_objectives:
-                    logger.info(f"      Learning Objectives: {len(learning_objectives)} defined")
-                    for i, obj in enumerate(learning_objectives[:3], 1):
-                        logger.info(f"         {i}. {obj}")
-                
-                current_patient_simulation = 'AI Generated Case'
-                
-            elif patient_type == 'custom':
-                patient_details = retrieved_patient_data.get('patient_details', {})
-                logger.info(f"   👤 Custom Patient Information:")
-                logger.info(f"      Age: {patient_details.get('age', 'Unknown')}")
-                logger.info(f"      Gender: {patient_details.get('gender', 'Unknown')}")
-                logger.info(f"      Occupation: {patient_details.get('occupation', 'Unknown')}")
-                logger.info(f"      Medical History: {patient_details.get('medical_history', 'None')}")
-                logger.info(f"      Condition: {patient_details.get('illness', 'Unknown')}")
-                current_patient_simulation = 'Custom Patient'
-                
-            else:
-                logger.info(f"   📄 File-based or Other Patient Type")
-                current_patient_simulation = simulation_file or 'Unknown'
-            
-            # ✅ PHASE 4.1: Validate retrieved data structure
-            is_valid, validation_errors = validate_patient_data_structure(retrieved_patient_data)
-            if not is_valid:
-                logger.warning(f"⚠️ PATIENT DATA VALIDATION ISSUES:")
-                for error in validation_errors:
-                    logger.warning(f"      - {error}")
-            else:
-                logger.info(f"✅ Patient data structure validation passed")
-                
-        elif simulation_file and os.path.exists(simulation_file):
-            # Load from file-based simulation
-            logger.info(f"📂 LOADING FILE-BASED SIMULATION")
-            logger.info(f"   File Path: {simulation_file}")
-            patient_data = initialize_patient_data(simulation_file)
-            current_patient_simulation = simulation_file
-            
-            if patient_data:
-                logger.info(f"✅ File-based patient data loaded successfully")
-                patient_details = patient_data.get('patient_details', {})
-                logger.info(f"   Patient Age: {patient_details.get('age', 'Unknown')}")
-                logger.info(f"   Patient Gender: {patient_details.get('gender', 'Unknown')}")
-                logger.info(f"   Patient Condition: {patient_details.get('illness', 'Unknown')}")
-            else:
-                logger.warning(f"❌ Failed to load file-based patient data")
-            
-        else:
-            # No patient data available
-            logger.warning(f"❌ NO PATIENT DATA AVAILABLE")
-            logger.info(f"   No stored patient data found")
-            logger.info(f"   No valid simulation file: {simulation_file}")
+        if simulation_file and simulation_file != '__custom__' and simulation_file != 'AI Generated Case':
+            # Legacy file-based simulation - log warning and clear
+            logger.warning(f"Legacy file-based simulation found: {simulation_file}")
+            logger.info("File-based simulations are no longer supported")
             patient_data = None
             current_patient_simulation = None
+        else:
+            # Load stored patient data (custom or AI-generated)
+            retrieved_patient_data = get_conversation_data(conversation_id, 'patient_data')
+            
+            if retrieved_patient_data:
+                patient_data = retrieved_patient_data
+                patient_type = patient_data.get('type', 'unknown')
+                
+                if patient_type == 'ai_generated':
+                    generation_metadata = retrieved_patient_data.get('generation_metadata', {})
+                    patient_details = retrieved_patient_data.get('patient_details', {})
+                    
+                    logger.info(f"🏥 AI Case Information:")
+                    logger.info(f"      Specialty: {generation_metadata.get('specialty', 'Unknown')}")
+                    logger.info(f"      Diagnosis: {patient_details.get('illness', 'Unknown')}")
+                    
+                    current_patient_simulation = 'AI Generated Case'
+                    
+                elif patient_type == 'custom':
+                    patient_details = retrieved_patient_data.get('patient_details', {})
+                    logger.info(f"👤 Custom Patient Information:")
+                    logger.info(f"      Age: {patient_details.get('age', 'Unknown')}")
+                    logger.info(f"      Gender: {patient_details.get('gender', 'Unknown')}")
+                    
+                    current_patient_simulation = 'Custom Patient'
+                    
+                else:
+                    logger.warning(f"Unknown patient type: {patient_type}")
+                    current_patient_simulation = 'Unknown Patient Type'
+            else:
+                patient_data = None
+                current_patient_simulation = None
         
-        # ✅ PHASE 4.1: Get additional conversation metadata
+        # Get additional conversation metadata
         voice_id = get_conversation_data(conversation_id, 'voice_id')
+        all_conversation_data = get_all_conversation_data(conversation_id)
         
         # Convert database messages to conversation history format
         conversation_history = [
@@ -1114,7 +990,7 @@ def load_conversation_by_id(conversation_id):
             for msg in conversation.get("messages", [])
         ]
         
-        # ✅ PHASE 4.1: Build enhanced response with detailed metadata
+        # Build enhanced response with detailed metadata
         response_data = {
             'status': 'success',
             'message': f'Conversation {conversation_id} loaded successfully',
@@ -1701,13 +1577,7 @@ if __name__ == '__main__':
     # Parse command line arguments only when running directly with Python
     parser = argparse.ArgumentParser(description='Run the voice conversation app')
     parser.add_argument('--port', type=int, default=5000, help='Port to run the app on')
-    parser.add_argument('--patient-file', type=str, help='Path to patient simulation JSON file')
     args = parser.parse_args()
-    
-    # Load patient simulation data if provided
-    if args.patient_file:
-        patient_data = initialize_patient_data(args.patient_file)
-        logger.info('Loaded patient data from %s', args.patient_file)
     
     # Create utils directory if it doesn't exist
     os.makedirs('utils', exist_ok=True)

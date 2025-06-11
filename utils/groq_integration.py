@@ -57,8 +57,8 @@ def get_groq_response(input_text, model="llama-3.3-70b-versatile", history=None,
          – Do not assume what the doctor might want next.
 
         Do not provide context unless asked.
-         – If the doctor says “What is your name?”, respond with just your name.
-         – If the doctor says “Tell me your symptoms,” only list the symptoms — no history or emotions unless prompted.
+         – If the doctor says "What is your name?", respond with just your name.
+         – If the doctor says "Tell me your symptoms," only list the symptoms — no history or emotions unless prompted.
 
         Do not break character. Do not act like an assistant or model. You are the patient.
 
@@ -72,10 +72,10 @@ def get_groq_response(input_text, model="llama-3.3-70b-versatile", history=None,
         Patient: Sarah.
 
         Doctor: What do you do for work?
-        Patient: I’m a nurse.
+        Patient: I'm a nurse.
 
         Doctor: Why are you here today?
-        Patient: My stomach’s been hurting since last night.
+        Patient: My stomach's been hurting since last night.
 
         """
         
@@ -116,31 +116,12 @@ if __name__ == "__main__":
     parser.add_argument("--model", type=str, default="llama3-8b-8192", help="Groq model to use")
     parser.add_argument("--history-file", type=str, help="JSON file containing conversation history")
     parser.add_argument("--system-prompt", type=str, help="Custom system prompt")
-    parser.add_argument("--patient-file", type=str, help="Path to patient simulation JSON file")
     
     args = parser.parse_args()
     
-    # Load patient simulation file if provided
-    if args.patient_file:
-        try:
-            with open(args.patient_file, 'r') as f:
-                patient_data = json.load(f)
-                # Use the prompt template from the file
-                system_prompt = patient_data.get('prompt_template')
-                # Populate template with patient details if available
-                if system_prompt and 'patient_details' in patient_data:
-                    system_prompt = system_prompt.format(**patient_data['patient_details'])
-                # Use the default doctor question if no input was provided initially
-                initial_question = None
-                if 'doctor_question' in patient_data:
-                    initial_question = patient_data['doctor_question']
-                print(f"Loaded patient simulation: {args.patient_file}")
-        except Exception as e:
-            print(f"Error loading patient file: {str(e)}")
-            sys.exit(1)
-    else:
-        system_prompt = args.system_prompt
-        initial_question = None
+    # Use the system prompt from arguments
+    system_prompt = args.system_prompt
+    initial_question = None
     
     # Load history if provided
     conversation_history = []
@@ -152,7 +133,7 @@ if __name__ == "__main__":
             print(f"Error loading history file: {str(e)}")
             sys.exit(1)
     
-    print("Starting conversation with virtual patient. Type 'exit' to end the conversation.")
+    print("Starting conversation. Type 'exit' to end the conversation.")
     print("Type 'save' to save the conversation history to a file.")
     
     # Start conversation loop
@@ -198,7 +179,7 @@ if __name__ == "__main__":
         conversation_history.append({"role": "assistant", "content": response})
         
         # Print response
-        print("\nPatient:", response)
+        print("\nResponse:", response)
         
         # If input was from stdin, break after one response
         if 'break_after' in locals() and break_after:
