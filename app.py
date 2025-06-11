@@ -409,6 +409,10 @@ def generate_patient_case_route():
             current_conversation_id = create_conversation(case_title, current_patient_simulation)
             conversation_history = []
             
+            # ✅ FIX: Store the patient data in the database
+            store_conversation_data(current_conversation_id, 'patient_data', patient_data)
+            logger.info("💾 Patient data stored in database")
+            
             logger.info("💾 CONVERSATION CREATED & ATTACHED")
             logger.info(f"   Conversation ID: {current_conversation_id}")
             logger.info(f"   Conversation Title: {case_title}")
