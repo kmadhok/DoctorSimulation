@@ -380,6 +380,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                 // Clear patient details panel
                 patientDetailsPanel.innerHTML = '';
                 
+                // Reset diagnosis panel for new conversation
+                resetDiagnosisPanel();
+                
                 // Refresh the conversation list
                 await loadConversationHistory();
                 
@@ -597,6 +600,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                 // Update UI
                 updateStatus('Ready');
                 
+                // Reset diagnosis panel for loaded conversation
+                resetDiagnosisPanel();
+                
                 // Update active conversation in sidebar
                 const items = conversationListElement.querySelectorAll('.conversation-item');
                 items.forEach(item => item.classList.remove('active'));
@@ -712,6 +718,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                 
                 // Refresh conversation list
                 await loadConversationHistory();
+                
+                // Reset diagnosis panel for new simulation
+                resetDiagnosisPanel();
             } else {
                 throw new Error(data.message || 'Failed to select simulation');
             }
@@ -1098,6 +1107,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                 
                 // Clear conversation display for new conversation
                 conversationElement.innerHTML = '';
+                
+                // Reset diagnosis panel for new AI patient case
+                resetDiagnosisPanel();
                 
                 console.log('AI patient case generated successfully with conversation ID:', currentConversationId);
                 return true;
@@ -2175,6 +2187,24 @@ document.addEventListener('DOMContentLoaded', async () => {
         diagnosisAttemptCount = 0;
         currentPatientDiagnosis = null;
         clearDiagnosis();
+    }
+
+    function resetDiagnosisPanel() {
+        // Reset all diagnosis panel state
+        diagnosisAttemptCount = 0;
+        currentPatientDiagnosis = null;
+        
+        // Clear the diagnosis input and feedback
+        clearDiagnosis();
+        
+        // Update patient details for the current conversation
+        if (currentConversationId) {
+            updatePatientDetailsInDiagnosis();
+        }
+        
+        // Note: We don't auto-hide the panel since user might want to keep it open
+        
+        console.log('Diagnosis panel state reset for new conversation');
     }
 
     function disableDiagnosisInput() {
