@@ -823,26 +823,44 @@ document.addEventListener('DOMContentLoaded', async () => {
             return;
         }
         
-        const detailsList = document.createElement('ul');
+        // Create main container with modern card design
+        const detailsCard = document.createElement('div');
+        detailsCard.className = 'patient-details-card';
         
-        // Display each field except 'illness'
+        // Create demographics section
+        const demographicsSection = document.createElement('div');
+        demographicsSection.className = 'details-section demographics';
+        demographicsSection.innerHTML = '<h4><span class="section-icon">👤</span>Demographics</h4>';
+        
+        const demographicsList = document.createElement('div');
+        demographicsList.className = 'details-list';
+        
+        // Display patient demographic fields
         const fieldsToDisplay = {
-            'age': 'Age',
-            'gender': 'Gender',
-            'occupation': 'Occupation',
-            'medical_history': 'Medical History',
-            'recent_exposure': 'Recent Exposure'
+            'age': { label: 'Age', icon: '📅' },
+            'gender': { label: 'Gender', icon: '⚧' },
+            'occupation': { label: 'Occupation', icon: '💼' },
+            'medical_history': { label: 'Medical History', icon: '📋' }
         };
         
-        for (const [key, label] of Object.entries(fieldsToDisplay)) {
+        for (const [key, config] of Object.entries(fieldsToDisplay)) {
             if (details[key]) {
-                const item = document.createElement('li');
-                item.innerHTML = `<strong>${label}:</strong> ${details[key]}`;
-                detailsList.appendChild(item);
+                const item = document.createElement('div');
+                item.className = 'detail-item';
+                item.innerHTML = `
+                    <span class="detail-icon">${config.icon}</span>
+                    <span class="detail-label">${config.label}:</span>
+                    <span class="detail-value">${details[key]}</span>
+                `;
+                demographicsList.appendChild(item);
             }
         }
         
-        patientDetailsPanel.appendChild(detailsList);
+        demographicsSection.appendChild(demographicsList);
+        detailsCard.appendChild(demographicsSection);
+        
+        // Store reference for AI case info to be added later
+        patientDetailsPanel.appendChild(detailsCard);
     }
     
     // ========== CUSTOM PATIENT FORM FUNCTIONS ==========
@@ -2921,41 +2939,48 @@ document.addEventListener('DOMContentLoaded', async () => {
             return;
         }
         
-        // Create AI case info section
-        const aiCaseSection = document.createElement('div');
-        aiCaseSection.className = 'ai-case-info';
-        aiCaseSection.innerHTML = '<h4>AI Case Information</h4>';
-        
-        const caseInfoList = document.createElement('ul');
-        caseInfoList.className = 'case-info-list';
-        
-        // Display relevant case metadata (excluding sensitive information)
-        const caseInfoToDisplay = {
-            'specialty': 'Medical Specialty',
-            'severity': 'Symptom Severity',
-            'difficulty_level': 'Case Difficulty'
-        };
-        
-        for (const [key, label] of Object.entries(caseInfoToDisplay)) {
-            if (metadata[key]) {
-                const item = document.createElement('li');
-                let displayValue = metadata[key];
-                
-                // Format certain values for better display
-                if (key === 'difficulty_level') {
-                    displayValue = displayValue.charAt(0).toUpperCase() + displayValue.slice(1);
-                } else if (key === 'severity') {
-                    displayValue = displayValue.charAt(0).toUpperCase() + displayValue.slice(1);
-                }
-                
-                item.innerHTML = `<strong>${label}:</strong> ${displayValue}`;
-                caseInfoList.appendChild(item);
-            }
+        // Find the existing patient details card
+        const detailsCard = patientDetailsPanel.querySelector('.patient-details-card');
+        if (!detailsCard) {
+            console.warn('No patient details card found to add AI case info');
+            return;
         }
         
-        // Display input symptoms in a readable format
+        // Create AI case section with same styling as demographics
+        const aiCaseSection = document.createElement('div');
+        aiCaseSection.className = 'details-section ai-case';
+        aiCaseSection.innerHTML = '<h4><span class="section-icon">🤖</span>Case Information</h4>';
+        
+        const aiCaseList = document.createElement('div');
+        aiCaseList.className = 'details-list';
+        
+        // Add specialty
+        if (metadata.specialty) {
+            const specialtyItem = document.createElement('div');
+            specialtyItem.className = 'detail-item';
+            specialtyItem.innerHTML = `
+                <span class="detail-icon">🏥</span>
+                <span class="detail-label">Specialty:</span>
+                <span class="detail-value">${metadata.specialty}</span>
+            `;
+            aiCaseList.appendChild(specialtyItem);
+        }
+        
+        // Add severity
+        if (metadata.severity) {
+            const severityIcon = getSeverityIcon(metadata.severity);
+            const severityItem = document.createElement('div');
+            severityItem.className = 'detail-item';
+            severityItem.innerHTML = `
+                <span class="detail-icon">${severityIcon}</span>
+                <span class="detail-label">Severity:</span>
+                <span class="detail-value">${metadata.severity}</span>
+            `;
+            aiCaseList.appendChild(severityItem);
+        }
+        
+        // Add symptoms
         if (metadata.input_symptoms && metadata.input_symptoms.length > 0) {
-            const symptomsItem = document.createElement('li');
             const symptomMapping = {
                 'chest_pain': 'Chest pain',
                 'shortness_breath': 'Shortness of breath',
@@ -3003,35 +3028,32 @@ document.addEventListener('DOMContentLoaded', async () => {
             };
             
             const formattedSymptoms = metadata.input_symptoms.map(symptom => 
-                symptomMapping[symptom] || symptom.replace('_', ' ').charAt(0).toUpperCase() + symptom.replace('_', ' ').slice(1)
+                symptomMapping[symptom] || symptom.replace('_', ' ')
             ).join(', ');
             
-            symptomsItem.innerHTML = `<strong>Presenting Symptoms:</strong> ${formattedSymptoms}`;
-            caseInfoList.appendChild(symptomsItem);
+            const symptomsItem = document.createElement('div');
+            symptomsItem.className = 'detail-item';
+            symptomsItem.innerHTML = `
+                <span class="detail-icon">🩺</span>
+                <span class="detail-label">Symptoms:</span>
+                <span class="detail-value">${formattedSymptoms}</span>
+            `;
+            aiCaseList.appendChild(symptomsItem);
         }
         
-        // Display learning objectives if available
-        if (metadata.learning_objectives && metadata.learning_objectives.length > 0) {
-            const objectivesItem = document.createElement('li');
-            objectivesItem.innerHTML = `<strong>Learning Objectives:</strong>`;
-            const objectivesList = document.createElement('ul');
-            objectivesList.className = 'learning-objectives';
-            
-            metadata.learning_objectives.forEach(objective => {
-                const objItem = document.createElement('li');
-                objItem.textContent = objective;
-                objectivesList.appendChild(objItem);
-            });
-            
-            objectivesItem.appendChild(objectivesList);
-            caseInfoList.appendChild(objectivesItem);
-        }
+        aiCaseSection.appendChild(aiCaseList);
+        detailsCard.appendChild(aiCaseSection);
         
-        aiCaseSection.appendChild(caseInfoList);
-        patientDetailsPanel.appendChild(aiCaseSection);
-        
-        console.log('AI case information displayed successfully');
+        console.log('AI case information added to patient details successfully');
     }
     
-    // ========== CUSTOM PATIENT FORM FUNCTIONS ==========
+    // Helper functions for icons
+    function getSeverityIcon(severity) {
+        const icons = {
+            'mild': '🟢',
+            'moderate': '🟡', 
+            'severe': '🔴'
+        };
+        return icons[severity.toLowerCase()] || '⚪';
+    }
 }); 
