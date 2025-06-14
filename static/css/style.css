@@ -1876,4 +1876,126 @@ textarea.form-control {
         margin-top: 1rem;
         padding: 1rem;
     }
+}
+
+/* AI Case Information Styles */
+.ai-case-info {
+    margin-top: 1.5rem;
+    padding: 1rem;
+    background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
+    border: 1px solid #bbdefb;
+    border-radius: 8px;
+    border-left: 4px solid #2196f3;
+}
+
+.ai-case-info h4 {
+    margin: 0 0 1rem 0;
+    color: #1976d2;
+    font-size: 1.1rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.ai-case-info h4::before {
+    content: "🤖";
+    font-size: 1.2rem;
+}
+
+.case-info-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.case-info-list > li {
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #e1f5fe;
+    color: #424242;
+    font-size: 0.9rem;
+}
+
+.case-info-list > li:last-child {
+    border-bottom: none;
+}
+
+.case-info-list > li strong {
+    color: #1976d2;
+    font-weight: 600;
+    margin-right: 0.5rem;
+}
+
+.learning-objectives {
+    margin: 0.5rem 0 0 1rem;
+    padding: 0;
+    list-style: disc;
+}
+
+.learning-objectives li {
+    margin-bottom: 0.25rem;
+    color: #616161;
+    font-size: 0.85rem;
+    line-height: 1.4;
+}
+
+/* Enhanced patient details when AI case info is present */
+.patient-details-panel:has(.ai-case-info) {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-color: #bbdefb;
+}
+
+.patient-details-panel:has(.ai-case-info) h3 {
+    color: #1976d2;
+    border-bottom: 2px solid #bbdefb;
+    padding-bottom: 0.5rem;
+}
+
+/* Responsive adjustments for AI case info */
+@media (max-width: 768px) {
+    .ai-case-info {
+        margin-top: 1rem;
+        padding: 0.75rem;
+    }
+    
+    .ai-case-info h4 {
+        font-size: 1rem;
+    }
+    
+    .case-info-list > li {
+        font-size: 0.85rem;
+        padding: 0.4rem 0;
+    }
+    
+    .learning-objectives li {
+        font-size: 0.8rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .ai-case-info {
+        margin-top: 0.75rem;
+        padding: 0.5rem;
+        border-left-width: 3px;
+    }
+    
+    .ai-case-info h4 {
+        font-size: 0.95rem;
+        margin-bottom: 0.75rem;
+    }
+    
+    .case-info-list > li {
+        font-size: 0.8rem;
+        padding: 0.3rem 0;
+        line-height: 1.4;
+    }
+    
+    .learning-objectives {
+        margin-left: 0.75rem;
+    }
+    
+    .learning-objectives li {
+        font-size: 0.75rem;
+        margin-bottom: 0.2rem;
+    }
 } 

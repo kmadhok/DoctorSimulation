@@ -49,6 +49,7 @@ from utils.groq_tts_speech import generate_speech_audio
 from utils.patient_simulation import get_patient_system_prompt
 from utils.database import init_db, create_conversation, add_message, get_conversations, get_conversation, delete_conversation, update_conversation_title, store_conversation_data, get_conversation_data, validate_patient_data_structure, get_all_conversation_data
 from utils.ai_case_generator import generate_patient_case, get_all_specialties, get_available_symptoms_for_specialty, validate_symptom_specialty_combination
+from conversation_assessment import call_groq_raw  # NEW – reuse grading helper
 
 # Add template folder check before app creation
 template_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates')
@@ -629,8 +630,8 @@ def process_audio():
         logger.info(f"Form data keys: {list(request.form.keys())}")
         
         # Get voice ID from form data early in the process
-        voice_id = request.form.get('voice_id')
-        logger.info(f"Received voice_id from form: {voice_id}")
+        client_voice_id = request.form.get('voice_id')
+        logger.info(f"Received voice_id from form: {client_voice_id}")
         
         # Check if a conversation is active
         if not current_conversation_id:
@@ -730,10 +731,14 @@ def process_audio():
         
         logger.info(f"Using patient_data: {patient_data}")
 
-        # If voice_id was received from form data, store it in the database right away
-        if voice_id and current_conversation_id:
-            logger.info(f"Storing voice_id from form data: {voice_id}")
-            store_conversation_data(current_conversation_id, 'voice_id', voice_id)
+        # Get voice ID sent by the client (if any)
+        client_voice_id = request.form.get('voice_id')
+        voice_id = client_voice_id  # may be None / ''
+
+        # We used to overwrite unconditionally; now we only fill in if still empty
+        if not voice_id:
+            voice_id = patient_data.get('voice_id', 'Fritz-PlayAI')
+        logger.info(f"   🔊 Voice ID (resolved): {voice_id}")
         
         # Check if audio file was sent
         if 'audio' not in request.files:
@@ -845,6 +850,11 @@ def process_audio():
         else:
             base64_audio = ""
             logger.error("Speech audio generation failed, returning empty audio")
+        
+        if client_voice_id and current_conversation_id:
+            logger.info(f"Storing new voice_id from client: {client_voice_id}")
+            store_conversation_data(current_conversation_id,
+                                    'voice_id', client_voice_id)
         
         return jsonify({
             'status': 'success',
@@ -1183,6 +1193,10 @@ def get_current_patient_details():
             response_data['migration_info'] = patient_data_to_use['migration_metadata']
         
         logger.debug(f"Successfully retrieved patient details for type: {patient_data_to_use.get('type', 'unknown')}")
+        # Extra verbose logging so frontend–backend data flow can be inspected easily
+        logger.debug(f"Patient details payload → {details}")
+        if 'ai_case_info' in response_data:
+            logger.debug(f"AI case info payload    → {response_data['ai_case_info']}")
         return jsonify(response_data)
         
     except Exception as e:
@@ -1571,6 +1585,62 @@ def generate_diagnosis_feedback(
     except Exception as e:
         logger.error(f"Error generating feedback: {str(e)}")
         return "Unable to generate feedback. Please try again."
+
+# === NEW ROUTE: Grade conversation =========================================
+@app.route('/api/grade-conversation', methods=['POST'])
+def grade_conversation():
+    """Run LLM-based grading for the supplied conversation_id."""
+    try:
+        data = request.get_json() or {}
+        conversation_id = data.get('conversation_id')
+        if not conversation_id:
+            return jsonify({'status': 'error', 'message': 'No conversation_id provided'}), 400
+
+        conv = get_conversation(conversation_id)
+        if not conv:
+            return jsonify({'status': 'error', 'message': 'Conversation not found'}), 404
+
+        # Retrieve patient data (may be None)
+        patient_data = get_conversation_data(conversation_id, 'patient_data') or {}
+
+        # Build list of tuples (role, content, timestamp)
+        messages = [
+            (m.get('role'), m.get('content'), m.get('timestamp', ''))
+            for m in conv.get('messages', [])
+        ]
+
+        # If no messages, short-circuit
+        if not messages:
+            return jsonify({'status': 'error', 'message': 'Conversation has no messages'}), 400
+
+        # Prompt crafting – mirrors conversation_assessment.main()
+        analyst_prompt = (
+            "analyze the conversation between the doctor and the patient. "
+            "Grade the doctor on how empathetic they are. Give a score out of 10. "
+            "Grade the doctor on how well they asked questions. Give a score out of 10"
+        )
+
+        transcript = "\n".join(f"{r.capitalize()}: {c}" for r, c, _ in messages)
+        redacted_details = {
+            k: v for k, v in patient_data.get("patient_details", {}).items() if k != "illness"
+        } if patient_data else {}
+
+        user_prompt = (
+            f"{analyst_prompt}\n\n"
+            f"Patient context:\n{json.dumps(redacted_details, indent=2)}\n\n"
+            f"Conversation transcript:\n{transcript}"
+        )
+        system_prompt = (
+            "You are a medical conversation analyst. "
+            "Answer the user's request based only on the transcript provided."
+        )
+
+        analysis_text = call_groq_raw(system_prompt, user_prompt)
+        return jsonify({'status': 'success', 'analysis': analysis_text})
+
+    except Exception as e:
+        logger.error(f"Error grading conversation: {e}", exc_info=True)
+        return jsonify({'status': 'error', 'message': str(e)}), 500
 
 # Keep the if __name__ == '__main__' block for running the app
 if __name__ == '__main__':

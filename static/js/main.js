@@ -159,6 +159,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     const formValidationSummary = document.getElementById('formValidationSummary');
     const validationErrorsList = document.getElementById('validationErrorsList');
     
+    // NEW: Grade Conversation Button
+    const gradeConversationBtn = document.getElementById('gradeConversationBtn'); // NEW
+    
     if (autoListenBtn) {
         autoListenBtn.addEventListener('click', async (event) => {
             event.preventDefault();
@@ -799,6 +802,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const data = await response.json();
             
             if (data.status === 'success') {
+                console.log('loadPatientDetails: full API response →', data);
                 displayPatientDetails(data.patient_details);
             } else {
                 throw new Error(data.message || 'Failed to load patient details');
@@ -811,6 +815,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     // New function to display patient details
     function displayPatientDetails(details) {
+        console.log('displayPatientDetails: rendering details →', details);
         patientDetailsPanel.innerHTML = '<h3>Patient Details</h3>';
         
         if (!details || Object.keys(details).length === 0) {
@@ -1132,8 +1137,18 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
                 
                 // Display patient details (excluding diagnosis for UI)
-                if (data.patient_details) {
+                if (data.patient_data && data.patient_data.patient_details) {
+                    displayPatientDetails(data.patient_data.patient_details);
+                    
+                    // Add AI case information if available
+                    if (data.patient_data.generation_metadata) {
+                        displayAICaseInfo(data.patient_data.generation_metadata);
+                    }
+                } else if (data.patient_details) {
+                    // Fallback for legacy response format
                     displayPatientDetails(data.patient_details);
+                } else {
+                    console.warn('No patient details found in response');
                 }
                 
                 // Clear conversation display for new conversation
@@ -2801,9 +2816,16 @@ document.addEventListener('DOMContentLoaded', async () => {
                     });
                 }
                 
-                // Display patient details
-                if (result.patient_details) {
-                    displayPatientDetails(result.patient_details);
+                // Display patient details with enhanced AI case info
+                if (result.patient_data && result.patient_data.patient_details) {
+                    displayPatientDetails(result.patient_data.patient_details);
+                    
+                    // Add AI case information if available
+                    if (result.patient_data.generation_metadata) {
+                        displayAICaseInfo(result.patient_data.generation_metadata);
+                    }
+                } else {
+                    console.warn('No patient details found in response');
                 }
                 
                 // Clear conversation display for new conversation
@@ -2858,4 +2880,158 @@ document.addEventListener('DOMContentLoaded', async () => {
         
         console.log('Selected symptoms:', wizardState.selectedSymptoms);
     };
+
+    // Grade Conversation Button Event Listener
+    if (gradeConversationBtn) {
+        gradeConversationBtn.addEventListener('click', async () => {
+            if (!currentConversationId) {
+                alert('No active conversation to grade.');
+                return;
+            }
+            const originalText = gradeConversationBtn.textContent;
+            gradeConversationBtn.disabled = true;
+            gradeConversationBtn.textContent = 'Grading…';
+            try {
+                const res = await fetch('/api/grade-conversation', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ conversation_id: currentConversationId })
+                });
+                const data = await res.json();
+                if (data.status === 'success') {
+                    alert(data.analysis);
+                } else {
+                    alert('Error: ' + (data.message || 'Unable to grade conversation'));
+                }
+            } catch (err) {
+                console.error('Error grading conversation:', err);
+                alert('Network error while grading conversation.');
+            } finally {
+                gradeConversationBtn.disabled = false;
+                gradeConversationBtn.textContent = originalText;
+            }
+        });
+    }
+
+    // New function to display AI case information
+    function displayAICaseInfo(metadata) {
+        console.log('displayAICaseInfo: rendering AI case metadata →', metadata);
+        
+        if (!metadata || Object.keys(metadata).length === 0) {
+            return;
+        }
+        
+        // Create AI case info section
+        const aiCaseSection = document.createElement('div');
+        aiCaseSection.className = 'ai-case-info';
+        aiCaseSection.innerHTML = '<h4>AI Case Information</h4>';
+        
+        const caseInfoList = document.createElement('ul');
+        caseInfoList.className = 'case-info-list';
+        
+        // Display relevant case metadata (excluding sensitive information)
+        const caseInfoToDisplay = {
+            'specialty': 'Medical Specialty',
+            'severity': 'Symptom Severity',
+            'difficulty_level': 'Case Difficulty'
+        };
+        
+        for (const [key, label] of Object.entries(caseInfoToDisplay)) {
+            if (metadata[key]) {
+                const item = document.createElement('li');
+                let displayValue = metadata[key];
+                
+                // Format certain values for better display
+                if (key === 'difficulty_level') {
+                    displayValue = displayValue.charAt(0).toUpperCase() + displayValue.slice(1);
+                } else if (key === 'severity') {
+                    displayValue = displayValue.charAt(0).toUpperCase() + displayValue.slice(1);
+                }
+                
+                item.innerHTML = `<strong>${label}:</strong> ${displayValue}`;
+                caseInfoList.appendChild(item);
+            }
+        }
+        
+        // Display input symptoms in a readable format
+        if (metadata.input_symptoms && metadata.input_symptoms.length > 0) {
+            const symptomsItem = document.createElement('li');
+            const symptomMapping = {
+                'chest_pain': 'Chest pain',
+                'shortness_breath': 'Shortness of breath',
+                'palpitations': 'Palpitations',
+                'dizziness': 'Dizziness',
+                'fatigue': 'Fatigue',
+                'swelling_legs': 'Leg swelling',
+                'irregular_heartbeat': 'Irregular heartbeat',
+                'headache': 'Headache',
+                'seizure': 'Seizure',
+                'memory_loss': 'Memory loss',
+                'confusion': 'Confusion',
+                'weakness': 'Weakness',
+                'numbness': 'Numbness',
+                'speech_difficulty': 'Speech difficulty',
+                'vision_changes': 'Vision changes',
+                'joint_pain': 'Joint pain',
+                'back_pain': 'Back pain',
+                'limited_mobility': 'Limited mobility',
+                'muscle_pain': 'Muscle pain',
+                'bone_pain': 'Bone pain',
+                'stiffness': 'Stiffness',
+                'abdominal_pain': 'Abdominal pain',
+                'nausea': 'Nausea',
+                'vomiting': 'Vomiting',
+                'diarrhea': 'Diarrhea',
+                'constipation': 'Constipation',
+                'bloating': 'Bloating',
+                'loss_appetite': 'Loss of appetite',
+                'cough': 'Cough',
+                'wheezing': 'Wheezing',
+                'chest_tightness': 'Chest tightness',
+                'sputum_production': 'Sputum production',
+                'difficulty_breathing': 'Difficulty breathing',
+                'rash': 'Rash',
+                'itching': 'Itching',
+                'skin_lesion': 'Skin lesion',
+                'dry_skin': 'Dry skin',
+                'skin_discoloration': 'Skin discoloration',
+                'fever': 'Fever',
+                'severe_pain': 'Severe pain',
+                'rapid_heart_rate': 'Rapid heart rate',
+                'low_blood_pressure': 'Low blood pressure',
+                'high_blood_pressure': 'High blood pressure'
+            };
+            
+            const formattedSymptoms = metadata.input_symptoms.map(symptom => 
+                symptomMapping[symptom] || symptom.replace('_', ' ').charAt(0).toUpperCase() + symptom.replace('_', ' ').slice(1)
+            ).join(', ');
+            
+            symptomsItem.innerHTML = `<strong>Presenting Symptoms:</strong> ${formattedSymptoms}`;
+            caseInfoList.appendChild(symptomsItem);
+        }
+        
+        // Display learning objectives if available
+        if (metadata.learning_objectives && metadata.learning_objectives.length > 0) {
+            const objectivesItem = document.createElement('li');
+            objectivesItem.innerHTML = `<strong>Learning Objectives:</strong>`;
+            const objectivesList = document.createElement('ul');
+            objectivesList.className = 'learning-objectives';
+            
+            metadata.learning_objectives.forEach(objective => {
+                const objItem = document.createElement('li');
+                objItem.textContent = objective;
+                objectivesList.appendChild(objItem);
+            });
+            
+            objectivesItem.appendChild(objectivesList);
+            caseInfoList.appendChild(objectivesItem);
+        }
+        
+        aiCaseSection.appendChild(caseInfoList);
+        patientDetailsPanel.appendChild(aiCaseSection);
+        
+        console.log('AI case information displayed successfully');
+    }
+    
+    // ========== CUSTOM PATIENT FORM FUNCTIONS ==========
 }); 
