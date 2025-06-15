@@ -518,9 +518,11 @@
     onerror="vadLogger.error('DEPS', 'Failed to load VAD bundle')">
     </script>
 
-    <!-- ⭐ your application logic (needs `vad` to exist) -->
+    <!-- ⭐ your application logic (needs `vad` to exist) 
+    previous:     src="{{ url_for('static', filename='js/main.js') }}" 
+    -->
     <script
-    src="{{ url_for('static', filename='js/main.js') }}"
+    type="module" src="{{ url_for('static', filename='js/bootstrap.js') }}"
     onload="vadLogger.success('DEPS', 'Main script loaded successfully')"
     onerror="vadLogger.error('DEPS', 'Failed to load main script')">
     </script>
