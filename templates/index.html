@@ -520,12 +520,15 @@
     onerror="vadLogger.error('DEPS', 'Failed to load VAD bundle')">
     </script>
 
-    <!-- ⭐ your application logic (needs `vad` to exist) -->
+    <!-- Legacy main.js (kept during migration) -->
     <script
     src="{{ url_for('static', filename='js/main.js') }}"
     onload="vadLogger.success('DEPS', 'Main script loaded successfully')"
     onerror="vadLogger.error('DEPS', 'Failed to load main script')">
     </script>
+
+    <!-- New modular bootstrap entry (PHASE-01) -->
+    <script type="module" src="{{ url_for('static', filename='js/bootstrap.js') }}"></script>
 
     <!-- Medical Knowledge and Form Management Script -->
     <script>
