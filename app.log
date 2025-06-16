@@ -18517,3 +18517,555 @@ PATIENT DEMOGRAPHICS:
 2025-06-09 09:04:59,323 - __main__ - INFO - Route: /api/diagnose, Endpoint: diagnose_api
 2025-06-09 09:04:59,323 - __main__ - INFO - Route: /api/current-patient-details, Endpoint: get_current_patient_details
 2025-06-09 09:04:59,323 - __main__ - INFO - Route: /api/medical-knowledge, Endpoint: get_medical_knowledge
+2025-06-15 15:37:58,621 - utils.database - INFO - Current database version: 2, Target version: 2
+2025-06-15 15:37:58,622 - utils.database - INFO - Database initialized successfully
+2025-06-15 15:37:58,625 - utils.medical_validation - INFO - Successfully loaded medical knowledge from E:\Doctor Simulation\DoctorSimulation\medical_knowledge.json
+2025-06-15 15:37:58,626 - utils.medical_validation - INFO - MedicalValidationSystem initialized with 7 specialties and 43 symptoms
+2025-06-15 15:37:58,626 - utils.ai_case_generator - INFO - Medical validation system initialized successfully
+2025-06-15 15:37:58,629 - utils.database - INFO - Current database version: 2, Target version: 2
+2025-06-15 15:37:58,629 - utils.database - INFO - Database initialized successfully
+2025-06-15 15:37:58,636 - __main__ - INFO - GROQ_API_KEY found - length: 56
+2025-06-15 15:37:58,636 - __main__ - INFO - Starting Flask app on 0.0.0.0:5000
+2025-06-15 15:37:58,670 - werkzeug - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.1.100:5000
+2025-06-15 15:37:58,671 - werkzeug - INFO - [33mPress CTRL+C to quit[0m
+2025-06-15 15:37:58,674 - werkzeug - INFO -  * Restarting with stat
+2025-06-15 15:38:00,208 - utils.database - INFO - Current database version: 2, Target version: 2
+2025-06-15 15:38:00,209 - utils.database - INFO - Database initialized successfully
+2025-06-15 15:38:00,213 - utils.medical_validation - INFO - Successfully loaded medical knowledge from E:\Doctor Simulation\DoctorSimulation\medical_knowledge.json
+2025-06-15 15:38:00,214 - utils.medical_validation - INFO - MedicalValidationSystem initialized with 7 specialties and 43 symptoms
+2025-06-15 15:38:00,215 - utils.ai_case_generator - INFO - Medical validation system initialized successfully
+2025-06-15 15:38:00,217 - utils.database - INFO - Current database version: 2, Target version: 2
+2025-06-15 15:38:00,218 - utils.database - INFO - Database initialized successfully
+2025-06-15 15:38:00,226 - __main__ - INFO - GROQ_API_KEY found - length: 56
+2025-06-15 15:38:00,227 - __main__ - INFO - Starting Flask app on 0.0.0.0:5000
+2025-06-15 15:38:00,251 - werkzeug - WARNING -  * Debugger is active!
+2025-06-15 15:38:00,260 - werkzeug - INFO -  * Debugger PIN: 537-489-708
+2025-06-15 15:38:03,042 - __main__ - DEBUG - Request: GET /
+2025-06-15 15:38:03,043 - __main__ - INFO - Serving index page
+2025-06-15 15:38:03,055 - werkzeug - INFO - 127.0.0.1 - - [15/Jun/2025 15:38:03] "GET / HTTP/1.1" 200 -
+2025-06-15 15:38:03,073 - __main__ - DEBUG - Request: GET /.well-known/appspecific/com.chrome.devtools.json
+2025-06-15 15:38:03,075 - __main__ - WARNING - 404 error: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again. - Path: /.well-known/appspecific/com.chrome.devtools.json, Method: GET
+2025-06-15 15:38:03,076 - werkzeug - INFO - 127.0.0.1 - - [15/Jun/2025 15:38:03] "[33mGET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1[0m" 404 -
+2025-06-15 15:38:03,077 - __main__ - DEBUG - Request: GET /static/css/style.css
+2025-06-15 15:38:03,079 - __main__ - DEBUG - Request: GET /static/vad-model/ort.min.js
+2025-06-15 15:38:03,082 - __main__ - WARNING - 404 error: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again. - Path: /static/vad-model/ort.min.js, Method: GET
+2025-06-15 15:38:03,084 - __main__ - DEBUG - Request: GET /static/vad-model/bundle.min.js
+2025-06-15 15:38:03,086 - werkzeug - INFO - 127.0.0.1 - - [15/Jun/2025 15:38:03] "[33mGET /static/vad-model/ort.min.js HTTP/1.1[0m" 404 -
+2025-06-15 15:38:03,086 - werkzeug - INFO - 127.0.0.1 - - [15/Jun/2025 15:38:03] "[36mGET /static/css/style.css HTTP/1.1[0m" 304 -
+2025-06-15 15:38:03,087 - __main__ - DEBUG - Request: GET /static/js/main.js
+2025-06-15 15:38:03,088 - __main__ - WARNING - 404 error: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again. - Path: /static/vad-model/bundle.min.js, Method: GET
+2025-06-15 15:38:03,089 - werkzeug - INFO - 127.0.0.1 - - [15/Jun/2025 15:38:03] "[33mGET /static/vad-model/bundle.min.js HTTP/1.1[0m" 404 -
+2025-06-15 15:38:03,092 - werkzeug - INFO - 127.0.0.1 - - [15/Jun/2025 15:38:03] "[36mGET /static/js/main.js HTTP/1.1[0m" 304 -
+2025-06-15 15:38:03,115 - __main__ - DEBUG - Request: GET /api/conversations
+2025-06-15 15:38:03,119 - __main__ - DEBUG - Request: GET /api/medical-knowledge
+2025-06-15 15:38:03,119 - __main__ - INFO - Calling get_all_specialties()...
+2025-06-15 15:38:03,120 - werkzeug - INFO - 127.0.0.1 - - [15/Jun/2025 15:38:03] "GET /api/conversations HTTP/1.1" 200 -
+2025-06-15 15:38:03,120 - __main__ - INFO - get_all_specialties() returned type: <class 'dict'>
+2025-06-15 15:38:03,121 - __main__ - DEBUG - Processing specialty: cardiology
+2025-06-15 15:38:03,121 - __main__ - DEBUG - Processing specialty: neurology
+2025-06-15 15:38:03,121 - __main__ - DEBUG - Processing specialty: orthopedics
+2025-06-15 15:38:03,121 - __main__ - DEBUG - Processing specialty: gastroenterology
+2025-06-15 15:38:03,122 - __main__ - DEBUG - Processing specialty: respiratory
+2025-06-15 15:38:03,122 - __main__ - DEBUG - Processing specialty: dermatology
+2025-06-15 15:38:03,123 - __main__ - DEBUG - Processing specialty: emergency
+2025-06-15 15:38:03,123 - __main__ - INFO - Successfully built medical knowledge response with 7 specialties
+2025-06-15 15:38:03,124 - werkzeug - INFO - 127.0.0.1 - - [15/Jun/2025 15:38:03] "GET /api/medical-knowledge HTTP/1.1" 200 -
+2025-06-15 15:38:03,132 - __main__ - DEBUG - Request: GET /api/medical-knowledge
+2025-06-15 15:38:03,133 - __main__ - INFO - Calling get_all_specialties()...
+2025-06-15 15:38:03,133 - __main__ - INFO - get_all_specialties() returned type: <class 'dict'>
+2025-06-15 15:38:03,134 - __main__ - DEBUG - Processing specialty: cardiology
+2025-06-15 15:38:03,135 - __main__ - DEBUG - Processing specialty: neurology
+2025-06-15 15:38:03,135 - __main__ - DEBUG - Processing specialty: orthopedics
+2025-06-15 15:38:03,135 - __main__ - DEBUG - Processing specialty: gastroenterology
+2025-06-15 15:38:03,135 - __main__ - DEBUG - Processing specialty: respiratory
+2025-06-15 15:38:03,135 - __main__ - DEBUG - Processing specialty: dermatology
+2025-06-15 15:38:03,135 - __main__ - DEBUG - Processing specialty: emergency
+2025-06-15 15:38:03,136 - __main__ - INFO - Successfully built medical knowledge response with 7 specialties
+2025-06-15 15:38:03,137 - werkzeug - INFO - 127.0.0.1 - - [15/Jun/2025 15:38:03] "GET /api/medical-knowledge HTTP/1.1" 200 -
+2025-06-15 15:38:20,083 - __main__ - DEBUG - Request: POST /api/generate-patient-case
+2025-06-15 15:38:20,084 - __main__ - INFO - Generating AI case with specialty: emergency, symptoms: ['difficulty_breathing'], severity: mild
+2025-06-15 15:38:20,085 - __main__ - INFO - Demographics: {'age': 55, 'gender': 'Female', 'occupation': 'Teacher', 'medical_history': ''}
+2025-06-15 15:38:20,085 - __main__ - INFO - Testing get_all_specialties()...
+2025-06-15 15:38:20,085 - __main__ - INFO - get_all_specialties() returned type: <class 'dict'>
+2025-06-15 15:38:20,086 - __main__ - INFO - Testing get_available_symptoms_for_specialty()...
+2025-06-15 15:38:20,086 - __main__ - INFO - get_available_symptoms_for_specialty() returned type: <class 'list'>
+2025-06-15 15:38:20,086 - __main__ - INFO - Calling generate_patient_case()...
+2025-06-15 15:38:20,086 - utils.ai_case_generator - INFO - Generating patient case for specialty: emergency, symptoms: ['difficulty_breathing'], severity: mild
+2025-06-15 15:38:20,087 - utils.medical_validation - DEBUG - Specialty 'emergency' validated successfully
+2025-06-15 15:38:20,087 - utils.medical_validation - DEBUG - Validated 1 symptoms successfully
+2025-06-15 15:38:20,087 - utils.medical_validation - DEBUG - Specialty 'emergency' validated successfully
+2025-06-15 15:38:20,087 - utils.medical_validation - DEBUG - Validated 1 symptoms successfully
+2025-06-15 15:38:20,088 - utils.medical_validation - DEBUG - Symptom-specialty validation for emergency: True
+2025-06-15 15:38:20,088 - utils.medical_validation - DEBUG - Contradictory symptoms check: True
+2025-06-15 15:38:20,088 - utils.medical_validation - DEBUG - Age appropriateness validation for age 55, specialty emergency: 1 warnings
+2025-06-15 15:38:20,088 - utils.medical_validation - DEBUG - Severity-symptom compatibility validation: 0 warnings
+2025-06-15 15:38:20,088 - utils.medical_validation - INFO - Comprehensive validation completed: True
+2025-06-15 15:38:20,089 - utils.ai_case_generator - WARNING - Case generation warnings: ['emergency is not typically common in middle_aged patients (age 55)']
+2025-06-15 15:38:20,089 - utils.ai_case_generator - DEBUG - Generated AI prompt: You are an expert medical case generator specializing in Emergency Medicine. Create a realistic, medically accurate case with the following specifications:
+
+PATIENT DEMOGRAPHICS:
+- Age: 55 years old (...
+2025-06-15 15:38:20,472 - utils.ai_case_generator - INFO - Calling Groq API for case generation...
+2025-06-15 15:38:20,473 - groq._base_client - DEBUG - Request options: {'method': 'post', 'url': '/openai/v1/chat/completions', 'files': None, 'json_data': {'messages': [{'role': 'system', 'content': 'You are an expert medical case generator. Always respond with valid JSON in the exact format requested.'}, {'role': 'user', 'content': 'You are an expert medical case generator specializing in Emergency Medicine. Create a realistic, medically accurate case with the following specifications:\n\nPATIENT DEMOGRAPHICS:\n- Age: 55 years old (middle_aged population)\n- Gender: Female\n- Occupation: Teacher\n- Baseline Medical History: \n\nSPECIALTY CONTEXT - EMERGENCY MEDICINE:\n- Focus Area: Acute and urgent medical conditions\n- Clinical Focus: acute presentations, life-threatening conditions, rapid assessment\n- Key Diagnostic Considerations: vital signs, level of consciousness, pain severity, onset timing\n- Typical Diagnostic Approach: rapid triage, point-of-care testing, immediate interventions\n- Urgency Markers: hemodynamic instability, respiratory distress, altered mental status\n\nPRESENTING SYMPTOMS:\n- Primary Symptoms: difficulty_breathing\n- Severity Level: MILD (Symptoms are noticeable but not significantly impacting daily activities)\n- Pain Scale: 1-3/10\n- Functional Impact: minimal\n\nCASE REQUIREMENTS:\n- Difficulty Level: INTERMEDIATE - Moderate complexity with some atypical features or comorbidities\n- Case Characteristics: mixed presentations, mild confounding factors, differential considerations\n- Learning Focus: clinical reasoning, differential diagnosis, management decisions\n\nDEMOGRAPHIC CONSIDERATIONS FOR MIDDLE_AGED PATIENTS:\n- Unique Factors: chronic disease onset, work-related stress, family responsibilities\n- Common Presentations: cardiovascular risk, diabetes, cancer screening\n\nMEDICAL ACCURACY REQUIREMENTS:\n1. Ensure pathophysiological coherence between symptoms and diagnosis\n2. Consider age-appropriate disease prevalence and presentations\n3. Include realistic timeline and disease progression\n4. Account for middle_aged population-specific factors\n5. Ensure symptoms align with mild severity level\n6. Make case appropriate for intermediate difficulty level\n\nCASE DEVELOPMENT INSTRUCTIONS:\n1. SELECT DIAGNOSIS: Choose a specific, realistic diagnosis from emergency that:\n   - Causes ALL the presenting symptoms: difficulty_breathing\n   - Is appropriate for 55-year-old Female\n   - Matches mild severity level\n   - Fits intermediate complexity level\n\n2. DEVELOP SUPPORTING SYMPTOMS: Add 2-4 additional symptoms that:\n   - Are consistent with the chosen diagnosis\n   - Enhance diagnostic complexity appropriately\n   - Consider middle_aged population factors\n\n3. CREATE MEDICAL HISTORY: Develop relevant past medical history that:\n   - Supports or explains current presentation\n   - Includes risk factors for the condition\n   - Considers middle_aged typical health patterns\n\n4. ESTABLISH TIMELINE: Create realistic onset and progression that:\n   - Matches disease pathophysiology\n   - Explains current severity level\n   - Includes relevant triggers or precipitating factors\n\n5. PATIENT PRESENTATION: Write how the patient would describe symptoms in:\n   - Natural, non-medical language\n   - Age-appropriate communication style\n   - Consistent with mild symptom severity\n\nOUTPUT FORMAT - Return ONLY valid JSON with this exact structure:\n{\n    "diagnosis": "Specific medical diagnosis (will be hidden from student)",\n    "additional_symptoms": "2-4 additional symptoms beyond presenting symptoms, described as patient would experience them",\n    "medical_history": "Relevant past medical history including risk factors and previous conditions",\n    "recent_exposure": "Recent events, activities, travel, medications, or exposures that contributed to current condition",\n    "patient_presentation": "How patient describes their symptoms in their own words - natural, conversational, age-appropriate",\n    "clinical_notes": "Additional clinical details for realism: onset timing, progression, associated factors, what makes it better/worse",\n    "difficulty_level": "intermediate",\n    "learning_objectives": [\n        "Primary learning objective specific to this case",\n        "Secondary learning objective focusing on differential diagnosis",\n        "Tertiary objective related to emergency specialty knowledge"\n    ],\n    "differential_diagnoses": [\n        "Most likely alternative diagnosis",\n        "Second alternative considering age and demographics", \n        "Third alternative based on symptom overlap",\n        "Less likely but important to rule out condition"\n    ]\n}\n\nQUALITY STANDARDS:\n- Medical accuracy is paramount - ensure all details are clinically sound\n- Case must be coherent and realistic for the specified demographic\n- Difficulty level must be appropriate for intended learning level\n- All symptoms must have logical medical explanations\n- Patient presentation must sound authentic and natural\n\nGenerate a case that challenges learners at the intermediate level while remaining medically accurate and realistic for a 55-year-old Female presenting to emergency.'}], 'model': 'llama-3.3-70b-versatile', 'max_tokens': 2000, 'temperature': 0.7}}
+2025-06-15 15:38:22,139 - httpx._client - DEBUG - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-06-15 15:38:22,140 - groq._base_client - DEBUG - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "200 OK"
+2025-06-15 15:38:22,141 - utils.ai_case_generator - DEBUG - AI response received: ```json
+{
+    "diagnosis": "Chronic Obstructive Pulmonary Disease (COPD) Exacerbation",
+    "additional_symptoms": "I've been having a dry cough for a few days, and I feel a bit more tired than usual....
+2025-06-15 15:38:22,142 - utils.ai_case_generator - INFO - Successfully parsed AI response. Keys: ['diagnosis', 'additional_symptoms', 'medical_history', 'recent_exposure', 'patient_presentation', 'clinical_notes', 'difficulty_level', 'learning_objectives', 'differential_diagnoses']
+2025-06-15 15:38:22,142 - utils.ai_case_generator - INFO - ============================================================
+2025-06-15 15:38:22,157 - utils.ai_case_generator - INFO - ============================================================
+2025-06-15 15:38:22,166 - utils.ai_case_generator - INFO -    Diagnosis: Chronic Obstructive Pulmonary Disease (COPD) Exacerbation
+2025-06-15 15:38:22,167 - utils.ai_case_generator - INFO -    Specialty: emergency
+2025-06-15 15:38:22,168 - utils.ai_case_generator - INFO -    Patient: Female, Age 55
+2025-06-15 15:38:22,168 - utils.ai_case_generator - INFO -    Occupation: Teacher
+2025-06-15 15:38:22,168 - utils.ai_case_generator - INFO -    Severity: mild
+2025-06-15 15:38:22,169 - utils.ai_case_generator - INFO -    Difficulty: intermediate
+2025-06-15 15:38:22,177 - utils.ai_case_generator - INFO -    Input Symptoms: difficulty_breathing
+2025-06-15 15:38:22,178 - utils.ai_case_generator - INFO -    Additional Symptoms: I've been having a dry cough for a few days, and I feel a bit more tired than usual. Sometimes I get a tight feeling in my chest when I exert myself.
+2025-06-15 15:38:22,188 - utils.ai_case_generator - INFO -    I've been feeling a bit short of breath, especially when I walk upstairs or carry groceries. It's not terrible, but it's noticeable. I thought it might be due to being out of shape, but it's been both...
+2025-06-15 15:38:22,196 - utils.ai_case_generator - INFO -    Medical History: Hypertension, hyperlipidemia, and a 30-pack-year smoking history. She has a family history of cardiovascular disease and was diagnosed with COPD 5 years ago.
+2025-06-15 15:38:22,196 - utils.ai_case_generator - INFO -    Recent Exposure: Increased smoking due to work-related stress and a recent upper respiratory infection
+2025-06-15 15:38:22,197 - utils.ai_case_generator - INFO -    Clinical Notes: The patient reports that symptoms started about 2 weeks ago, worsening over the past 3 days. She has been using her albuterol inhaler more frequently but hasn't noticed significant relief. Her symptoms are worse in the morning and improve slightly throughout the day.
+2025-06-15 15:38:22,205 - utils.ai_case_generator - INFO -    1. To recognize and manage COPD exacerbations in the emergency setting
+2025-06-15 15:38:22,205 - utils.ai_case_generator - INFO -    2. To differentiate COPD from other causes of dyspnea, such as heart failure or pneumonia
+2025-06-15 15:38:22,206 - utils.ai_case_generator - INFO -    3. To understand the importance of smoking cessation and pulmonary rehabilitation in COPD management
+2025-06-15 15:38:22,215 - utils.ai_case_generator - INFO -    1. Asthma exacerbation
+2025-06-15 15:38:22,216 - utils.ai_case_generator - INFO -    2. Heart failure with preserved ejection fraction
+2025-06-15 15:38:22,216 - utils.ai_case_generator - INFO -    3. Pneumonia
+2025-06-15 15:38:22,217 - utils.ai_case_generator - INFO -    4. Pulmonary embolism
+2025-06-15 15:38:22,225 - utils.ai_case_generator - INFO -    - emergency is not typically common in middle_aged patients (age 55)
+2025-06-15 15:38:22,233 - utils.ai_case_generator - INFO -    Template will use the following variables:
+2025-06-15 15:38:22,234 - utils.ai_case_generator - INFO -    - age: 55
+2025-06-15 15:38:22,234 - utils.ai_case_generator - INFO -    - gender: Female
+2025-06-15 15:38:22,234 - utils.ai_case_generator - INFO -    - occupation: Teacher
+2025-06-15 15:38:22,234 - utils.ai_case_generator - INFO -    - medical_history: Hypertension, hyperlipidemia, and a 30-pack-year smoking history. She has a family history of cardio...
+2025-06-15 15:38:22,235 - utils.ai_case_generator - INFO -    - illness: [HIDDEN FROM STUDENT - Chronic Obstructive Pulmonary Disease (COPD) Exacerbation]
+2025-06-15 15:38:22,235 - utils.ai_case_generator - INFO -    - recent_exposure: Increased smoking due to work-related stress and a recent upper respiratory infection
+2025-06-15 15:38:22,235 - utils.ai_case_generator - INFO -    - additional_symptoms: I've been having a dry cough for a few days, and I feel a bit more tired than usual. Sometimes I get...
+2025-06-15 15:38:22,235 - utils.ai_case_generator - INFO -    - patient_presentation: I've been feeling a bit short of breath, especially when I walk upstairs or carry groceries. It's no...
+2025-06-15 15:38:22,236 - utils.ai_case_generator - INFO - ============================================================
+2025-06-15 15:38:22,244 - utils.ai_case_generator - INFO - ============================================================
+2025-06-15 15:38:22,245 - utils.ai_case_generator - INFO - Successfully generated case: Chronic Obstructive Pulmonary Disease (COPD) Exacerbation for Female, 55 in emergency
+2025-06-15 15:38:22,245 - __main__ - INFO - generate_patient_case() returned: success
+2025-06-15 15:38:22,256 - __main__ - INFO -    Patient Data Type: ai_generated
+2025-06-15 15:38:22,256 - __main__ - INFO -    Generation Metadata Available: True
+2025-06-15 15:38:22,256 - __main__ - INFO - Initializing custom patient data
+2025-06-15 15:38:22,256 - __main__ - INFO - Custom patient data initialized: {'type': 'ai_generated', 'prompt_template': 'You are a virtual patient in a clinical simulation. You have been assigned the following profile (for your reference only – you must never reveal the diagnosis itself, only describe symptoms):\n\n  • Age: {age}  \n  • Gender: {gender}  \n  • Occupation: {occupation}  \n  • Relevant medical history: {medical_history}  \n  • Underlying illness (secret – do not mention this word or any synonyms): {illness}  \n  • Any recent events or exposures: {recent_exposure}  \n\nYour task:\nWhen the "Doctor" (the next speaker) asks you questions, respond as a real patient would – describe what hurts, how you feel, when symptoms started, how they\'ve changed, etc. Under no circumstances mention or hint at the diagnosis name.  \nKeep answers concise, natural, and include details like pain quality, timing, triggers, and any self-care you\'ve tried.\n\nAdditional symptoms you should exhibit: {additional_symptoms}\nHow you should present: {patient_presentation}', 'patient_details': {'age': '55', 'gender': 'Female', 'occupation': 'Teacher', 'medical_history': 'Hypertension, hyperlipidemia, and a 30-pack-year smoking history. She has a family history of cardiovascular disease and was diagnosed with COPD 5 years ago.', 'illness': 'Chronic Obstructive Pulmonary Disease (COPD) Exacerbation', 'recent_exposure': 'Increased smoking due to work-related stress and a recent upper respiratory infection', 'additional_symptoms': "I've been having a dry cough for a few days, and I feel a bit more tired than usual. Sometimes I get a tight feeling in my chest when I exert myself.", 'patient_presentation': "I've been feeling a bit short of breath, especially when I walk upstairs or carry groceries. It's not terrible, but it's noticeable. I thought it might be due to being out of shape, but it's been bothering me for a few weeks now."}, 'generation_metadata': {'specialty': 'emergency', 'input_symptoms': ['difficulty_breathing'], 'severity': 'mild', 'difficulty_level': 'intermediate', 'learning_objectives': ['To recognize and manage COPD exacerbations in the emergency setting', 'To differentiate COPD from other causes of dyspnea, such as heart failure or pneumonia', 'To understand the importance of smoking cessation and pulmonary rehabilitation in COPD management'], 'differential_diagnoses': ['Asthma exacerbation', 'Heart failure with preserved ejection fraction', 'Pneumonia', 'Pulmonary embolism'], 'clinical_notes': "The patient reports that symptoms started about 2 weeks ago, worsening over the past 3 days. She has been using her albuterol inhaler more frequently but hasn't noticed significant relief. Her symptoms are worse in the morning and improve slightly throughout the day.", 'generation_warnings': ['emergency is not typically common in middle_aged patients (age 55)']}, 'voice_id': 'Fritz-PlayAI'}
+2025-06-15 15:38:22,275 - utils.database - DEBUG - Created conversation 40: AI Case: Chronic Obstructive Pulmonary Disease (COPD) Exacerbation
+2025-06-15 15:38:22,278 - utils.database - DEBUG - Storing JSON data for conversation 40, key: patient_data
+2025-06-15 15:38:22,285 - utils.database - DEBUG - Successfully stored json data for conversation 40, key: patient_data
+2025-06-15 15:38:22,300 - __main__ - INFO -    Conversation ID: 40
+2025-06-15 15:38:22,300 - __main__ - INFO -    Conversation Title: AI Case: Chronic Obstructive Pulmonary Disease (COPD) Exacerbation
+2025-06-15 15:38:22,301 - __main__ - INFO -    Conversation History Reset: True
+2025-06-15 15:38:22,308 - __main__ - INFO -    The following prompt will be sent to AI when doctor asks questions:
+2025-06-15 15:38:22,308 - __main__ - INFO -    Formatted Prompt Preview: You are a virtual patient in a clinical simulation. You have been assigned the following profile (for your reference only – you must never reveal the diagnosis itself, only describe symptoms):
+
+  • Age: 55  
+  • Gender: Female  
+  • Occupation: Teacher  
+  • Relevant medical history: Hypertension, h...
+2025-06-15 15:38:22,309 - __main__ - INFO -    Full Prompt Length: 1520 characters
+2025-06-15 15:38:22,335 - __main__ - INFO -    Case is now active and ready for doctor-patient simulation
+2025-06-15 15:38:22,336 - werkzeug - INFO - 127.0.0.1 - - [15/Jun/2025 15:38:22] "POST /api/generate-patient-case HTTP/1.1" 200 -
+2025-06-15 15:38:22,342 - __main__ - DEBUG - Request: POST /api/update-voice
+2025-06-15 15:38:22,353 - utils.database - DEBUG - Successfully stored string data for conversation 40, key: voice_id
+2025-06-15 15:38:22,354 - __main__ - INFO - Updated voice_id to Fritz-PlayAI for conversation 40
+2025-06-15 15:38:22,355 - werkzeug - INFO - 127.0.0.1 - - [15/Jun/2025 15:38:22] "POST /api/update-voice HTTP/1.1" 200 -
+2025-06-15 15:38:22,361 - __main__ - DEBUG - Request: GET /api/conversations
+2025-06-15 15:38:22,365 - werkzeug - INFO - 127.0.0.1 - - [15/Jun/2025 15:38:22] "GET /api/conversations HTTP/1.1" 200 -
+2025-06-15 21:46:34,463 - __main__ - INFO - Registered URL Rules:
+2025-06-15 21:46:34,463 - __main__ - INFO - Route: /static/<path:filename>, Endpoint: static
+2025-06-15 21:46:34,464 - __main__ - INFO - Route: /api/debug, Endpoint: debug_routes
+2025-06-15 21:46:34,464 - __main__ - INFO - Route: /, Endpoint: index
+2025-06-15 21:46:34,464 - __main__ - INFO - Route: /api/patient-simulations, Endpoint: list_patient_simulations
+2025-06-15 21:46:34,464 - __main__ - INFO - Route: /api/conversations/new, Endpoint: create_new_conversation
+2025-06-15 21:46:34,465 - __main__ - INFO - Route: /api/select-simulation, Endpoint: select_simulation
+2025-06-15 21:46:34,465 - __main__ - INFO - Route: /api/update-voice, Endpoint: update_voice
+2025-06-15 21:46:34,465 - __main__ - INFO - Route: /api/generate-patient-case, Endpoint: generate_patient_case_route
+2025-06-15 21:46:34,465 - __main__ - INFO - Route: /api/create-custom-patient, Endpoint: create_custom_patient
+2025-06-15 21:46:34,466 - __main__ - INFO - Route: /process_audio, Endpoint: process_audio
+2025-06-15 21:46:34,466 - __main__ - INFO - Route: /api/conversations, Endpoint: list_conversations
+2025-06-15 21:46:34,466 - __main__ - INFO - Route: /api/conversations/<int:conversation_id>, Endpoint: get_conversation_by_id
+2025-06-15 21:46:34,466 - __main__ - INFO - Route: /api/conversations/<int:conversation_id>, Endpoint: delete_conversation_by_id
+2025-06-15 21:46:34,466 - __main__ - INFO - Route: /api/conversations/<int:conversation_id>/load, Endpoint: load_conversation_by_id
+2025-06-15 21:46:34,467 - __main__ - INFO - Route: /test, Endpoint: test_route
+2025-06-15 21:46:34,467 - __main__ - INFO - Route: /api/diagnose, Endpoint: diagnose_api
+2025-06-15 21:46:34,467 - __main__ - INFO - Route: /api/current-patient-details, Endpoint: get_current_patient_details
+2025-06-15 21:46:34,467 - __main__ - INFO - Route: /api/medical-knowledge, Endpoint: get_medical_knowledge
+2025-06-15 21:46:34,467 - __main__ - INFO - Route: /api/submit-diagnosis, Endpoint: submit_diagnosis
+2025-06-15 21:46:34,639 - __main__ - INFO - Registered URL Rules:
+2025-06-15 21:46:34,639 - __main__ - INFO - Route: /static/<path:filename>, Endpoint: static
+2025-06-15 21:46:34,640 - __main__ - INFO - Route: /api/debug, Endpoint: debug_routes
+2025-06-15 21:46:34,640 - __main__ - INFO - Route: /, Endpoint: index
+2025-06-15 21:46:34,640 - __main__ - INFO - Route: /api/patient-simulations, Endpoint: list_patient_simulations
+2025-06-15 21:46:34,640 - __main__ - INFO - Route: /api/conversations/new, Endpoint: create_new_conversation
+2025-06-15 21:46:34,641 - __main__ - INFO - Route: /api/select-simulation, Endpoint: select_simulation
+2025-06-15 21:46:34,641 - __main__ - INFO - Route: /api/update-voice, Endpoint: update_voice
+2025-06-15 21:46:34,641 - __main__ - INFO - Route: /api/generate-patient-case, Endpoint: generate_patient_case_route
+2025-06-15 21:46:34,641 - __main__ - INFO - Route: /api/create-custom-patient, Endpoint: create_custom_patient
+2025-06-15 21:46:34,642 - __main__ - INFO - Route: /process_audio, Endpoint: process_audio
+2025-06-15 21:46:34,642 - __main__ - INFO - Route: /api/conversations, Endpoint: list_conversations
+2025-06-15 21:46:34,642 - __main__ - INFO - Route: /api/conversations/<int:conversation_id>, Endpoint: get_conversation_by_id
+2025-06-15 21:46:34,642 - __main__ - INFO - Route: /api/conversations/<int:conversation_id>, Endpoint: delete_conversation_by_id
+2025-06-15 21:46:34,642 - __main__ - INFO - Route: /api/conversations/<int:conversation_id>/load, Endpoint: load_conversation_by_id
+2025-06-15 21:46:34,643 - __main__ - INFO - Route: /test, Endpoint: test_route
+2025-06-15 21:46:34,643 - __main__ - INFO - Route: /api/diagnose, Endpoint: diagnose_api
+2025-06-15 21:46:34,643 - __main__ - INFO - Route: /api/current-patient-details, Endpoint: get_current_patient_details
+2025-06-15 21:46:34,643 - __main__ - INFO - Route: /api/medical-knowledge, Endpoint: get_medical_knowledge
+2025-06-15 21:46:34,643 - __main__ - INFO - Route: /api/submit-diagnosis, Endpoint: submit_diagnosis
+2025-06-15 21:46:37,623 - utils.database - INFO - Current database version: 2, Target version: 2
+2025-06-15 21:46:37,624 - utils.database - INFO - Database initialized successfully
+2025-06-15 21:46:37,627 - utils.medical_validation - INFO - Successfully loaded medical knowledge from E:\Doctor Simulation\DoctorSimulation\medical_knowledge.json
+2025-06-15 21:46:37,628 - utils.medical_validation - INFO - MedicalValidationSystem initialized with 7 specialties and 43 symptoms
+2025-06-15 21:46:37,628 - utils.ai_case_generator - INFO - Medical validation system initialized successfully
+2025-06-15 21:46:37,631 - utils.database - INFO - Current database version: 2, Target version: 2
+2025-06-15 21:46:37,632 - utils.database - INFO - Database initialized successfully
+2025-06-15 21:46:37,641 - __main__ - INFO - GROQ_API_KEY found - length: 56
+2025-06-15 21:46:37,641 - __main__ - INFO - Starting Flask app on 0.0.0.0:5000
+2025-06-15 21:46:37,679 - werkzeug - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.1.100:5000
+2025-06-15 21:46:37,680 - werkzeug - INFO - [33mPress CTRL+C to quit[0m
+2025-06-15 21:46:37,685 - werkzeug - INFO -  * Restarting with stat
+2025-06-15 21:46:39,377 - utils.database - INFO - Current database version: 2, Target version: 2
+2025-06-15 21:46:39,377 - utils.database - INFO - Database initialized successfully
+2025-06-15 21:46:39,382 - utils.medical_validation - INFO - Successfully loaded medical knowledge from E:\Doctor Simulation\DoctorSimulation\medical_knowledge.json
+2025-06-15 21:46:39,382 - utils.medical_validation - INFO - MedicalValidationSystem initialized with 7 specialties and 43 symptoms
+2025-06-15 21:46:39,383 - utils.ai_case_generator - INFO - Medical validation system initialized successfully
+2025-06-15 21:46:39,387 - utils.database - INFO - Current database version: 2, Target version: 2
+2025-06-15 21:46:39,388 - utils.database - INFO - Database initialized successfully
+2025-06-15 21:46:39,396 - __main__ - INFO - GROQ_API_KEY found - length: 56
+2025-06-15 21:46:39,396 - __main__ - INFO - Starting Flask app on 0.0.0.0:5000
+2025-06-15 21:46:39,419 - werkzeug - WARNING -  * Debugger is active!
+2025-06-15 21:46:39,427 - werkzeug - INFO -  * Debugger PIN: 537-489-708
+2025-06-15 21:46:45,396 - __main__ - DEBUG - Request: GET /
+2025-06-15 21:46:45,396 - __main__ - INFO - Serving index page
+2025-06-15 21:46:45,408 - werkzeug - INFO - 127.0.0.1 - - [15/Jun/2025 21:46:45] "GET / HTTP/1.1" 200 -
+2025-06-15 21:46:45,437 - __main__ - DEBUG - Request: GET /static/css/style.css
+2025-06-15 21:46:45,437 - __main__ - DEBUG - Request: GET /static/vad-model/bundle.min.js
+2025-06-15 21:46:45,438 - __main__ - DEBUG - Request: GET /static/vad-model/ort.min.js
+2025-06-15 21:46:45,440 - __main__ - DEBUG - Request: GET /static/js/main.js
+2025-06-15 21:46:45,441 - werkzeug - INFO - 127.0.0.1 - - [15/Jun/2025 21:46:45] "GET /static/vad-model/bundle.min.js HTTP/1.1" 200 -
+2025-06-15 21:46:45,442 - werkzeug - INFO - 127.0.0.1 - - [15/Jun/2025 21:46:45] "[36mGET /static/css/style.css HTTP/1.1[0m" 304 -
+2025-06-15 21:46:45,443 - __main__ - DEBUG - Request: GET /.well-known/appspecific/com.chrome.devtools.json
+2025-06-15 21:46:45,443 - werkzeug - INFO - 127.0.0.1 - - [15/Jun/2025 21:46:45] "GET /static/vad-model/ort.min.js HTTP/1.1" 200 -
+2025-06-15 21:46:45,445 - werkzeug - INFO - 127.0.0.1 - - [15/Jun/2025 21:46:45] "[36mGET /static/js/main.js HTTP/1.1[0m" 304 -
+2025-06-15 21:46:45,445 - __main__ - WARNING - 404 error: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again. - Path: /.well-known/appspecific/com.chrome.devtools.json, Method: GET
+2025-06-15 21:46:45,449 - werkzeug - INFO - 127.0.0.1 - - [15/Jun/2025 21:46:45] "[33mGET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1[0m" 404 -
+2025-06-15 21:46:45,490 - __main__ - DEBUG - Request: GET /static/vad-model/ort.min.js.map
+2025-06-15 21:46:45,491 - __main__ - WARNING - 404 error: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again. - Path: /static/vad-model/ort.min.js.map, Method: GET
+2025-06-15 21:46:45,493 - werkzeug - INFO - 127.0.0.1 - - [15/Jun/2025 21:46:45] "[33mGET /static/vad-model/ort.min.js.map HTTP/1.1[0m" 404 -
+2025-06-15 21:46:45,497 - __main__ - DEBUG - Request: GET /api/conversations
+2025-06-15 21:46:45,498 - __main__ - DEBUG - Request: GET /api/medical-knowledge
+2025-06-15 21:46:45,500 - __main__ - INFO - Calling get_all_specialties()...
+2025-06-15 21:46:45,500 - __main__ - INFO - get_all_specialties() returned type: <class 'dict'>
+2025-06-15 21:46:45,501 - __main__ - DEBUG - Processing specialty: cardiology
+2025-06-15 21:46:45,501 - __main__ - DEBUG - Processing specialty: neurology
+2025-06-15 21:46:45,503 - werkzeug - INFO - 127.0.0.1 - - [15/Jun/2025 21:46:45] "GET /api/conversations HTTP/1.1" 200 -
+2025-06-15 21:46:45,503 - __main__ - DEBUG - Processing specialty: orthopedics
+2025-06-15 21:46:45,503 - __main__ - DEBUG - Processing specialty: gastroenterology
+2025-06-15 21:46:45,504 - __main__ - DEBUG - Processing specialty: respiratory
+2025-06-15 21:46:45,505 - __main__ - DEBUG - Processing specialty: dermatology
+2025-06-15 21:46:45,506 - __main__ - DEBUG - Processing specialty: emergency
+2025-06-15 21:46:45,506 - __main__ - INFO - Successfully built medical knowledge response with 7 specialties
+2025-06-15 21:46:45,507 - werkzeug - INFO - 127.0.0.1 - - [15/Jun/2025 21:46:45] "GET /api/medical-knowledge HTTP/1.1" 200 -
+2025-06-15 21:46:45,544 - __main__ - DEBUG - Request: GET /api/medical-knowledge
+2025-06-15 21:46:45,545 - __main__ - INFO - Calling get_all_specialties()...
+2025-06-15 21:46:45,545 - __main__ - INFO - get_all_specialties() returned type: <class 'dict'>
+2025-06-15 21:46:45,546 - __main__ - DEBUG - Processing specialty: cardiology
+2025-06-15 21:46:45,546 - __main__ - DEBUG - Processing specialty: neurology
+2025-06-15 21:46:45,546 - __main__ - DEBUG - Processing specialty: orthopedics
+2025-06-15 21:46:45,546 - __main__ - DEBUG - Processing specialty: gastroenterology
+2025-06-15 21:46:45,547 - __main__ - DEBUG - Processing specialty: respiratory
+2025-06-15 21:46:45,547 - __main__ - DEBUG - Processing specialty: dermatology
+2025-06-15 21:46:45,547 - __main__ - DEBUG - Processing specialty: emergency
+2025-06-15 21:46:45,547 - __main__ - INFO - Successfully built medical knowledge response with 7 specialties
+2025-06-15 21:46:45,548 - werkzeug - INFO - 127.0.0.1 - - [15/Jun/2025 21:46:45] "GET /api/medical-knowledge HTTP/1.1" 200 -
+2025-06-15 21:47:05,760 - __main__ - DEBUG - Request: POST /api/generate-patient-case
+2025-06-15 21:47:05,760 - __main__ - INFO - Generating AI case with specialty: cardiology, symptoms: ['palpitations'], severity: moderate
+2025-06-15 21:47:05,761 - __main__ - INFO - Demographics: {'age': 55, 'gender': 'Male', 'occupation': 'Teacher', 'medical_history': 'Hypertension'}
+2025-06-15 21:47:05,761 - __main__ - INFO - Testing get_all_specialties()...
+2025-06-15 21:47:05,761 - __main__ - INFO - get_all_specialties() returned type: <class 'dict'>
+2025-06-15 21:47:05,761 - __main__ - INFO - Testing get_available_symptoms_for_specialty()...
+2025-06-15 21:47:05,762 - __main__ - INFO - get_available_symptoms_for_specialty() returned type: <class 'list'>
+2025-06-15 21:47:05,762 - __main__ - INFO - Calling generate_patient_case()...
+2025-06-15 21:47:05,762 - utils.ai_case_generator - INFO - Generating patient case for specialty: cardiology, symptoms: ['palpitations'], severity: moderate
+2025-06-15 21:47:05,762 - utils.medical_validation - DEBUG - Specialty 'cardiology' validated successfully
+2025-06-15 21:47:05,762 - utils.medical_validation - DEBUG - Validated 1 symptoms successfully
+2025-06-15 21:47:05,763 - utils.medical_validation - DEBUG - Specialty 'cardiology' validated successfully
+2025-06-15 21:47:05,763 - utils.medical_validation - DEBUG - Validated 1 symptoms successfully
+2025-06-15 21:47:05,763 - utils.medical_validation - DEBUG - Symptom-specialty validation for cardiology: True
+2025-06-15 21:47:05,763 - utils.medical_validation - DEBUG - Contradictory symptoms check: True
+2025-06-15 21:47:05,763 - utils.medical_validation - DEBUG - Age appropriateness validation for age 55, specialty cardiology: 0 warnings
+2025-06-15 21:47:05,764 - utils.medical_validation - DEBUG - Severity-symptom compatibility validation: 0 warnings
+2025-06-15 21:47:05,764 - utils.medical_validation - INFO - Comprehensive validation completed: True
+2025-06-15 21:47:05,764 - utils.ai_case_generator - DEBUG - Generated AI prompt: You are an expert medical case generator specializing in Cardiology. Create a realistic, medically accurate case with the following specifications:
+
+PATIENT DEMOGRAPHICS:
+- Age: 55 years old (middle_a...
+2025-06-15 21:47:06,149 - utils.ai_case_generator - INFO - Calling Groq API for case generation...
+2025-06-15 21:47:06,151 - groq._base_client - DEBUG - Request options: {'method': 'post', 'url': '/openai/v1/chat/completions', 'files': None, 'json_data': {'messages': [{'role': 'system', 'content': 'You are an expert medical case generator. Always respond with valid JSON in the exact format requested.'}, {'role': 'user', 'content': 'You are an expert medical case generator specializing in Cardiology. Create a realistic, medically accurate case with the following specifications:\n\nPATIENT DEMOGRAPHICS:\n- Age: 55 years old (middle_aged population)\n- Gender: Male\n- Occupation: Teacher\n- Baseline Medical History: Hypertension\n\nSPECIALTY CONTEXT - CARDIOLOGY:\n- Focus Area: Heart and cardiovascular system disorders\n- Clinical Focus: cardiovascular pathophysiology, hemodynamic changes, cardiac risk factors\n- Key Diagnostic Considerations: chest pain characteristics, exertional symptoms, family history, cardiovascular risk factors\n- Typical Diagnostic Approach: ECG findings, cardiac enzymes, stress testing, echocardiography\n- Urgency Markers: acute chest pain, hemodynamic instability, arrhythmias\n\nPRESENTING SYMPTOMS:\n- Primary Symptoms: palpitations\n- Severity Level: MODERATE (Symptoms are affecting daily activities and causing concern)\n- Pain Scale: 4-6/10\n- Functional Impact: moderate limitation\n\nCASE REQUIREMENTS:\n- Difficulty Level: INTERMEDIATE - Moderate complexity with some atypical features or comorbidities\n- Case Characteristics: mixed presentations, mild confounding factors, differential considerations\n- Learning Focus: clinical reasoning, differential diagnosis, management decisions\n\nDEMOGRAPHIC CONSIDERATIONS FOR MIDDLE_AGED PATIENTS:\n- Unique Factors: chronic disease onset, work-related stress, family responsibilities\n- Common Presentations: cardiovascular risk, diabetes, cancer screening\n\nMEDICAL ACCURACY REQUIREMENTS:\n1. Ensure pathophysiological coherence between symptoms and diagnosis\n2. Consider age-appropriate disease prevalence and presentations\n3. Include realistic timeline and disease progression\n4. Account for middle_aged population-specific factors\n5. Ensure symptoms align with moderate severity level\n6. Make case appropriate for intermediate difficulty level\n\nCASE DEVELOPMENT INSTRUCTIONS:\n1. SELECT DIAGNOSIS: Choose a specific, realistic diagnosis from cardiology that:\n   - Causes ALL the presenting symptoms: palpitations\n   - Is appropriate for 55-year-old Male\n   - Matches moderate severity level\n   - Fits intermediate complexity level\n\n2. DEVELOP SUPPORTING SYMPTOMS: Add 2-4 additional symptoms that:\n   - Are consistent with the chosen diagnosis\n   - Enhance diagnostic complexity appropriately\n   - Consider middle_aged population factors\n\n3. CREATE MEDICAL HISTORY: Develop relevant past medical history that:\n   - Supports or explains current presentation\n   - Includes risk factors for the condition\n   - Considers middle_aged typical health patterns\n\n4. ESTABLISH TIMELINE: Create realistic onset and progression that:\n   - Matches disease pathophysiology\n   - Explains current severity level\n   - Includes relevant triggers or precipitating factors\n\n5. PATIENT PRESENTATION: Write how the patient would describe symptoms in:\n   - Natural, non-medical language\n   - Age-appropriate communication style\n   - Consistent with moderate symptom severity\n\nOUTPUT FORMAT - Return ONLY valid JSON with this exact structure:\n{\n    "diagnosis": "Specific medical diagnosis (will be hidden from student)",\n    "additional_symptoms": "2-4 additional symptoms beyond presenting symptoms, described as patient would experience them",\n    "medical_history": "Relevant past medical history including risk factors and previous conditions",\n    "recent_exposure": "Recent events, activities, travel, medications, or exposures that contributed to current condition",\n    "patient_presentation": "How patient describes their symptoms in their own words - natural, conversational, age-appropriate",\n    "clinical_notes": "Additional clinical details for realism: onset timing, progression, associated factors, what makes it better/worse",\n    "difficulty_level": "intermediate",\n    "learning_objectives": [\n        "Primary learning objective specific to this case",\n        "Secondary learning objective focusing on differential diagnosis",\n        "Tertiary objective related to cardiology specialty knowledge"\n    ],\n    "differential_diagnoses": [\n        "Most likely alternative diagnosis",\n        "Second alternative considering age and demographics", \n        "Third alternative based on symptom overlap",\n        "Less likely but important to rule out condition"\n    ]\n}\n\nQUALITY STANDARDS:\n- Medical accuracy is paramount - ensure all details are clinically sound\n- Case must be coherent and realistic for the specified demographic\n- Difficulty level must be appropriate for intended learning level\n- All symptoms must have logical medical explanations\n- Patient presentation must sound authentic and natural\n\nGenerate a case that challenges learners at the intermediate level while remaining medically accurate and realistic for a 55-year-old Male presenting to cardiology.'}], 'model': 'llama-3.3-70b-versatile', 'max_tokens': 2000, 'temperature': 0.7}}
+2025-06-15 21:47:07,943 - httpx._client - DEBUG - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-06-15 21:47:07,944 - groq._base_client - DEBUG - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "200 OK"
+2025-06-15 21:47:07,946 - utils.ai_case_generator - DEBUG - AI response received: ```json
+{
+    "diagnosis": "Atrial Fibrillation with Hypertension",
+    "additional_symptoms": "Shortness of breath when walking uphill, fatigue, and occasional mild chest discomfort",
+    "medical_hi...
+2025-06-15 21:47:07,947 - utils.ai_case_generator - INFO - Successfully parsed AI response. Keys: ['diagnosis', 'additional_symptoms', 'medical_history', 'recent_exposure', 'patient_presentation', 'clinical_notes', 'difficulty_level', 'learning_objectives', 'differential_diagnoses']
+2025-06-15 21:47:07,947 - utils.ai_case_generator - INFO - ============================================================
+2025-06-15 21:47:07,965 - utils.ai_case_generator - INFO - ============================================================
+2025-06-15 21:47:07,974 - utils.ai_case_generator - INFO -    Diagnosis: Atrial Fibrillation with Hypertension
+2025-06-15 21:47:07,975 - utils.ai_case_generator - INFO -    Specialty: cardiology
+2025-06-15 21:47:07,975 - utils.ai_case_generator - INFO -    Patient: Male, Age 55
+2025-06-15 21:47:07,975 - utils.ai_case_generator - INFO -    Occupation: Teacher
+2025-06-15 21:47:07,975 - utils.ai_case_generator - INFO -    Severity: moderate
+2025-06-15 21:47:07,975 - utils.ai_case_generator - INFO -    Difficulty: intermediate
+2025-06-15 21:47:07,984 - utils.ai_case_generator - INFO -    Input Symptoms: palpitations
+2025-06-15 21:47:07,985 - utils.ai_case_generator - INFO -    Additional Symptoms: Shortness of breath when walking uphill, fatigue, and occasional mild chest discomfort
+2025-06-15 21:47:07,996 - utils.ai_case_generator - INFO -    Doc, I've been feeling like my heart is racing and skipping beats for a few weeks now. It's been bothering me, especially when I'm teaching or walking around. Sometimes I feel a bit short of breath an...
+2025-06-15 21:47:08,004 - utils.ai_case_generator - INFO -    Medical History: Hypertension for 10 years, hyperlipidemia, family history of cardiovascular disease, and recent increase in work-related stress
+2025-06-15 21:47:08,004 - utils.ai_case_generator - INFO -    Recent Exposure: Recent increase in caffeine intake, lack of regular exercise, and a family history of atrial fibrillation
+2025-06-15 21:47:08,005 - utils.ai_case_generator - INFO -    Clinical Notes: Onset of symptoms approximately 6 weeks ago, worsening over the past 2 weeks, with an increase in frequency and duration of palpitations. Symptoms are exacerbated by stress and physical activity, and improved with rest. ECG shows atrial fibrillation with rapid ventricular response, and echocardiography reveals mild left ventricular hypertrophy.
+2025-06-15 21:47:08,014 - utils.ai_case_generator - INFO -    1. To recognize the clinical presentation and diagnostic approach for atrial fibrillation in a patient with hypertension
+2025-06-15 21:47:08,015 - utils.ai_case_generator - INFO -    2. To differentiate atrial fibrillation from other causes of palpitations, such as anxiety or thyrotoxicosis
+2025-06-15 21:47:08,015 - utils.ai_case_generator - INFO -    3. To understand the importance of managing hypertension and other cardiovascular risk factors in the prevention and treatment of atrial fibrillation
+2025-06-15 21:47:08,027 - utils.ai_case_generator - INFO -    1. Anxiety disorder with palpitations
+2025-06-15 21:47:08,028 - utils.ai_case_generator - INFO -    2. Thyrotoxicosis with atrial fibrillation
+2025-06-15 21:47:08,028 - utils.ai_case_generator - INFO -    3. Mitral valve prolapse with palpitations
+2025-06-15 21:47:08,028 - utils.ai_case_generator - INFO -    4. Wolff-Parkinson-White syndrome
+2025-06-15 21:47:08,036 - utils.ai_case_generator - INFO -    Template will use the following variables:
+2025-06-15 21:47:08,036 - utils.ai_case_generator - INFO -    - age: 55
+2025-06-15 21:47:08,037 - utils.ai_case_generator - INFO -    - gender: Male
+2025-06-15 21:47:08,037 - utils.ai_case_generator - INFO -    - occupation: Teacher
+2025-06-15 21:47:08,037 - utils.ai_case_generator - INFO -    - medical_history: Hypertension for 10 years, hyperlipidemia, family history of cardiovascular disease, and recent incr...
+2025-06-15 21:47:08,037 - utils.ai_case_generator - INFO -    - illness: [HIDDEN FROM STUDENT - Atrial Fibrillation with Hypertension]
+2025-06-15 21:47:08,038 - utils.ai_case_generator - INFO -    - recent_exposure: Recent increase in caffeine intake, lack of regular exercise, and a family history of atrial fibrill...
+2025-06-15 21:47:08,038 - utils.ai_case_generator - INFO -    - additional_symptoms: Shortness of breath when walking uphill, fatigue, and occasional mild chest discomfort
+2025-06-15 21:47:08,039 - utils.ai_case_generator - INFO -    - patient_presentation: Doc, I've been feeling like my heart is racing and skipping beats for a few weeks now. It's been bot...
+2025-06-15 21:47:08,039 - utils.ai_case_generator - INFO - ============================================================
+2025-06-15 21:47:08,047 - utils.ai_case_generator - INFO - ============================================================
+2025-06-15 21:47:08,047 - utils.ai_case_generator - INFO - Successfully generated case: Atrial Fibrillation with Hypertension for Male, 55 in cardiology
+2025-06-15 21:47:08,047 - __main__ - INFO - generate_patient_case() returned: success
+2025-06-15 21:47:08,058 - __main__ - INFO -    Patient Data Type: ai_generated
+2025-06-15 21:47:08,058 - __main__ - INFO -    Generation Metadata Available: True
+2025-06-15 21:47:08,059 - __main__ - INFO - Initializing custom patient data
+2025-06-15 21:47:08,059 - __main__ - INFO - Custom patient data initialized: {'type': 'ai_generated', 'prompt_template': 'You are a virtual patient in a clinical simulation. You have been assigned the following profile (for your reference only – you must never reveal the diagnosis itself, only describe symptoms):\n\n  • Age: {age}  \n  • Gender: {gender}  \n  • Occupation: {occupation}  \n  • Relevant medical history: {medical_history}  \n  • Underlying illness (secret – do not mention this word or any synonyms): {illness}  \n  • Any recent events or exposures: {recent_exposure}  \n\nYour task:\nWhen the "Doctor" (the next speaker) asks you questions, respond as a real patient would – describe what hurts, how you feel, when symptoms started, how they\'ve changed, etc. Under no circumstances mention or hint at the diagnosis name.  \nKeep answers concise, natural, and include details like pain quality, timing, triggers, and any self-care you\'ve tried.\n\nAdditional symptoms you should exhibit: {additional_symptoms}\nHow you should present: {patient_presentation}', 'patient_details': {'age': '55', 'gender': 'Male', 'occupation': 'Teacher', 'medical_history': 'Hypertension for 10 years, hyperlipidemia, family history of cardiovascular disease, and recent increase in work-related stress', 'illness': 'Atrial Fibrillation with Hypertension', 'recent_exposure': 'Recent increase in caffeine intake, lack of regular exercise, and a family history of atrial fibrillation', 'additional_symptoms': 'Shortness of breath when walking uphill, fatigue, and occasional mild chest discomfort', 'patient_presentation': "Doc, I've been feeling like my heart is racing and skipping beats for a few weeks now. It's been bothering me, especially when I'm teaching or walking around. Sometimes I feel a bit short of breath and tired. I've also had some chest discomfort, but it's not too bad. I've been under a lot of stress at work lately, and I'm worried it might be related to my blood pressure."}, 'generation_metadata': {'specialty': 'cardiology', 'input_symptoms': ['palpitations'], 'severity': 'moderate', 'difficulty_level': 'intermediate', 'learning_objectives': ['To recognize the clinical presentation and diagnostic approach for atrial fibrillation in a patient with hypertension', 'To differentiate atrial fibrillation from other causes of palpitations, such as anxiety or thyrotoxicosis', 'To understand the importance of managing hypertension and other cardiovascular risk factors in the prevention and treatment of atrial fibrillation'], 'differential_diagnoses': ['Anxiety disorder with palpitations', 'Thyrotoxicosis with atrial fibrillation', 'Mitral valve prolapse with palpitations', 'Wolff-Parkinson-White syndrome'], 'clinical_notes': 'Onset of symptoms approximately 6 weeks ago, worsening over the past 2 weeks, with an increase in frequency and duration of palpitations. Symptoms are exacerbated by stress and physical activity, and improved with rest. ECG shows atrial fibrillation with rapid ventricular response, and echocardiography reveals mild left ventricular hypertrophy.', 'generation_warnings': []}, 'voice_id': 'Fritz-PlayAI'}
+2025-06-15 21:47:08,077 - utils.database - DEBUG - Created conversation 41: AI Case: Atrial Fibrillation with Hypertension
+2025-06-15 21:47:08,079 - utils.database - DEBUG - Storing JSON data for conversation 41, key: patient_data
+2025-06-15 21:47:08,085 - utils.database - DEBUG - Successfully stored json data for conversation 41, key: patient_data
+2025-06-15 21:47:08,102 - __main__ - INFO -    Conversation ID: 41
+2025-06-15 21:47:08,103 - __main__ - INFO -    Conversation Title: AI Case: Atrial Fibrillation with Hypertension
+2025-06-15 21:47:08,103 - __main__ - INFO -    Conversation History Reset: True
+2025-06-15 21:47:08,111 - __main__ - INFO -    The following prompt will be sent to AI when doctor asks questions:
+2025-06-15 21:47:08,112 - __main__ - INFO -    Formatted Prompt Preview: You are a virtual patient in a clinical simulation. You have been assigned the following profile (for your reference only – you must never reveal the diagnosis itself, only describe symptoms):
+
+  • Age: 55  
+  • Gender: Male  
+  • Occupation: Teacher  
+  • Relevant medical history: Hypertension for ...
+2025-06-15 21:47:08,112 - __main__ - INFO -    Full Prompt Length: 1569 characters
+2025-06-15 21:47:08,141 - __main__ - INFO -    Case is now active and ready for doctor-patient simulation
+2025-06-15 21:47:08,141 - werkzeug - INFO - 127.0.0.1 - - [15/Jun/2025 21:47:08] "POST /api/generate-patient-case HTTP/1.1" 200 -
+2025-06-15 21:47:08,146 - __main__ - DEBUG - Request: POST /api/update-voice
+2025-06-15 21:47:08,158 - utils.database - DEBUG - Successfully stored string data for conversation 41, key: voice_id
+2025-06-15 21:47:08,159 - __main__ - INFO - Updated voice_id to Fritz-PlayAI for conversation 41
+2025-06-15 21:47:08,160 - werkzeug - INFO - 127.0.0.1 - - [15/Jun/2025 21:47:08] "POST /api/update-voice HTTP/1.1" 200 -
+2025-06-15 21:47:08,167 - __main__ - DEBUG - Request: GET /api/conversations
+2025-06-15 21:47:08,173 - werkzeug - INFO - 127.0.0.1 - - [15/Jun/2025 21:47:08] "GET /api/conversations HTTP/1.1" 200 -
+2025-06-15 21:47:11,039 - __main__ - DEBUG - Request: GET /static/vad-model/silero_vad_legacy.onnx
+2025-06-15 21:47:11,040 - werkzeug - INFO - 127.0.0.1 - - [15/Jun/2025 21:47:11] "GET /static/vad-model/silero_vad_legacy.onnx HTTP/1.1" 200 -
+2025-06-15 21:47:11,069 - __main__ - DEBUG - Request: GET /static/vad-model/ort-wasm-simd-threaded.jsep.mjs
+2025-06-15 21:47:11,071 - werkzeug - INFO - 127.0.0.1 - - [15/Jun/2025 21:47:11] "GET /static/vad-model/ort-wasm-simd-threaded.jsep.mjs HTTP/1.1" 200 -
+2025-06-15 21:47:11,081 - __main__ - DEBUG - Request: GET /static/vad-model/ort-wasm-simd-threaded.jsep.wasm
+2025-06-15 21:47:11,098 - werkzeug - INFO - 127.0.0.1 - - [15/Jun/2025 21:47:11] "GET /static/vad-model/ort-wasm-simd-threaded.jsep.wasm HTTP/1.1" 200 -
+2025-06-15 21:47:11,978 - __main__ - DEBUG - Request: GET /static/vad-model/vad.worklet.bundle.min.js
+2025-06-15 21:47:11,979 - werkzeug - INFO - 127.0.0.1 - - [15/Jun/2025 21:47:11] "GET /static/vad-model/vad.worklet.bundle.min.js HTTP/1.1" 200 -
+2025-06-15 21:47:14,754 - __main__ - DEBUG - Request: POST /process_audio
+2025-06-15 21:47:14,755 - __main__ - INFO - === Starting audio processing ===
+2025-06-15 21:47:14,757 - __main__ - INFO - Using conversation_id from form: 41
+2025-06-15 21:47:14,758 - __main__ - INFO - Form data keys: ['voice_id', 'conversation_id']
+2025-06-15 21:47:14,758 - __main__ - INFO - Received voice_id from form: Fritz-PlayAI
+2025-06-15 21:47:14,767 - __main__ - INFO -    Conversation ID: 41
+2025-06-15 21:47:14,768 - utils.database - DEBUG - Retrieved 2 data items for conversation 41
+2025-06-15 21:47:14,768 - __main__ - INFO -    Available Data Keys: ['patient_data', 'voice_id']
+2025-06-15 21:47:14,769 - utils.database - DEBUG - Retrieved JSON data for conversation 41, key: patient_data
+2025-06-15 21:47:14,777 - __main__ - INFO -    Patient Type: ai_generated
+2025-06-15 21:47:14,786 - __main__ - INFO -       Specialty: cardiology
+2025-06-15 21:47:14,786 - __main__ - INFO -       Input Symptoms: ['palpitations']
+2025-06-15 21:47:14,787 - __main__ - INFO -       Severity: moderate
+2025-06-15 21:47:14,787 - __main__ - INFO -       Difficulty: intermediate
+2025-06-15 21:47:14,795 - __main__ - INFO -       Age: 55
+2025-06-15 21:47:14,795 - __main__ - INFO -       Gender: Male
+2025-06-15 21:47:14,795 - __main__ - INFO -       Occupation: Teacher
+2025-06-15 21:47:14,796 - __main__ - INFO -       Medical History: Hypertension for 10 years, hyperlipidemia, family history of cardiovascular disease, and recent increase in work-related stress
+2025-06-15 21:47:14,796 - __main__ - INFO -       Hidden Diagnosis: Atrial Fibrillation with Hypertension
+2025-06-15 21:47:14,819 - __main__ - INFO - Using patient_data: {'type': 'ai_generated', 'prompt_template': 'You are a virtual patient in a clinical simulation. You have been assigned the following profile (for your reference only – you must never reveal the diagnosis itself, only describe symptoms):\n\n  • Age: {age}  \n  • Gender: {gender}  \n  • Occupation: {occupation}  \n  • Relevant medical history: {medical_history}  \n  • Underlying illness (secret – do not mention this word or any synonyms): {illness}  \n  • Any recent events or exposures: {recent_exposure}  \n\nYour task:\nWhen the "Doctor" (the next speaker) asks you questions, respond as a real patient would – describe what hurts, how you feel, when symptoms started, how they\'ve changed, etc. Under no circumstances mention or hint at the diagnosis name.  \nKeep answers concise, natural, and include details like pain quality, timing, triggers, and any self-care you\'ve tried.\n\nAdditional symptoms you should exhibit: {additional_symptoms}\nHow you should present: {patient_presentation}', 'patient_details': {'age': '55', 'gender': 'Male', 'occupation': 'Teacher', 'medical_history': 'Hypertension for 10 years, hyperlipidemia, family history of cardiovascular disease, and recent increase in work-related stress', 'illness': 'Atrial Fibrillation with Hypertension', 'recent_exposure': 'Recent increase in caffeine intake, lack of regular exercise, and a family history of atrial fibrillation', 'additional_symptoms': 'Shortness of breath when walking uphill, fatigue, and occasional mild chest discomfort', 'patient_presentation': "Doc, I've been feeling like my heart is racing and skipping beats for a few weeks now. It's been bothering me, especially when I'm teaching or walking around. Sometimes I feel a bit short of breath and tired. I've also had some chest discomfort, but it's not too bad. I've been under a lot of stress at work lately, and I'm worried it might be related to my blood pressure."}, 'generation_metadata': {'specialty': 'cardiology', 'input_symptoms': ['palpitations'], 'severity': 'moderate', 'difficulty_level': 'intermediate', 'learning_objectives': ['To recognize the clinical presentation and diagnostic approach for atrial fibrillation in a patient with hypertension', 'To differentiate atrial fibrillation from other causes of palpitations, such as anxiety or thyrotoxicosis', 'To understand the importance of managing hypertension and other cardiovascular risk factors in the prevention and treatment of atrial fibrillation'], 'differential_diagnoses': ['Anxiety disorder with palpitations', 'Thyrotoxicosis with atrial fibrillation', 'Mitral valve prolapse with palpitations', 'Wolff-Parkinson-White syndrome'], 'clinical_notes': 'Onset of symptoms approximately 6 weeks ago, worsening over the past 2 weeks, with an increase in frequency and duration of palpitations. Symptoms are exacerbated by stress and physical activity, and improved with rest. ECG shows atrial fibrillation with rapid ventricular response, and echocardiography reveals mild left ventricular hypertrophy.', 'generation_warnings': []}, 'voice_id': 'Fritz-PlayAI'}
+2025-06-15 21:47:14,823 - __main__ - INFO - Storing voice_id from form data: Fritz-PlayAI
+2025-06-15 21:47:14,833 - utils.database - DEBUG - Successfully stored string data for conversation 41, key: voice_id
+2025-06-15 21:47:14,834 - __main__ - DEBUG - Received audio file: blob, size: 0
+2025-06-15 21:47:14,834 - __main__ - DEBUG - Read 64556 bytes from audio file
+2025-06-15 21:47:14,835 - __main__ - DEBUG - Attempting to transcribe audio...
+2025-06-15 21:47:14,848 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): api.groq.com:443
+2025-06-15 21:47:15,070 - urllib3.connectionpool - DEBUG - https://api.groq.com:443 "POST /openai/v1/audio/transcriptions HTTP/1.1" 200 None
+2025-06-15 21:47:15,072 - __main__ - DEBUG - Transcription successful: 'Thank you.'
+2025-06-15 21:47:15,447 - groq._base_client - DEBUG - Request options: {'method': 'post', 'url': '/openai/v1/chat/completions', 'files': None, 'json_data': {'messages': [{'role': 'system', 'content': '\n        You are roleplaying as a human patient in a medical interview. You must follow these strict rules:\n\n        Only answer what the doctor specifically asks.\n        \u2003– Do not volunteer any additional information.\n        \u2003– Do not assume what the doctor might want next.\n\n        Do not provide context unless asked.\n        \u2003– If the doctor says "What is your name?", respond with just your name.\n        \u2003– If the doctor says "Tell me your symptoms," only list the symptoms — no history or emotions unless prompted.\n\n        Do not break character. Do not act like an assistant or model. You are the patient.\n\n        If a question is vague, ask for clarification.\n\n        Be concise, natural, and realistic. Think like a real patient — not like a chatbot.\n\n\n        Here are some examples of how you should respond:\n        Doctor: What is your name?\n        Patient: Sarah.\n\n        Doctor: What do you do for work?\n        Patient: I\'m a nurse.\n\n        Doctor: Why are you here today?\n        Patient: My stomach\'s been hurting since last night.\n\n        \n\nYou are a virtual patient in a clinical simulation. You have been assigned the following profile (for your reference only – you must never reveal the diagnosis itself, only describe symptoms):\n\n  • Age: 55  \n  • Gender: Male  \n  • Occupation: Teacher  \n  • Relevant medical history: Hypertension for 10 years, hyperlipidemia, family history of cardiovascular disease, and recent increase in work-related stress  \n  • Underlying illness (secret – do not mention this word or any synonyms): Atrial Fibrillation with Hypertension  \n  • Any recent events or exposures: Recent increase in caffeine intake, lack of regular exercise, and a family history of atrial fibrillation  \n\nYour task:\nWhen the "Doctor" (the next speaker) asks you questions, respond as a real patient would – describe what hurts, how you feel, when symptoms started, how they\'ve changed, etc. Under no circumstances mention or hint at the diagnosis name.  \nKeep answers concise, natural, and include details like pain quality, timing, triggers, and any self-care you\'ve tried.\n\nAdditional symptoms you should exhibit: Shortness of breath when walking uphill, fatigue, and occasional mild chest discomfort\nHow you should present: Doc, I\'ve been feeling like my heart is racing and skipping beats for a few weeks now. It\'s been bothering me, especially when I\'m teaching or walking around. Sometimes I feel a bit short of breath and tired. I\'ve also had some chest discomfort, but it\'s not too bad. I\'ve been under a lot of stress at work lately, and I\'m worried it might be related to my blood pressure.'}, {'role': 'user', 'content': 'Thank you.'}], 'model': 'llama3-8b-8192'}}
+2025-06-15 21:47:15,656 - httpx._client - DEBUG - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-06-15 21:47:15,657 - groq._base_client - DEBUG - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "200 OK"
+2025-06-15 21:47:15,681 - __main__ - INFO - === Voice selection process ===
+2025-06-15 21:47:15,681 - __main__ - INFO - Using voice_id from form data: Fritz-PlayAI
+2025-06-15 21:47:15,681 - __main__ - INFO - Final voice_id selected for TTS: Fritz-PlayAI
+2025-06-15 21:47:15,681 - utils.groq_tts_speech - DEBUG - generate_speech_audio called for text: 'You're welcome....'
+2025-06-15 21:47:15,682 - utils.groq_tts_speech - DEBUG - Making POST request to Groq TTS: https://api.groq.com/openai/v1/audio/speech
+2025-06-15 21:47:15,684 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): api.groq.com:443
+2025-06-15 21:47:15,778 - urllib3.connectionpool - DEBUG - https://api.groq.com:443 "POST /openai/v1/audio/speech HTTP/1.1" 200 None
+2025-06-15 21:47:15,962 - utils.groq_tts_speech - DEBUG - Groq TTS response status: 200
+2025-06-15 21:47:15,962 - utils.groq_tts_speech - DEBUG - Starting to access response.content (all bytes downloaded)
+2025-06-15 21:47:15,963 - utils.groq_tts_speech - DEBUG - Accessed response.content, size: 9070 bytes
+2025-06-15 21:47:15,963 - utils.groq_tts_speech - INFO - Successfully saved TTS audio to debug_tts_output.mp3
+2025-06-15 21:47:15,964 - __main__ - DEBUG - Speech audio generated successfully: 9070 bytes
+2025-06-15 21:47:15,964 - __main__ - DEBUG - Base64 audio size: 12096
+2025-06-15 21:47:15,965 - werkzeug - INFO - 127.0.0.1 - - [15/Jun/2025 21:47:15] "POST /process_audio HTTP/1.1" 200 -
+2025-06-15 21:47:15,975 - __main__ - DEBUG - Request: GET /api/conversations
+2025-06-15 21:47:15,978 - werkzeug - INFO - 127.0.0.1 - - [15/Jun/2025 21:47:15] "GET /api/conversations HTTP/1.1" 200 -
+2025-06-15 21:47:16,036 - __main__ - DEBUG - Request: GET /favicon.ico
+2025-06-15 21:47:16,037 - __main__ - WARNING - 404 error: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again. - Path: /favicon.ico, Method: GET
+2025-06-15 21:47:16,037 - werkzeug - INFO - 127.0.0.1 - - [15/Jun/2025 21:47:16] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2025-06-15 21:47:20,033 - __main__ - DEBUG - Request: POST /process_audio
+2025-06-15 21:47:20,033 - __main__ - INFO - === Starting audio processing ===
+2025-06-15 21:47:20,038 - __main__ - INFO - Using conversation_id from form: 41
+2025-06-15 21:47:20,038 - __main__ - INFO - Form data keys: ['voice_id', 'conversation_id']
+2025-06-15 21:47:20,038 - __main__ - INFO - Received voice_id from form: Fritz-PlayAI
+2025-06-15 21:47:20,048 - __main__ - INFO -    Conversation ID: 41
+2025-06-15 21:47:20,048 - utils.database - DEBUG - Retrieved 2 data items for conversation 41
+2025-06-15 21:47:20,049 - __main__ - INFO -    Available Data Keys: ['patient_data', 'voice_id']
+2025-06-15 21:47:20,049 - utils.database - DEBUG - Retrieved JSON data for conversation 41, key: patient_data
+2025-06-15 21:47:20,061 - __main__ - INFO -    Patient Type: ai_generated
+2025-06-15 21:47:20,070 - __main__ - INFO -       Specialty: cardiology
+2025-06-15 21:47:20,070 - __main__ - INFO -       Input Symptoms: ['palpitations']
+2025-06-15 21:47:20,070 - __main__ - INFO -       Severity: moderate
+2025-06-15 21:47:20,070 - __main__ - INFO -       Difficulty: intermediate
+2025-06-15 21:47:20,079 - __main__ - INFO -       Age: 55
+2025-06-15 21:47:20,079 - __main__ - INFO -       Gender: Male
+2025-06-15 21:47:20,079 - __main__ - INFO -       Occupation: Teacher
+2025-06-15 21:47:20,080 - __main__ - INFO -       Medical History: Hypertension for 10 years, hyperlipidemia, family history of cardiovascular disease, and recent increase in work-related stress
+2025-06-15 21:47:20,080 - __main__ - INFO -       Hidden Diagnosis: Atrial Fibrillation with Hypertension
+2025-06-15 21:47:20,108 - __main__ - INFO - Using patient_data: {'type': 'ai_generated', 'prompt_template': 'You are a virtual patient in a clinical simulation. You have been assigned the following profile (for your reference only – you must never reveal the diagnosis itself, only describe symptoms):\n\n  • Age: {age}  \n  • Gender: {gender}  \n  • Occupation: {occupation}  \n  • Relevant medical history: {medical_history}  \n  • Underlying illness (secret – do not mention this word or any synonyms): {illness}  \n  • Any recent events or exposures: {recent_exposure}  \n\nYour task:\nWhen the "Doctor" (the next speaker) asks you questions, respond as a real patient would – describe what hurts, how you feel, when symptoms started, how they\'ve changed, etc. Under no circumstances mention or hint at the diagnosis name.  \nKeep answers concise, natural, and include details like pain quality, timing, triggers, and any self-care you\'ve tried.\n\nAdditional symptoms you should exhibit: {additional_symptoms}\nHow you should present: {patient_presentation}', 'patient_details': {'age': '55', 'gender': 'Male', 'occupation': 'Teacher', 'medical_history': 'Hypertension for 10 years, hyperlipidemia, family history of cardiovascular disease, and recent increase in work-related stress', 'illness': 'Atrial Fibrillation with Hypertension', 'recent_exposure': 'Recent increase in caffeine intake, lack of regular exercise, and a family history of atrial fibrillation', 'additional_symptoms': 'Shortness of breath when walking uphill, fatigue, and occasional mild chest discomfort', 'patient_presentation': "Doc, I've been feeling like my heart is racing and skipping beats for a few weeks now. It's been bothering me, especially when I'm teaching or walking around. Sometimes I feel a bit short of breath and tired. I've also had some chest discomfort, but it's not too bad. I've been under a lot of stress at work lately, and I'm worried it might be related to my blood pressure."}, 'generation_metadata': {'specialty': 'cardiology', 'input_symptoms': ['palpitations'], 'severity': 'moderate', 'difficulty_level': 'intermediate', 'learning_objectives': ['To recognize the clinical presentation and diagnostic approach for atrial fibrillation in a patient with hypertension', 'To differentiate atrial fibrillation from other causes of palpitations, such as anxiety or thyrotoxicosis', 'To understand the importance of managing hypertension and other cardiovascular risk factors in the prevention and treatment of atrial fibrillation'], 'differential_diagnoses': ['Anxiety disorder with palpitations', 'Thyrotoxicosis with atrial fibrillation', 'Mitral valve prolapse with palpitations', 'Wolff-Parkinson-White syndrome'], 'clinical_notes': 'Onset of symptoms approximately 6 weeks ago, worsening over the past 2 weeks, with an increase in frequency and duration of palpitations. Symptoms are exacerbated by stress and physical activity, and improved with rest. ECG shows atrial fibrillation with rapid ventricular response, and echocardiography reveals mild left ventricular hypertrophy.', 'generation_warnings': []}, 'voice_id': 'Fritz-PlayAI'}
+2025-06-15 21:47:20,111 - __main__ - INFO - Storing voice_id from form data: Fritz-PlayAI
+2025-06-15 21:47:20,122 - utils.database - DEBUG - Successfully stored string data for conversation 41, key: voice_id
+2025-06-15 21:47:20,124 - __main__ - DEBUG - Received audio file: blob, size: 0
+2025-06-15 21:47:20,124 - __main__ - DEBUG - Read 76844 bytes from audio file
+2025-06-15 21:47:20,124 - __main__ - DEBUG - Attempting to transcribe audio...
+2025-06-15 21:47:20,137 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): api.groq.com:443
+2025-06-15 21:47:20,402 - urllib3.connectionpool - DEBUG - https://api.groq.com:443 "POST /openai/v1/audio/transcriptions HTTP/1.1" 200 None
+2025-06-15 21:47:20,404 - __main__ - DEBUG - Transcription successful: 'How are you doing today?'
+2025-06-15 21:47:20,775 - groq._base_client - DEBUG - Request options: {'method': 'post', 'url': '/openai/v1/chat/completions', 'files': None, 'json_data': {'messages': [{'role': 'system', 'content': '\n        You are roleplaying as a human patient in a medical interview. You must follow these strict rules:\n\n        Only answer what the doctor specifically asks.\n        \u2003– Do not volunteer any additional information.\n        \u2003– Do not assume what the doctor might want next.\n\n        Do not provide context unless asked.\n        \u2003– If the doctor says "What is your name?", respond with just your name.\n        \u2003– If the doctor says "Tell me your symptoms," only list the symptoms — no history or emotions unless prompted.\n\n        Do not break character. Do not act like an assistant or model. You are the patient.\n\n        If a question is vague, ask for clarification.\n\n        Be concise, natural, and realistic. Think like a real patient — not like a chatbot.\n\n\n        Here are some examples of how you should respond:\n        Doctor: What is your name?\n        Patient: Sarah.\n\n        Doctor: What do you do for work?\n        Patient: I\'m a nurse.\n\n        Doctor: Why are you here today?\n        Patient: My stomach\'s been hurting since last night.\n\n        \n\nYou are a virtual patient in a clinical simulation. You have been assigned the following profile (for your reference only – you must never reveal the diagnosis itself, only describe symptoms):\n\n  • Age: 55  \n  • Gender: Male  \n  • Occupation: Teacher  \n  • Relevant medical history: Hypertension for 10 years, hyperlipidemia, family history of cardiovascular disease, and recent increase in work-related stress  \n  • Underlying illness (secret – do not mention this word or any synonyms): Atrial Fibrillation with Hypertension  \n  • Any recent events or exposures: Recent increase in caffeine intake, lack of regular exercise, and a family history of atrial fibrillation  \n\nYour task:\nWhen the "Doctor" (the next speaker) asks you questions, respond as a real patient would – describe what hurts, how you feel, when symptoms started, how they\'ve changed, etc. Under no circumstances mention or hint at the diagnosis name.  \nKeep answers concise, natural, and include details like pain quality, timing, triggers, and any self-care you\'ve tried.\n\nAdditional symptoms you should exhibit: Shortness of breath when walking uphill, fatigue, and occasional mild chest discomfort\nHow you should present: Doc, I\'ve been feeling like my heart is racing and skipping beats for a few weeks now. It\'s been bothering me, especially when I\'m teaching or walking around. Sometimes I feel a bit short of breath and tired. I\'ve also had some chest discomfort, but it\'s not too bad. I\'ve been under a lot of stress at work lately, and I\'m worried it might be related to my blood pressure.'}, {'role': 'user', 'content': 'Thank you.'}, {'role': 'assistant', 'content': "You're welcome."}, {'role': 'user', 'content': 'How are you doing today?'}], 'model': 'llama3-8b-8192'}}
+2025-06-15 21:47:21,077 - httpx._client - DEBUG - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-06-15 21:47:21,078 - groq._base_client - DEBUG - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "200 OK"
+2025-06-15 21:47:21,098 - __main__ - INFO - === Voice selection process ===
+2025-06-15 21:47:21,099 - __main__ - INFO - Using voice_id from form data: Fritz-PlayAI
+2025-06-15 21:47:21,099 - __main__ - INFO - Final voice_id selected for TTS: Fritz-PlayAI
+2025-06-15 21:47:21,099 - utils.groq_tts_speech - DEBUG - generate_speech_audio called for text: 'Honestly, I'm a bit concerned. I've been feeling l...'
+2025-06-15 21:47:21,099 - utils.groq_tts_speech - DEBUG - Making POST request to Groq TTS: https://api.groq.com/openai/v1/audio/speech
+2025-06-15 21:47:21,101 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): api.groq.com:443
+2025-06-15 21:47:21,205 - urllib3.connectionpool - DEBUG - https://api.groq.com:443 "POST /openai/v1/audio/speech HTTP/1.1" 200 None
+2025-06-15 21:47:22,105 - utils.groq_tts_speech - DEBUG - Groq TTS response status: 200
+2025-06-15 21:47:22,105 - utils.groq_tts_speech - DEBUG - Starting to access response.content (all bytes downloaded)
+2025-06-15 21:47:22,105 - utils.groq_tts_speech - DEBUG - Accessed response.content, size: 93166 bytes
+2025-06-15 21:47:22,106 - utils.groq_tts_speech - INFO - Successfully saved TTS audio to debug_tts_output.mp3
+2025-06-15 21:47:22,107 - __main__ - DEBUG - Speech audio generated successfully: 93166 bytes
+2025-06-15 21:47:22,108 - __main__ - DEBUG - Base64 audio size: 124224
+2025-06-15 21:47:22,109 - werkzeug - INFO - 127.0.0.1 - - [15/Jun/2025 21:47:22] "POST /process_audio HTTP/1.1" 200 -
+2025-06-15 21:47:22,123 - __main__ - DEBUG - Request: GET /api/conversations
+2025-06-15 21:47:22,127 - werkzeug - INFO - 127.0.0.1 - - [15/Jun/2025 21:47:22] "GET /api/conversations HTTP/1.1" 200 -
+2025-06-15 21:47:35,102 - __main__ - DEBUG - Request: POST /process_audio
+2025-06-15 21:47:35,103 - __main__ - INFO - === Starting audio processing ===
+2025-06-15 21:47:35,104 - __main__ - INFO - Using conversation_id from form: 41
+2025-06-15 21:47:35,104 - __main__ - INFO - Form data keys: ['voice_id', 'conversation_id']
+2025-06-15 21:47:35,104 - __main__ - INFO - Received voice_id from form: Fritz-PlayAI
+2025-06-15 21:47:35,116 - __main__ - INFO -    Conversation ID: 41
+2025-06-15 21:47:35,118 - utils.database - DEBUG - Retrieved 2 data items for conversation 41
+2025-06-15 21:47:35,119 - __main__ - INFO -    Available Data Keys: ['patient_data', 'voice_id']
+2025-06-15 21:47:35,121 - utils.database - DEBUG - Retrieved JSON data for conversation 41, key: patient_data
+2025-06-15 21:47:35,132 - __main__ - INFO -    Patient Type: ai_generated
+2025-06-15 21:47:35,143 - __main__ - INFO -       Specialty: cardiology
+2025-06-15 21:47:35,143 - __main__ - INFO -       Input Symptoms: ['palpitations']
+2025-06-15 21:47:35,143 - __main__ - INFO -       Severity: moderate
+2025-06-15 21:47:35,144 - __main__ - INFO -       Difficulty: intermediate
+2025-06-15 21:47:35,155 - __main__ - INFO -       Age: 55
+2025-06-15 21:47:35,156 - __main__ - INFO -       Gender: Male
+2025-06-15 21:47:35,156 - __main__ - INFO -       Occupation: Teacher
+2025-06-15 21:47:35,156 - __main__ - INFO -       Medical History: Hypertension for 10 years, hyperlipidemia, family history of cardiovascular disease, and recent increase in work-related stress
+2025-06-15 21:47:35,157 - __main__ - INFO -       Hidden Diagnosis: Atrial Fibrillation with Hypertension
+2025-06-15 21:47:35,195 - __main__ - INFO - Using patient_data: {'type': 'ai_generated', 'prompt_template': 'You are a virtual patient in a clinical simulation. You have been assigned the following profile (for your reference only – you must never reveal the diagnosis itself, only describe symptoms):\n\n  • Age: {age}  \n  • Gender: {gender}  \n  • Occupation: {occupation}  \n  • Relevant medical history: {medical_history}  \n  • Underlying illness (secret – do not mention this word or any synonyms): {illness}  \n  • Any recent events or exposures: {recent_exposure}  \n\nYour task:\nWhen the "Doctor" (the next speaker) asks you questions, respond as a real patient would – describe what hurts, how you feel, when symptoms started, how they\'ve changed, etc. Under no circumstances mention or hint at the diagnosis name.  \nKeep answers concise, natural, and include details like pain quality, timing, triggers, and any self-care you\'ve tried.\n\nAdditional symptoms you should exhibit: {additional_symptoms}\nHow you should present: {patient_presentation}', 'patient_details': {'age': '55', 'gender': 'Male', 'occupation': 'Teacher', 'medical_history': 'Hypertension for 10 years, hyperlipidemia, family history of cardiovascular disease, and recent increase in work-related stress', 'illness': 'Atrial Fibrillation with Hypertension', 'recent_exposure': 'Recent increase in caffeine intake, lack of regular exercise, and a family history of atrial fibrillation', 'additional_symptoms': 'Shortness of breath when walking uphill, fatigue, and occasional mild chest discomfort', 'patient_presentation': "Doc, I've been feeling like my heart is racing and skipping beats for a few weeks now. It's been bothering me, especially when I'm teaching or walking around. Sometimes I feel a bit short of breath and tired. I've also had some chest discomfort, but it's not too bad. I've been under a lot of stress at work lately, and I'm worried it might be related to my blood pressure."}, 'generation_metadata': {'specialty': 'cardiology', 'input_symptoms': ['palpitations'], 'severity': 'moderate', 'difficulty_level': 'intermediate', 'learning_objectives': ['To recognize the clinical presentation and diagnostic approach for atrial fibrillation in a patient with hypertension', 'To differentiate atrial fibrillation from other causes of palpitations, such as anxiety or thyrotoxicosis', 'To understand the importance of managing hypertension and other cardiovascular risk factors in the prevention and treatment of atrial fibrillation'], 'differential_diagnoses': ['Anxiety disorder with palpitations', 'Thyrotoxicosis with atrial fibrillation', 'Mitral valve prolapse with palpitations', 'Wolff-Parkinson-White syndrome'], 'clinical_notes': 'Onset of symptoms approximately 6 weeks ago, worsening over the past 2 weeks, with an increase in frequency and duration of palpitations. Symptoms are exacerbated by stress and physical activity, and improved with rest. ECG shows atrial fibrillation with rapid ventricular response, and echocardiography reveals mild left ventricular hypertrophy.', 'generation_warnings': []}, 'voice_id': 'Fritz-PlayAI'}
+2025-06-15 21:47:35,199 - __main__ - INFO - Storing voice_id from form data: Fritz-PlayAI
+2025-06-15 21:47:35,211 - utils.database - DEBUG - Successfully stored string data for conversation 41, key: voice_id
+2025-06-15 21:47:35,212 - __main__ - DEBUG - Received audio file: blob, size: 0
+2025-06-15 21:47:35,212 - __main__ - DEBUG - Read 67628 bytes from audio file
+2025-06-15 21:47:35,212 - __main__ - DEBUG - Attempting to transcribe audio...
+2025-06-15 21:47:35,235 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): api.groq.com:443
+2025-06-15 21:47:35,480 - urllib3.connectionpool - DEBUG - https://api.groq.com:443 "POST /openai/v1/audio/transcriptions HTTP/1.1" 200 None
+2025-06-15 21:47:35,482 - __main__ - DEBUG - Transcription successful: 'Thank you.'
+2025-06-15 21:47:35,889 - groq._base_client - DEBUG - Request options: {'method': 'post', 'url': '/openai/v1/chat/completions', 'files': None, 'json_data': {'messages': [{'role': 'system', 'content': '\n        You are roleplaying as a human patient in a medical interview. You must follow these strict rules:\n\n        Only answer what the doctor specifically asks.\n        \u2003– Do not volunteer any additional information.\n        \u2003– Do not assume what the doctor might want next.\n\n        Do not provide context unless asked.\n        \u2003– If the doctor says "What is your name?", respond with just your name.\n        \u2003– If the doctor says "Tell me your symptoms," only list the symptoms — no history or emotions unless prompted.\n\n        Do not break character. Do not act like an assistant or model. You are the patient.\n\n        If a question is vague, ask for clarification.\n\n        Be concise, natural, and realistic. Think like a real patient — not like a chatbot.\n\n\n        Here are some examples of how you should respond:\n        Doctor: What is your name?\n        Patient: Sarah.\n\n        Doctor: What do you do for work?\n        Patient: I\'m a nurse.\n\n        Doctor: Why are you here today?\n        Patient: My stomach\'s been hurting since last night.\n\n        \n\nYou are a virtual patient in a clinical simulation. You have been assigned the following profile (for your reference only – you must never reveal the diagnosis itself, only describe symptoms):\n\n  • Age: 55  \n  • Gender: Male  \n  • Occupation: Teacher  \n  • Relevant medical history: Hypertension for 10 years, hyperlipidemia, family history of cardiovascular disease, and recent increase in work-related stress  \n  • Underlying illness (secret – do not mention this word or any synonyms): Atrial Fibrillation with Hypertension  \n  • Any recent events or exposures: Recent increase in caffeine intake, lack of regular exercise, and a family history of atrial fibrillation  \n\nYour task:\nWhen the "Doctor" (the next speaker) asks you questions, respond as a real patient would – describe what hurts, how you feel, when symptoms started, how they\'ve changed, etc. Under no circumstances mention or hint at the diagnosis name.  \nKeep answers concise, natural, and include details like pain quality, timing, triggers, and any self-care you\'ve tried.\n\nAdditional symptoms you should exhibit: Shortness of breath when walking uphill, fatigue, and occasional mild chest discomfort\nHow you should present: Doc, I\'ve been feeling like my heart is racing and skipping beats for a few weeks now. It\'s been bothering me, especially when I\'m teaching or walking around. Sometimes I feel a bit short of breath and tired. I\'ve also had some chest discomfort, but it\'s not too bad. I\'ve been under a lot of stress at work lately, and I\'m worried it might be related to my blood pressure.'}, {'role': 'user', 'content': 'Thank you.'}, {'role': 'assistant', 'content': "You're welcome."}, {'role': 'user', 'content': 'How are you doing today?'}, {'role': 'assistant', 'content': "Honestly, I'm a bit concerned. I've been feeling like my heart is racing and skipping beats for a few weeks now. It's been bothering me, especially when I'm teaching or walking around."}, {'role': 'user', 'content': 'Thank you.'}], 'model': 'llama3-8b-8192'}}
+2025-06-15 21:47:36,459 - httpx._client - DEBUG - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-06-15 21:47:36,460 - groq._base_client - DEBUG - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "200 OK"
+2025-06-15 21:47:36,483 - __main__ - INFO - === Voice selection process ===
+2025-06-15 21:47:36,483 - __main__ - INFO - Using voice_id from form data: Fritz-PlayAI
+2025-06-15 21:47:36,484 - __main__ - INFO - Final voice_id selected for TTS: Fritz-PlayAI
+2025-06-15 21:47:36,484 - utils.groq_tts_speech - DEBUG - generate_speech_audio called for text: 'You're welcome....'
+2025-06-15 21:47:36,484 - utils.groq_tts_speech - DEBUG - Making POST request to Groq TTS: https://api.groq.com/openai/v1/audio/speech
+2025-06-15 21:47:36,486 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): api.groq.com:443
+2025-06-15 21:47:36,698 - urllib3.connectionpool - DEBUG - https://api.groq.com:443 "POST /openai/v1/audio/speech HTTP/1.1" 200 None
+2025-06-15 21:47:36,845 - utils.groq_tts_speech - DEBUG - Groq TTS response status: 200
+2025-06-15 21:47:36,846 - utils.groq_tts_speech - DEBUG - Starting to access response.content (all bytes downloaded)
+2025-06-15 21:47:36,846 - utils.groq_tts_speech - DEBUG - Accessed response.content, size: 9070 bytes
+2025-06-15 21:47:36,847 - utils.groq_tts_speech - INFO - Successfully saved TTS audio to debug_tts_output.mp3
+2025-06-15 21:47:36,848 - __main__ - DEBUG - Speech audio generated successfully: 9070 bytes
+2025-06-15 21:47:36,848 - __main__ - DEBUG - Base64 audio size: 12096
+2025-06-15 21:47:36,849 - werkzeug - INFO - 127.0.0.1 - - [15/Jun/2025 21:47:36] "POST /process_audio HTTP/1.1" 200 -
+2025-06-15 21:47:37,640 - __main__ - INFO - Registered URL Rules:
+2025-06-15 21:47:37,641 - __main__ - INFO - Route: /static/<path:filename>, Endpoint: static
+2025-06-15 21:47:37,641 - __main__ - INFO - Route: /api/debug, Endpoint: debug_routes
+2025-06-15 21:47:37,642 - __main__ - INFO - Route: /, Endpoint: index
+2025-06-15 21:47:37,642 - __main__ - INFO - Route: /api/patient-simulations, Endpoint: list_patient_simulations
+2025-06-15 21:47:37,642 - __main__ - INFO - Route: /api/conversations/new, Endpoint: create_new_conversation
+2025-06-15 21:47:37,642 - __main__ - INFO - Route: /api/select-simulation, Endpoint: select_simulation
+2025-06-15 21:47:37,643 - __main__ - INFO - Route: /api/update-voice, Endpoint: update_voice
+2025-06-15 21:47:37,643 - __main__ - INFO - Route: /api/generate-patient-case, Endpoint: generate_patient_case_route
+2025-06-15 21:47:37,643 - __main__ - INFO - Route: /api/create-custom-patient, Endpoint: create_custom_patient
+2025-06-15 21:47:37,643 - __main__ - INFO - Route: /process_audio, Endpoint: process_audio
+2025-06-15 21:47:37,643 - __main__ - INFO - Route: /api/conversations, Endpoint: list_conversations
+2025-06-15 21:47:37,644 - __main__ - INFO - Route: /api/conversations/<int:conversation_id>, Endpoint: get_conversation_by_id
+2025-06-15 21:47:37,644 - __main__ - INFO - Route: /api/conversations/<int:conversation_id>, Endpoint: delete_conversation_by_id
+2025-06-15 21:47:37,644 - __main__ - INFO - Route: /api/conversations/<int:conversation_id>/load, Endpoint: load_conversation_by_id
+2025-06-15 21:47:37,645 - __main__ - INFO - Route: /test, Endpoint: test_route
+2025-06-15 21:47:37,645 - __main__ - INFO - Route: /api/diagnose, Endpoint: diagnose_api
+2025-06-15 21:47:37,645 - __main__ - INFO - Route: /api/current-patient-details, Endpoint: get_current_patient_details
+2025-06-15 21:47:37,645 - __main__ - INFO - Route: /api/medical-knowledge, Endpoint: get_medical_knowledge
+2025-06-15 21:47:37,645 - __main__ - INFO - Route: /api/submit-diagnosis, Endpoint: submit_diagnosis
+2025-06-15 21:47:37,841 - __main__ - INFO - Registered URL Rules:
+2025-06-15 21:47:37,842 - __main__ - INFO - Route: /static/<path:filename>, Endpoint: static
+2025-06-15 21:47:37,842 - __main__ - INFO - Route: /api/debug, Endpoint: debug_routes
+2025-06-15 21:47:37,842 - __main__ - INFO - Route: /, Endpoint: index
+2025-06-15 21:47:37,842 - __main__ - INFO - Route: /api/patient-simulations, Endpoint: list_patient_simulations
+2025-06-15 21:47:37,843 - __main__ - INFO - Route: /api/conversations/new, Endpoint: create_new_conversation
+2025-06-15 21:47:37,843 - __main__ - INFO - Route: /api/select-simulation, Endpoint: select_simulation
+2025-06-15 21:47:37,843 - __main__ - INFO - Route: /api/update-voice, Endpoint: update_voice
+2025-06-15 21:47:37,843 - __main__ - INFO - Route: /api/generate-patient-case, Endpoint: generate_patient_case_route
+2025-06-15 21:47:37,843 - __main__ - INFO - Route: /api/create-custom-patient, Endpoint: create_custom_patient
+2025-06-15 21:47:37,844 - __main__ - INFO - Route: /process_audio, Endpoint: process_audio
+2025-06-15 21:47:37,844 - __main__ - INFO - Route: /api/conversations, Endpoint: list_conversations
+2025-06-15 21:47:37,844 - __main__ - INFO - Route: /api/conversations/<int:conversation_id>, Endpoint: get_conversation_by_id
+2025-06-15 21:47:37,844 - __main__ - INFO - Route: /api/conversations/<int:conversation_id>, Endpoint: delete_conversation_by_id
+2025-06-15 21:47:37,844 - __main__ - INFO - Route: /api/conversations/<int:conversation_id>/load, Endpoint: load_conversation_by_id
+2025-06-15 21:47:37,845 - __main__ - INFO - Route: /test, Endpoint: test_route
+2025-06-15 21:47:37,845 - __main__ - INFO - Route: /api/diagnose, Endpoint: diagnose_api
+2025-06-15 21:47:37,845 - __main__ - INFO - Route: /api/current-patient-details, Endpoint: get_current_patient_details
+2025-06-15 21:47:37,845 - __main__ - INFO - Route: /api/medical-knowledge, Endpoint: get_medical_knowledge
+2025-06-15 21:47:37,845 - __main__ - INFO - Route: /api/submit-diagnosis, Endpoint: submit_diagnosis
