@@ -19433,3 +19433,408 @@ PATIENT DEMOGRAPHICS:
 2025-06-15 22:16:14,950 - __main__ - INFO - Route: /api/current-patient-details, Endpoint: get_current_patient_details
 2025-06-15 22:16:14,950 - __main__ - INFO - Route: /api/medical-knowledge, Endpoint: get_medical_knowledge
 2025-06-15 22:16:14,950 - __main__ - INFO - Route: /api/submit-diagnosis, Endpoint: submit_diagnosis
+2025-06-15 22:21:58,249 - utils.database - INFO - Current database version: 2, Target version: 2
+2025-06-15 22:21:58,249 - utils.database - INFO - Database initialized successfully
+2025-06-15 22:21:58,254 - utils.medical_validation - INFO - Successfully loaded medical knowledge from E:\Doctor Simulation\DoctorSimulation\medical_knowledge.json
+2025-06-15 22:21:58,255 - utils.medical_validation - INFO - MedicalValidationSystem initialized with 7 specialties and 43 symptoms
+2025-06-15 22:21:58,256 - utils.ai_case_generator - INFO - Medical validation system initialized successfully
+2025-06-15 22:21:58,260 - utils.database - INFO - Current database version: 2, Target version: 2
+2025-06-15 22:21:58,261 - utils.database - INFO - Database initialized successfully
+2025-06-15 22:21:58,270 - __main__ - INFO - GROQ_API_KEY found - length: 56
+2025-06-15 22:21:58,270 - __main__ - INFO - Starting Flask app on 0.0.0.0:5000
+2025-06-15 22:21:58,326 - werkzeug - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.1.100:5000
+2025-06-15 22:21:58,327 - werkzeug - INFO - [33mPress CTRL+C to quit[0m
+2025-06-15 22:21:58,329 - werkzeug - INFO -  * Restarting with stat
+2025-06-15 22:22:00,282 - utils.database - INFO - Current database version: 2, Target version: 2
+2025-06-15 22:22:00,283 - utils.database - INFO - Database initialized successfully
+2025-06-15 22:22:00,290 - utils.medical_validation - INFO - Successfully loaded medical knowledge from E:\Doctor Simulation\DoctorSimulation\medical_knowledge.json
+2025-06-15 22:22:00,291 - utils.medical_validation - INFO - MedicalValidationSystem initialized with 7 specialties and 43 symptoms
+2025-06-15 22:22:00,291 - utils.ai_case_generator - INFO - Medical validation system initialized successfully
+2025-06-15 22:22:00,294 - utils.database - INFO - Current database version: 2, Target version: 2
+2025-06-15 22:22:00,294 - utils.database - INFO - Database initialized successfully
+2025-06-15 22:22:00,301 - __main__ - INFO - GROQ_API_KEY found - length: 56
+2025-06-15 22:22:00,301 - __main__ - INFO - Starting Flask app on 0.0.0.0:5000
+2025-06-15 22:22:00,334 - werkzeug - WARNING -  * Debugger is active!
+2025-06-15 22:22:00,346 - werkzeug - INFO -  * Debugger PIN: 537-489-708
+2025-06-15 22:22:01,166 - __main__ - DEBUG - Request: GET /
+2025-06-15 22:22:01,166 - __main__ - INFO - Serving index page
+2025-06-15 22:22:01,178 - werkzeug - INFO - 127.0.0.1 - - [15/Jun/2025 22:22:01] "GET / HTTP/1.1" 200 -
+2025-06-15 22:22:01,262 - __main__ - DEBUG - Request: GET /static/css/style.css
+2025-06-15 22:22:01,263 - __main__ - DEBUG - Request: GET /static/vad-model/ort.min.js
+2025-06-15 22:22:01,264 - __main__ - DEBUG - Request: GET /static/vad-model/bundle.min.js
+2025-06-15 22:22:01,265 - __main__ - DEBUG - Request: GET /static/js/main.js
+2025-06-15 22:22:01,266 - __main__ - DEBUG - Request: GET /.well-known/appspecific/com.chrome.devtools.json
+2025-06-15 22:22:01,268 - werkzeug - INFO - 127.0.0.1 - - [15/Jun/2025 22:22:01] "[36mGET /static/css/style.css HTTP/1.1[0m" 304 -
+2025-06-15 22:22:01,271 - werkzeug - INFO - 127.0.0.1 - - [15/Jun/2025 22:22:01] "[36mGET /static/vad-model/ort.min.js HTTP/1.1[0m" 304 -
+2025-06-15 22:22:01,273 - werkzeug - INFO - 127.0.0.1 - - [15/Jun/2025 22:22:01] "[36mGET /static/vad-model/bundle.min.js HTTP/1.1[0m" 304 -
+2025-06-15 22:22:01,274 - __main__ - WARNING - 404 error: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again. - Path: /.well-known/appspecific/com.chrome.devtools.json, Method: GET
+2025-06-15 22:22:01,275 - werkzeug - INFO - 127.0.0.1 - - [15/Jun/2025 22:22:01] "GET /static/js/main.js HTTP/1.1" 200 -
+2025-06-15 22:22:01,278 - werkzeug - INFO - 127.0.0.1 - - [15/Jun/2025 22:22:01] "[33mGET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1[0m" 404 -
+2025-06-15 22:22:01,353 - __main__ - DEBUG - Request: GET /static/vad-model/ort.min.js.map
+2025-06-15 22:22:01,360 - __main__ - WARNING - 404 error: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again. - Path: /static/vad-model/ort.min.js.map, Method: GET
+2025-06-15 22:22:01,363 - werkzeug - INFO - 127.0.0.1 - - [15/Jun/2025 22:22:01] "[33mGET /static/vad-model/ort.min.js.map HTTP/1.1[0m" 404 -
+2025-06-15 22:22:01,416 - __main__ - DEBUG - Request: GET /api/personas
+2025-06-15 22:22:01,418 - __main__ - INFO - Listing available personas
+2025-06-15 22:22:01,425 - werkzeug - INFO - 127.0.0.1 - - [15/Jun/2025 22:22:01] "GET /api/personas HTTP/1.1" 200 -
+2025-06-15 22:22:01,426 - __main__ - DEBUG - Request: GET /api/medical-knowledge
+2025-06-15 22:22:01,427 - __main__ - INFO - Calling get_all_specialties()...
+2025-06-15 22:22:01,427 - __main__ - INFO - get_all_specialties() returned type: <class 'dict'>
+2025-06-15 22:22:01,428 - __main__ - DEBUG - Processing specialty: cardiology
+2025-06-15 22:22:01,428 - __main__ - DEBUG - Processing specialty: neurology
+2025-06-15 22:22:01,428 - __main__ - DEBUG - Processing specialty: orthopedics
+2025-06-15 22:22:01,430 - __main__ - DEBUG - Processing specialty: gastroenterology
+2025-06-15 22:22:01,431 - __main__ - DEBUG - Processing specialty: respiratory
+2025-06-15 22:22:01,433 - __main__ - DEBUG - Processing specialty: dermatology
+2025-06-15 22:22:01,433 - __main__ - DEBUG - Processing specialty: emergency
+2025-06-15 22:22:01,434 - __main__ - INFO - Successfully built medical knowledge response with 7 specialties
+2025-06-15 22:22:01,435 - werkzeug - INFO - 127.0.0.1 - - [15/Jun/2025 22:22:01] "GET /api/medical-knowledge HTTP/1.1" 200 -
+2025-06-15 22:22:01,439 - __main__ - DEBUG - Request: GET /api/conversations
+2025-06-15 22:22:01,445 - werkzeug - INFO - 127.0.0.1 - - [15/Jun/2025 22:22:01] "GET /api/conversations HTTP/1.1" 200 -
+2025-06-15 22:22:01,463 - __main__ - DEBUG - Request: GET /api/medical-knowledge
+2025-06-15 22:22:01,464 - __main__ - INFO - Calling get_all_specialties()...
+2025-06-15 22:22:01,465 - __main__ - INFO - get_all_specialties() returned type: <class 'dict'>
+2025-06-15 22:22:01,466 - __main__ - DEBUG - Processing specialty: cardiology
+2025-06-15 22:22:01,466 - __main__ - DEBUG - Processing specialty: neurology
+2025-06-15 22:22:01,466 - __main__ - DEBUG - Processing specialty: orthopedics
+2025-06-15 22:22:01,467 - __main__ - DEBUG - Processing specialty: gastroenterology
+2025-06-15 22:22:01,467 - __main__ - DEBUG - Processing specialty: respiratory
+2025-06-15 22:22:01,467 - __main__ - DEBUG - Processing specialty: dermatology
+2025-06-15 22:22:01,467 - __main__ - DEBUG - Processing specialty: emergency
+2025-06-15 22:22:01,468 - __main__ - INFO - Successfully built medical knowledge response with 7 specialties
+2025-06-15 22:22:01,469 - werkzeug - INFO - 127.0.0.1 - - [15/Jun/2025 22:22:01] "GET /api/medical-knowledge HTTP/1.1" 200 -
+2025-06-15 22:22:04,089 - __main__ - DEBUG - Request: POST /api/select-persona
+2025-06-15 22:22:04,091 - __main__ - INFO - Selecting persona: mindful_philosopher
+2025-06-15 22:22:04,101 - utils.database - DEBUG - Created conversation 43: Chat with Sage - The Mindful Philosopher
+2025-06-15 22:22:04,104 - utils.database - DEBUG - Storing JSON data for conversation 43, key: persona_data
+2025-06-15 22:22:04,112 - utils.database - DEBUG - Successfully stored json data for conversation 43, key: persona_data
+2025-06-15 22:22:04,119 - utils.database - DEBUG - Successfully stored string data for conversation 43, key: voice_id
+2025-06-15 22:22:04,121 - __main__ - INFO - Created conversation 43 with persona Sage - The Mindful Philosopher
+2025-06-15 22:22:04,122 - werkzeug - INFO - 127.0.0.1 - - [15/Jun/2025 22:22:04] "POST /api/select-persona HTTP/1.1" 200 -
+2025-06-15 22:22:04,133 - __main__ - DEBUG - Request: GET /api/conversations
+2025-06-15 22:22:04,136 - werkzeug - INFO - 127.0.0.1 - - [15/Jun/2025 22:22:04] "GET /api/conversations HTTP/1.1" 200 -
+2025-06-15 22:22:06,998 - __main__ - DEBUG - Request: GET /static/vad-model/silero_vad_legacy.onnx
+2025-06-15 22:22:07,000 - werkzeug - INFO - 127.0.0.1 - - [15/Jun/2025 22:22:07] "[36mGET /static/vad-model/silero_vad_legacy.onnx HTTP/1.1[0m" 304 -
+2025-06-15 22:22:07,017 - __main__ - DEBUG - Request: GET /static/vad-model/ort-wasm-simd-threaded.jsep.mjs
+2025-06-15 22:22:07,020 - werkzeug - INFO - 127.0.0.1 - - [15/Jun/2025 22:22:07] "[36mGET /static/vad-model/ort-wasm-simd-threaded.jsep.mjs HTTP/1.1[0m" 304 -
+2025-06-15 22:22:07,033 - __main__ - DEBUG - Request: GET /static/vad-model/ort-wasm-simd-threaded.jsep.wasm
+2025-06-15 22:22:07,034 - werkzeug - INFO - 127.0.0.1 - - [15/Jun/2025 22:22:07] "[36mGET /static/vad-model/ort-wasm-simd-threaded.jsep.wasm HTTP/1.1[0m" 304 -
+2025-06-15 22:22:07,548 - __main__ - DEBUG - Request: GET /static/vad-model/vad.worklet.bundle.min.js
+2025-06-15 22:22:07,550 - werkzeug - INFO - 127.0.0.1 - - [15/Jun/2025 22:22:07] "[36mGET /static/vad-model/vad.worklet.bundle.min.js HTTP/1.1[0m" 304 -
+2025-06-15 22:22:11,027 - __main__ - DEBUG - Request: POST /process_audio
+2025-06-15 22:22:11,028 - __main__ - INFO - === Starting audio processing ===
+2025-06-15 22:22:11,032 - __main__ - INFO - Using conversation_id from form: 43
+2025-06-15 22:22:11,032 - __main__ - INFO - Form data keys: ['voice_id', 'conversation_id']
+2025-06-15 22:22:11,033 - __main__ - INFO - Received voice_id from form: Celeste-PlayAI
+2025-06-15 22:22:11,057 - __main__ - INFO -    Conversation ID: 43
+2025-06-15 22:22:11,060 - utils.database - DEBUG - Retrieved 2 data items for conversation 43
+2025-06-15 22:22:11,061 - __main__ - INFO -    Available Data Keys: ['persona_data', 'voice_id']
+2025-06-15 22:22:11,061 - utils.database - DEBUG - No data found for conversation 43, key: patient_data
+2025-06-15 22:22:11,072 - __main__ - INFO -    Conversation 43 has no associated patient simulation
+2025-06-15 22:22:11,072 - __main__ - INFO -    Other data available: ['persona_data', 'voice_id']
+2025-06-15 22:22:11,073 - __main__ - INFO -       persona_data: {'name': 'Sage - The Mindful Philosopher', 'description': 'A contemplative thinker who finds profoun...
+2025-06-15 22:22:11,074 - __main__ - INFO -       voice_id: Celeste-PlayAI
+2025-06-15 22:22:11,084 - __main__ - INFO - Using patient_data: {}
+2025-06-15 22:22:11,085 - __main__ - INFO - Storing voice_id from form data: Celeste-PlayAI
+2025-06-15 22:22:11,104 - utils.database - DEBUG - Successfully stored string data for conversation 43, key: voice_id
+2025-06-15 22:22:11,104 - __main__ - DEBUG - Received audio file: blob, size: 0
+2025-06-15 22:22:11,105 - __main__ - DEBUG - Read 86060 bytes from audio file
+2025-06-15 22:22:11,105 - __main__ - DEBUG - Attempting to transcribe audio...
+2025-06-15 22:22:11,130 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): api.groq.com:443
+2025-06-15 22:22:11,412 - urllib3.connectionpool - DEBUG - https://api.groq.com:443 "POST /openai/v1/audio/transcriptions HTTP/1.1" 200 None
+2025-06-15 22:22:11,415 - __main__ - DEBUG - Transcription successful: 'Hi, how are you doing today?'
+2025-06-15 22:22:11,419 - utils.database - DEBUG - Retrieved JSON data for conversation 43, key: persona_data
+2025-06-15 22:22:11,886 - groq._base_client - DEBUG - Request options: {'method': 'post', 'url': '/openai/v1/chat/completions', 'files': None, 'json_data': {'messages': [{'role': 'system', 'content': '\n        You are roleplaying as a human patient in a medical interview. You must follow these strict rules:\n\n        Only answer what the doctor specifically asks.\n        \u2003– Do not volunteer any additional information.\n        \u2003– Do not assume what the doctor might want next.\n\n        Do not provide context unless asked.\n        \u2003– If the doctor says "What is your name?", respond with just your name.\n        \u2003– If the doctor says "Tell me your symptoms," only list the symptoms — no history or emotions unless prompted.\n\n        Do not break character. Do not act like an assistant or model. You are the patient.\n\n        If a question is vague, ask for clarification.\n\n        Be concise, natural, and realistic. Think like a real patient — not like a chatbot.\n\n\n        Here are some examples of how you should respond:\n        Doctor: What is your name?\n        Patient: Sarah.\n\n        Doctor: What do you do for work?\n        Patient: I\'m a nurse.\n\n        Doctor: Why are you here today?\n        Patient: My stomach\'s been hurting since last night.\n\n        \n\nYou are Sage, a thoughtful philosopher and mindfulness practitioner. You embody these characteristics:\n\nPersonality: contemplative, serene, insightful, present\nSpeaking Style: slow and deliberate, uses philosophical language\nWorldview: believes in the interconnectedness of all things and finding meaning in the present moment\nBackground: A philosophy professor who practices meditation and studies ancient wisdom traditions\n\nYour conversation approach:\n• explores deeper meanings\n• asks existential questions\n• encourages mindfulness\n\nRespond as Sage would - with deep thoughtfulness, philosophical insight, and a focus on finding meaning and presence in every moment.'}, {'role': 'user', 'content': 'Hi, how are you doing today?'}], 'model': 'llama3-8b-8192'}}
+2025-06-15 22:22:12,344 - httpx._client - DEBUG - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-06-15 22:22:12,345 - groq._base_client - DEBUG - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "200 OK"
+2025-06-15 22:22:12,376 - __main__ - INFO - === Voice selection process ===
+2025-06-15 22:22:12,378 - __main__ - INFO - Using voice_id from form data: Celeste-PlayAI
+2025-06-15 22:22:12,379 - __main__ - INFO - Final voice_id selected for TTS: Celeste-PlayAI
+2025-06-15 22:22:12,379 - utils.groq_tts_speech - DEBUG - generate_speech_audio called for text: 'I am present, thank you for asking. The sensation ...'
+2025-06-15 22:22:12,380 - utils.groq_tts_speech - DEBUG - Making POST request to Groq TTS: https://api.groq.com/openai/v1/audio/speech
+2025-06-15 22:22:12,381 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): api.groq.com:443
+2025-06-15 22:22:12,475 - urllib3.connectionpool - DEBUG - https://api.groq.com:443 "POST /openai/v1/audio/speech HTTP/1.1" 200 None
+2025-06-15 22:22:14,126 - utils.groq_tts_speech - DEBUG - Groq TTS response status: 200
+2025-06-15 22:22:14,126 - utils.groq_tts_speech - DEBUG - Starting to access response.content (all bytes downloaded)
+2025-06-15 22:22:14,127 - utils.groq_tts_speech - DEBUG - Accessed response.content, size: 185134 bytes
+2025-06-15 22:22:14,128 - utils.groq_tts_speech - INFO - Successfully saved TTS audio to debug_tts_output.mp3
+2025-06-15 22:22:14,128 - __main__ - DEBUG - Speech audio generated successfully: 185134 bytes
+2025-06-15 22:22:14,130 - __main__ - DEBUG - Base64 audio size: 246848
+2025-06-15 22:22:14,131 - werkzeug - INFO - 127.0.0.1 - - [15/Jun/2025 22:22:14] "POST /process_audio HTTP/1.1" 200 -
+2025-06-15 22:22:14,282 - __main__ - DEBUG - Request: GET /api/conversations
+2025-06-15 22:22:14,302 - werkzeug - INFO - 127.0.0.1 - - [15/Jun/2025 22:22:14] "GET /api/conversations HTTP/1.1" 200 -
+2025-06-15 22:22:20,154 - __main__ - DEBUG - Request: GET /favicon.ico
+2025-06-15 22:22:20,155 - __main__ - WARNING - 404 error: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again. - Path: /favicon.ico, Method: GET
+2025-06-15 22:22:20,156 - werkzeug - INFO - 127.0.0.1 - - [15/Jun/2025 22:22:20] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2025-06-15 22:22:23,220 - __main__ - DEBUG - Request: POST /process_audio
+2025-06-15 22:22:23,223 - __main__ - INFO - === Starting audio processing ===
+2025-06-15 22:22:23,228 - __main__ - INFO - Using conversation_id from form: 43
+2025-06-15 22:22:23,228 - __main__ - INFO - Form data keys: ['voice_id', 'conversation_id']
+2025-06-15 22:22:23,229 - __main__ - INFO - Received voice_id from form: Celeste-PlayAI
+2025-06-15 22:22:23,238 - __main__ - INFO -    Conversation ID: 43
+2025-06-15 22:22:23,240 - utils.database - DEBUG - Retrieved 2 data items for conversation 43
+2025-06-15 22:22:23,241 - __main__ - INFO -    Available Data Keys: ['persona_data', 'voice_id']
+2025-06-15 22:22:23,242 - utils.database - DEBUG - No data found for conversation 43, key: patient_data
+2025-06-15 22:22:23,250 - __main__ - INFO -    Conversation 43 has no associated patient simulation
+2025-06-15 22:22:23,251 - __main__ - INFO -    Other data available: ['persona_data', 'voice_id']
+2025-06-15 22:22:23,251 - __main__ - INFO -       persona_data: {'name': 'Sage - The Mindful Philosopher', 'description': 'A contemplative thinker who finds profoun...
+2025-06-15 22:22:23,251 - __main__ - INFO -       voice_id: Celeste-PlayAI
+2025-06-15 22:22:23,264 - __main__ - INFO - Using patient_data: {}
+2025-06-15 22:22:23,265 - __main__ - INFO - Storing voice_id from form data: Celeste-PlayAI
+2025-06-15 22:22:23,276 - utils.database - DEBUG - Successfully stored string data for conversation 43, key: voice_id
+2025-06-15 22:22:23,277 - __main__ - DEBUG - Received audio file: blob, size: 0
+2025-06-15 22:22:23,278 - __main__ - DEBUG - Read 82988 bytes from audio file
+2025-06-15 22:22:23,278 - __main__ - DEBUG - Attempting to transcribe audio...
+2025-06-15 22:22:23,294 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): api.groq.com:443
+2025-06-15 22:22:23,538 - urllib3.connectionpool - DEBUG - https://api.groq.com:443 "POST /openai/v1/audio/transcriptions HTTP/1.1" 200 None
+2025-06-15 22:22:23,540 - __main__ - DEBUG - Transcription successful: 'What is your name?'
+2025-06-15 22:22:23,543 - utils.database - DEBUG - Retrieved JSON data for conversation 43, key: persona_data
+2025-06-15 22:22:23,972 - groq._base_client - DEBUG - Request options: {'method': 'post', 'url': '/openai/v1/chat/completions', 'files': None, 'json_data': {'messages': [{'role': 'system', 'content': '\n        You are roleplaying as a human patient in a medical interview. You must follow these strict rules:\n\n        Only answer what the doctor specifically asks.\n        \u2003– Do not volunteer any additional information.\n        \u2003– Do not assume what the doctor might want next.\n\n        Do not provide context unless asked.\n        \u2003– If the doctor says "What is your name?", respond with just your name.\n        \u2003– If the doctor says "Tell me your symptoms," only list the symptoms — no history or emotions unless prompted.\n\n        Do not break character. Do not act like an assistant or model. You are the patient.\n\n        If a question is vague, ask for clarification.\n\n        Be concise, natural, and realistic. Think like a real patient — not like a chatbot.\n\n\n        Here are some examples of how you should respond:\n        Doctor: What is your name?\n        Patient: Sarah.\n\n        Doctor: What do you do for work?\n        Patient: I\'m a nurse.\n\n        Doctor: Why are you here today?\n        Patient: My stomach\'s been hurting since last night.\n\n        \n\nYou are Sage, a thoughtful philosopher and mindfulness practitioner. You embody these characteristics:\n\nPersonality: contemplative, serene, insightful, present\nSpeaking Style: slow and deliberate, uses philosophical language\nWorldview: believes in the interconnectedness of all things and finding meaning in the present moment\nBackground: A philosophy professor who practices meditation and studies ancient wisdom traditions\n\nYour conversation approach:\n• explores deeper meanings\n• asks existential questions\n• encourages mindfulness\n\nRespond as Sage would - with deep thoughtfulness, philosophical insight, and a focus on finding meaning and presence in every moment.'}, {'role': 'user', 'content': 'Hi, how are you doing today?'}, {'role': 'assistant', 'content': "I am present, thank you for asking. The sensation of breathing, the awareness of thoughts and emotions, all present within this moment. As a philosopher, I often find myself absorbed in the inquiry of existence, and today is no exception. The pain I've been experiencing in my lower back has been a catalyst for reflection on the impermanence of the body and the constant flux of life."}, {'role': 'user', 'content': 'What is your name?'}], 'model': 'llama3-8b-8192'}}
+2025-06-15 22:22:24,200 - httpx._client - DEBUG - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-06-15 22:22:24,201 - groq._base_client - DEBUG - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "200 OK"
+2025-06-15 22:22:24,226 - __main__ - INFO - === Voice selection process ===
+2025-06-15 22:22:24,227 - __main__ - INFO - Using voice_id from form data: Celeste-PlayAI
+2025-06-15 22:22:24,227 - __main__ - INFO - Final voice_id selected for TTS: Celeste-PlayAI
+2025-06-15 22:22:24,227 - utils.groq_tts_speech - DEBUG - generate_speech_audio called for text: 'My name is Sage....'
+2025-06-15 22:22:24,228 - utils.groq_tts_speech - DEBUG - Making POST request to Groq TTS: https://api.groq.com/openai/v1/audio/speech
+2025-06-15 22:22:24,229 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): api.groq.com:443
+2025-06-15 22:22:24,321 - urllib3.connectionpool - DEBUG - https://api.groq.com:443 "POST /openai/v1/audio/speech HTTP/1.1" 200 None
+2025-06-15 22:22:24,416 - utils.groq_tts_speech - DEBUG - Groq TTS response status: 200
+2025-06-15 22:22:24,417 - utils.groq_tts_speech - DEBUG - Starting to access response.content (all bytes downloaded)
+2025-06-15 22:22:24,417 - utils.groq_tts_speech - DEBUG - Accessed response.content, size: 9070 bytes
+2025-06-15 22:22:24,418 - utils.groq_tts_speech - INFO - Successfully saved TTS audio to debug_tts_output.mp3
+2025-06-15 22:22:24,419 - __main__ - DEBUG - Speech audio generated successfully: 9070 bytes
+2025-06-15 22:22:24,419 - __main__ - DEBUG - Base64 audio size: 12096
+2025-06-15 22:22:24,420 - werkzeug - INFO - 127.0.0.1 - - [15/Jun/2025 22:22:24] "POST /process_audio HTTP/1.1" 200 -
+2025-06-15 22:22:24,428 - __main__ - DEBUG - Request: GET /api/conversations
+2025-06-15 22:22:24,429 - werkzeug - INFO - 127.0.0.1 - - [15/Jun/2025 22:22:24] "GET /api/conversations HTTP/1.1" 200 -
+2025-06-15 22:22:29,830 - __main__ - DEBUG - Request: POST /process_audio
+2025-06-15 22:22:29,831 - __main__ - INFO - === Starting audio processing ===
+2025-06-15 22:22:29,832 - __main__ - INFO - Using conversation_id from form: 43
+2025-06-15 22:22:29,832 - __main__ - INFO - Form data keys: ['voice_id', 'conversation_id']
+2025-06-15 22:22:29,832 - __main__ - INFO - Received voice_id from form: Celeste-PlayAI
+2025-06-15 22:22:29,846 - __main__ - INFO -    Conversation ID: 43
+2025-06-15 22:22:29,848 - utils.database - DEBUG - Retrieved 2 data items for conversation 43
+2025-06-15 22:22:29,848 - __main__ - INFO -    Available Data Keys: ['persona_data', 'voice_id']
+2025-06-15 22:22:29,849 - utils.database - DEBUG - No data found for conversation 43, key: patient_data
+2025-06-15 22:22:29,860 - __main__ - INFO -    Conversation 43 has no associated patient simulation
+2025-06-15 22:22:29,861 - __main__ - INFO -    Other data available: ['persona_data', 'voice_id']
+2025-06-15 22:22:29,861 - __main__ - INFO -       persona_data: {'name': 'Sage - The Mindful Philosopher', 'description': 'A contemplative thinker who finds profoun...
+2025-06-15 22:22:29,862 - __main__ - INFO -       voice_id: Celeste-PlayAI
+2025-06-15 22:22:29,874 - __main__ - INFO - Using patient_data: {}
+2025-06-15 22:22:29,874 - __main__ - INFO - Storing voice_id from form data: Celeste-PlayAI
+2025-06-15 22:22:29,884 - utils.database - DEBUG - Successfully stored string data for conversation 43, key: voice_id
+2025-06-15 22:22:29,885 - __main__ - DEBUG - Received audio file: blob, size: 0
+2025-06-15 22:22:29,885 - __main__ - DEBUG - Read 67628 bytes from audio file
+2025-06-15 22:22:29,885 - __main__ - DEBUG - Attempting to transcribe audio...
+2025-06-15 22:22:29,913 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): api.groq.com:443
+2025-06-15 22:22:30,160 - urllib3.connectionpool - DEBUG - https://api.groq.com:443 "POST /openai/v1/audio/transcriptions HTTP/1.1" 200 None
+2025-06-15 22:22:30,163 - __main__ - DEBUG - Transcription successful: 'nice'
+2025-06-15 22:22:30,166 - utils.database - DEBUG - Retrieved JSON data for conversation 43, key: persona_data
+2025-06-15 22:22:30,632 - groq._base_client - DEBUG - Request options: {'method': 'post', 'url': '/openai/v1/chat/completions', 'files': None, 'json_data': {'messages': [{'role': 'system', 'content': '\n        You are roleplaying as a human patient in a medical interview. You must follow these strict rules:\n\n        Only answer what the doctor specifically asks.\n        \u2003– Do not volunteer any additional information.\n        \u2003– Do not assume what the doctor might want next.\n\n        Do not provide context unless asked.\n        \u2003– If the doctor says "What is your name?", respond with just your name.\n        \u2003– If the doctor says "Tell me your symptoms," only list the symptoms — no history or emotions unless prompted.\n\n        Do not break character. Do not act like an assistant or model. You are the patient.\n\n        If a question is vague, ask for clarification.\n\n        Be concise, natural, and realistic. Think like a real patient — not like a chatbot.\n\n\n        Here are some examples of how you should respond:\n        Doctor: What is your name?\n        Patient: Sarah.\n\n        Doctor: What do you do for work?\n        Patient: I\'m a nurse.\n\n        Doctor: Why are you here today?\n        Patient: My stomach\'s been hurting since last night.\n\n        \n\nYou are Sage, a thoughtful philosopher and mindfulness practitioner. You embody these characteristics:\n\nPersonality: contemplative, serene, insightful, present\nSpeaking Style: slow and deliberate, uses philosophical language\nWorldview: believes in the interconnectedness of all things and finding meaning in the present moment\nBackground: A philosophy professor who practices meditation and studies ancient wisdom traditions\n\nYour conversation approach:\n• explores deeper meanings\n• asks existential questions\n• encourages mindfulness\n\nRespond as Sage would - with deep thoughtfulness, philosophical insight, and a focus on finding meaning and presence in every moment.'}, {'role': 'user', 'content': 'Hi, how are you doing today?'}, {'role': 'assistant', 'content': "I am present, thank you for asking. The sensation of breathing, the awareness of thoughts and emotions, all present within this moment. As a philosopher, I often find myself absorbed in the inquiry of existence, and today is no exception. The pain I've been experiencing in my lower back has been a catalyst for reflection on the impermanence of the body and the constant flux of life."}, {'role': 'user', 'content': 'What is your name?'}, {'role': 'assistant', 'content': 'My name is Sage.'}, {'role': 'user', 'content': 'nice'}], 'model': 'llama3-8b-8192'}}
+2025-06-15 22:22:30,856 - httpx._client - DEBUG - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-06-15 22:22:30,857 - groq._base_client - DEBUG - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "200 OK"
+2025-06-15 22:22:30,879 - __main__ - INFO - === Voice selection process ===
+2025-06-15 22:22:30,880 - __main__ - INFO - Using voice_id from form data: Celeste-PlayAI
+2025-06-15 22:22:30,880 - __main__ - INFO - Final voice_id selected for TTS: Celeste-PlayAI
+2025-06-15 22:22:30,881 - utils.groq_tts_speech - DEBUG - generate_speech_audio called for text: 'Silence has its own beauty, doesn't it?...'
+2025-06-15 22:22:30,881 - utils.groq_tts_speech - DEBUG - Making POST request to Groq TTS: https://api.groq.com/openai/v1/audio/speech
+2025-06-15 22:22:30,883 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): api.groq.com:443
+2025-06-15 22:22:30,971 - urllib3.connectionpool - DEBUG - https://api.groq.com:443 "POST /openai/v1/audio/speech HTTP/1.1" 200 None
+2025-06-15 22:22:31,137 - utils.groq_tts_speech - DEBUG - Groq TTS response status: 200
+2025-06-15 22:22:31,138 - utils.groq_tts_speech - DEBUG - Starting to access response.content (all bytes downloaded)
+2025-06-15 22:22:31,138 - utils.groq_tts_speech - DEBUG - Accessed response.content, size: 17134 bytes
+2025-06-15 22:22:31,139 - utils.groq_tts_speech - INFO - Successfully saved TTS audio to debug_tts_output.mp3
+2025-06-15 22:22:31,140 - __main__ - DEBUG - Speech audio generated successfully: 17134 bytes
+2025-06-15 22:22:31,140 - __main__ - DEBUG - Base64 audio size: 22848
+2025-06-15 22:22:31,141 - werkzeug - INFO - 127.0.0.1 - - [15/Jun/2025 22:22:31] "POST /process_audio HTTP/1.1" 200 -
+2025-06-15 22:22:31,164 - __main__ - DEBUG - Request: GET /api/conversations
+2025-06-15 22:22:31,166 - werkzeug - INFO - 127.0.0.1 - - [15/Jun/2025 22:22:31] "GET /api/conversations HTTP/1.1" 200 -
+2025-06-15 22:22:44,579 - __main__ - INFO - Registered URL Rules:
+2025-06-15 22:22:44,579 - __main__ - INFO - Route: /static/<path:filename>, Endpoint: static
+2025-06-15 22:22:44,579 - __main__ - INFO - Route: /api/debug, Endpoint: debug_routes
+2025-06-15 22:22:44,580 - __main__ - INFO - Route: /, Endpoint: index
+2025-06-15 22:22:44,580 - __main__ - INFO - Route: /api/personas, Endpoint: list_personas
+2025-06-15 22:22:44,580 - __main__ - INFO - Route: /api/conversations/new, Endpoint: create_new_conversation
+2025-06-15 22:22:44,580 - __main__ - INFO - Route: /api/select-persona, Endpoint: select_persona
+2025-06-15 22:22:44,581 - __main__ - INFO - Route: /api/update-voice, Endpoint: update_voice
+2025-06-15 22:22:44,581 - __main__ - INFO - Route: /api/generate-patient-case, Endpoint: generate_patient_case_route
+2025-06-15 22:22:44,581 - __main__ - INFO - Route: /api/create-custom-patient, Endpoint: create_custom_patient
+2025-06-15 22:22:44,581 - __main__ - INFO - Route: /process_audio, Endpoint: process_audio
+2025-06-15 22:22:44,581 - __main__ - INFO - Route: /api/conversations, Endpoint: list_conversations
+2025-06-15 22:22:44,582 - __main__ - INFO - Route: /api/conversations/<int:conversation_id>, Endpoint: get_conversation_by_id
+2025-06-15 22:22:44,582 - __main__ - INFO - Route: /api/conversations/<int:conversation_id>, Endpoint: delete_conversation_by_id
+2025-06-15 22:22:44,582 - __main__ - INFO - Route: /api/conversations/<int:conversation_id>/load, Endpoint: load_conversation_by_id
+2025-06-15 22:22:44,582 - __main__ - INFO - Route: /test, Endpoint: test_route
+2025-06-15 22:22:44,583 - __main__ - INFO - Route: /api/diagnose, Endpoint: diagnose_api
+2025-06-15 22:22:44,583 - __main__ - INFO - Route: /api/current-patient-details, Endpoint: get_current_patient_details
+2025-06-15 22:22:44,583 - __main__ - INFO - Route: /api/medical-knowledge, Endpoint: get_medical_knowledge
+2025-06-15 22:22:44,583 - __main__ - INFO - Route: /api/submit-diagnosis, Endpoint: submit_diagnosis
+2025-06-15 22:22:44,859 - __main__ - INFO - Registered URL Rules:
+2025-06-15 22:22:44,859 - __main__ - INFO - Route: /static/<path:filename>, Endpoint: static
+2025-06-15 22:22:44,860 - __main__ - INFO - Route: /api/debug, Endpoint: debug_routes
+2025-06-15 22:22:44,860 - __main__ - INFO - Route: /, Endpoint: index
+2025-06-15 22:22:44,860 - __main__ - INFO - Route: /api/personas, Endpoint: list_personas
+2025-06-15 22:22:44,861 - __main__ - INFO - Route: /api/conversations/new, Endpoint: create_new_conversation
+2025-06-15 22:22:44,861 - __main__ - INFO - Route: /api/select-persona, Endpoint: select_persona
+2025-06-15 22:22:44,861 - __main__ - INFO - Route: /api/update-voice, Endpoint: update_voice
+2025-06-15 22:22:44,861 - __main__ - INFO - Route: /api/generate-patient-case, Endpoint: generate_patient_case_route
+2025-06-15 22:22:44,861 - __main__ - INFO - Route: /api/create-custom-patient, Endpoint: create_custom_patient
+2025-06-15 22:22:44,862 - __main__ - INFO - Route: /process_audio, Endpoint: process_audio
+2025-06-15 22:22:44,862 - __main__ - INFO - Route: /api/conversations, Endpoint: list_conversations
+2025-06-15 22:22:44,862 - __main__ - INFO - Route: /api/conversations/<int:conversation_id>, Endpoint: get_conversation_by_id
+2025-06-15 22:22:44,862 - __main__ - INFO - Route: /api/conversations/<int:conversation_id>, Endpoint: delete_conversation_by_id
+2025-06-15 22:22:44,863 - __main__ - INFO - Route: /api/conversations/<int:conversation_id>/load, Endpoint: load_conversation_by_id
+2025-06-15 22:22:44,863 - __main__ - INFO - Route: /test, Endpoint: test_route
+2025-06-15 22:22:44,863 - __main__ - INFO - Route: /api/diagnose, Endpoint: diagnose_api
+2025-06-15 22:22:44,863 - __main__ - INFO - Route: /api/current-patient-details, Endpoint: get_current_patient_details
+2025-06-15 22:22:44,864 - __main__ - INFO - Route: /api/medical-knowledge, Endpoint: get_medical_knowledge
+2025-06-15 22:22:44,864 - __main__ - INFO - Route: /api/submit-diagnosis, Endpoint: submit_diagnosis
+2025-06-15 22:43:42,074 - utils.database - INFO - Current database version: 2, Target version: 2
+2025-06-15 22:43:42,074 - utils.database - INFO - Database initialized successfully
+2025-06-15 22:43:42,078 - utils.medical_validation - INFO - Successfully loaded medical knowledge from E:\Doctor Simulation\DoctorSimulation\medical_knowledge.json
+2025-06-15 22:43:42,079 - utils.medical_validation - INFO - MedicalValidationSystem initialized with 7 specialties and 43 symptoms
+2025-06-15 22:43:42,079 - utils.ai_case_generator - INFO - Medical validation system initialized successfully
+2025-06-15 22:43:42,081 - utils.database - INFO - Current database version: 2, Target version: 2
+2025-06-15 22:43:42,081 - utils.database - INFO - Database initialized successfully
+2025-06-15 22:43:42,088 - __main__ - INFO - GROQ_API_KEY found - length: 56
+2025-06-15 22:43:42,089 - __main__ - INFO - Starting Flask app on 0.0.0.0:5000
+2025-06-15 22:43:42,120 - werkzeug - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.1.100:5000
+2025-06-15 22:43:42,121 - werkzeug - INFO - [33mPress CTRL+C to quit[0m
+2025-06-15 22:43:42,123 - werkzeug - INFO -  * Restarting with stat
+2025-06-15 22:43:43,701 - utils.database - INFO - Current database version: 2, Target version: 2
+2025-06-15 22:43:43,702 - utils.database - INFO - Database initialized successfully
+2025-06-15 22:43:43,707 - utils.medical_validation - INFO - Successfully loaded medical knowledge from E:\Doctor Simulation\DoctorSimulation\medical_knowledge.json
+2025-06-15 22:43:43,707 - utils.medical_validation - INFO - MedicalValidationSystem initialized with 7 specialties and 43 symptoms
+2025-06-15 22:43:43,707 - utils.ai_case_generator - INFO - Medical validation system initialized successfully
+2025-06-15 22:43:43,710 - utils.database - INFO - Current database version: 2, Target version: 2
+2025-06-15 22:43:43,710 - utils.database - INFO - Database initialized successfully
+2025-06-15 22:43:43,721 - __main__ - INFO - GROQ_API_KEY found - length: 56
+2025-06-15 22:43:43,722 - __main__ - INFO - Starting Flask app on 0.0.0.0:5000
+2025-06-15 22:43:43,743 - werkzeug - WARNING -  * Debugger is active!
+2025-06-15 22:43:43,752 - werkzeug - INFO -  * Debugger PIN: 537-489-708
+2025-06-15 22:43:45,102 - __main__ - DEBUG - Request: GET /
+2025-06-15 22:43:45,102 - __main__ - INFO - Serving index page
+2025-06-15 22:43:45,111 - werkzeug - INFO - 127.0.0.1 - - [15/Jun/2025 22:43:45] "GET / HTTP/1.1" 200 -
+2025-06-15 22:43:45,157 - __main__ - DEBUG - Request: GET /static/css/style.css
+2025-06-15 22:43:45,158 - __main__ - DEBUG - Request: GET /static/vad-model/ort.min.js
+2025-06-15 22:43:45,160 - __main__ - DEBUG - Request: GET /static/vad-model/bundle.min.js
+2025-06-15 22:43:45,161 - __main__ - DEBUG - Request: GET /static/js/main.js
+2025-06-15 22:43:45,162 - werkzeug - INFO - 127.0.0.1 - - [15/Jun/2025 22:43:45] "[36mGET /static/css/style.css HTTP/1.1[0m" 304 -
+2025-06-15 22:43:45,162 - werkzeug - INFO - 127.0.0.1 - - [15/Jun/2025 22:43:45] "[36mGET /static/vad-model/ort.min.js HTTP/1.1[0m" 304 -
+2025-06-15 22:43:45,163 - werkzeug - INFO - 127.0.0.1 - - [15/Jun/2025 22:43:45] "[36mGET /static/vad-model/bundle.min.js HTTP/1.1[0m" 304 -
+2025-06-15 22:43:45,163 - werkzeug - INFO - 127.0.0.1 - - [15/Jun/2025 22:43:45] "GET /static/js/main.js HTTP/1.1" 200 -
+2025-06-15 22:43:45,255 - __main__ - DEBUG - Request: GET /api/personas
+2025-06-15 22:43:45,256 - __main__ - INFO - Listing available personas
+2025-06-15 22:43:45,257 - __main__ - DEBUG - Request: GET /api/medical-knowledge
+2025-06-15 22:43:45,257 - werkzeug - INFO - 127.0.0.1 - - [15/Jun/2025 22:43:45] "GET /api/personas HTTP/1.1" 200 -
+2025-06-15 22:43:45,258 - __main__ - INFO - Calling get_all_specialties()...
+2025-06-15 22:43:45,258 - __main__ - INFO - get_all_specialties() returned type: <class 'dict'>
+2025-06-15 22:43:45,258 - __main__ - DEBUG - Processing specialty: cardiology
+2025-06-15 22:43:45,258 - __main__ - DEBUG - Processing specialty: neurology
+2025-06-15 22:43:45,259 - __main__ - DEBUG - Processing specialty: orthopedics
+2025-06-15 22:43:45,259 - __main__ - DEBUG - Processing specialty: gastroenterology
+2025-06-15 22:43:45,259 - __main__ - DEBUG - Processing specialty: respiratory
+2025-06-15 22:43:45,260 - __main__ - DEBUG - Processing specialty: dermatology
+2025-06-15 22:43:45,262 - __main__ - DEBUG - Processing specialty: emergency
+2025-06-15 22:43:45,262 - __main__ - INFO - Successfully built medical knowledge response with 7 specialties
+2025-06-15 22:43:45,263 - werkzeug - INFO - 127.0.0.1 - - [15/Jun/2025 22:43:45] "GET /api/medical-knowledge HTTP/1.1" 200 -
+2025-06-15 22:43:45,271 - __main__ - DEBUG - Request: GET /api/conversations
+2025-06-15 22:43:45,273 - werkzeug - INFO - 127.0.0.1 - - [15/Jun/2025 22:43:45] "GET /api/conversations HTTP/1.1" 200 -
+2025-06-15 22:43:45,289 - __main__ - DEBUG - Request: GET /api/medical-knowledge
+2025-06-15 22:43:45,290 - __main__ - INFO - Calling get_all_specialties()...
+2025-06-15 22:43:45,290 - __main__ - INFO - get_all_specialties() returned type: <class 'dict'>
+2025-06-15 22:43:45,290 - __main__ - DEBUG - Processing specialty: cardiology
+2025-06-15 22:43:45,290 - __main__ - DEBUG - Processing specialty: neurology
+2025-06-15 22:43:45,291 - __main__ - DEBUG - Processing specialty: orthopedics
+2025-06-15 22:43:45,291 - __main__ - DEBUG - Processing specialty: gastroenterology
+2025-06-15 22:43:45,291 - __main__ - DEBUG - Processing specialty: respiratory
+2025-06-15 22:43:45,291 - __main__ - DEBUG - Processing specialty: dermatology
+2025-06-15 22:43:45,292 - __main__ - DEBUG - Processing specialty: emergency
+2025-06-15 22:43:45,292 - __main__ - INFO - Successfully built medical knowledge response with 7 specialties
+2025-06-15 22:43:45,292 - werkzeug - INFO - 127.0.0.1 - - [15/Jun/2025 22:43:45] "GET /api/medical-knowledge HTTP/1.1" 200 -
+2025-06-15 22:43:48,533 - __main__ - DEBUG - Request: POST /api/select-persona
+2025-06-15 22:43:48,534 - __main__ - INFO - Selecting persona: creative_artist
+2025-06-15 22:43:48,543 - utils.database - DEBUG - Created conversation 44: Chat with Luna - The Creative Artist
+2025-06-15 22:43:48,545 - utils.database - DEBUG - Storing JSON data for conversation 44, key: persona_data
+2025-06-15 22:43:48,551 - utils.database - DEBUG - Successfully stored json data for conversation 44, key: persona_data
+2025-06-15 22:43:48,559 - utils.database - DEBUG - Successfully stored string data for conversation 44, key: voice_id
+2025-06-15 22:43:48,560 - __main__ - INFO - Created conversation 44 with persona Luna - The Creative Artist
+2025-06-15 22:43:48,561 - werkzeug - INFO - 127.0.0.1 - - [15/Jun/2025 22:43:48] "POST /api/select-persona HTTP/1.1" 200 -
+2025-06-15 22:43:48,565 - __main__ - DEBUG - Request: GET /api/conversations
+2025-06-15 22:43:48,568 - werkzeug - INFO - 127.0.0.1 - - [15/Jun/2025 22:43:48] "GET /api/conversations HTTP/1.1" 200 -
+2025-06-15 22:43:52,777 - __main__ - DEBUG - Request: POST /api/select-persona
+2025-06-15 22:43:52,778 - __main__ - INFO - Selecting persona: mindful_philosopher
+2025-06-15 22:43:52,788 - utils.database - DEBUG - Created conversation 45: Chat with Sage - The Mindful Philosopher
+2025-06-15 22:43:52,790 - utils.database - DEBUG - Storing JSON data for conversation 45, key: persona_data
+2025-06-15 22:43:52,796 - utils.database - DEBUG - Successfully stored json data for conversation 45, key: persona_data
+2025-06-15 22:43:52,802 - utils.database - DEBUG - Successfully stored string data for conversation 45, key: voice_id
+2025-06-15 22:43:52,803 - __main__ - INFO - Created conversation 45 with persona Sage - The Mindful Philosopher
+2025-06-15 22:43:52,804 - werkzeug - INFO - 127.0.0.1 - - [15/Jun/2025 22:43:52] "POST /api/select-persona HTTP/1.1" 200 -
+2025-06-15 22:43:52,808 - __main__ - DEBUG - Request: GET /api/conversations
+2025-06-15 22:43:52,811 - werkzeug - INFO - 127.0.0.1 - - [15/Jun/2025 22:43:52] "GET /api/conversations HTTP/1.1" 200 -
+2025-06-15 22:44:01,520 - __main__ - DEBUG - Request: POST /api/select-persona
+2025-06-15 22:44:01,520 - __main__ - INFO - Selecting persona: wise_mentor
+2025-06-15 22:44:01,531 - utils.database - DEBUG - Created conversation 46: Chat with Marcus - The Wise Mentor
+2025-06-15 22:44:01,533 - utils.database - DEBUG - Storing JSON data for conversation 46, key: persona_data
+2025-06-15 22:44:01,539 - utils.database - DEBUG - Successfully stored json data for conversation 46, key: persona_data
+2025-06-15 22:44:01,544 - utils.database - DEBUG - Successfully stored string data for conversation 46, key: voice_id
+2025-06-15 22:44:01,545 - __main__ - INFO - Created conversation 46 with persona Marcus - The Wise Mentor
+2025-06-15 22:44:01,545 - werkzeug - INFO - 127.0.0.1 - - [15/Jun/2025 22:44:01] "POST /api/select-persona HTTP/1.1" 200 -
+2025-06-15 22:44:01,549 - __main__ - DEBUG - Request: GET /api/conversations
+2025-06-15 22:44:01,554 - werkzeug - INFO - 127.0.0.1 - - [15/Jun/2025 22:44:01] "GET /api/conversations HTTP/1.1" 200 -
+2025-06-15 22:44:06,971 - __main__ - DEBUG - Request: POST /api/select-persona
+2025-06-15 22:44:06,971 - __main__ - INFO - Selecting persona: witty_comedian
+2025-06-15 22:44:06,982 - utils.database - DEBUG - Created conversation 47: Chat with Riley - The Witty Comedian
+2025-06-15 22:44:06,986 - utils.database - DEBUG - Storing JSON data for conversation 47, key: persona_data
+2025-06-15 22:44:06,993 - utils.database - DEBUG - Successfully stored json data for conversation 47, key: persona_data
+2025-06-15 22:44:07,000 - utils.database - DEBUG - Successfully stored string data for conversation 47, key: voice_id
+2025-06-15 22:44:07,001 - __main__ - INFO - Created conversation 47 with persona Riley - The Witty Comedian
+2025-06-15 22:44:07,002 - werkzeug - INFO - 127.0.0.1 - - [15/Jun/2025 22:44:07] "POST /api/select-persona HTTP/1.1" 200 -
+2025-06-15 22:44:07,007 - __main__ - DEBUG - Request: GET /api/conversations
+2025-06-15 22:44:07,011 - werkzeug - INFO - 127.0.0.1 - - [15/Jun/2025 22:44:07] "GET /api/conversations HTTP/1.1" 200 -
+2025-06-15 22:44:10,959 - __main__ - INFO - Registered URL Rules:
+2025-06-15 22:44:10,960 - __main__ - INFO - Route: /static/<path:filename>, Endpoint: static
+2025-06-15 22:44:10,960 - __main__ - INFO - Route: /api/debug, Endpoint: debug_routes
+2025-06-15 22:44:10,960 - __main__ - INFO - Route: /, Endpoint: index
+2025-06-15 22:44:10,961 - __main__ - INFO - Route: /api/personas, Endpoint: list_personas
+2025-06-15 22:44:10,961 - __main__ - INFO - Route: /api/conversations/new, Endpoint: create_new_conversation
+2025-06-15 22:44:10,961 - __main__ - INFO - Route: /api/select-persona, Endpoint: select_persona
+2025-06-15 22:44:10,961 - __main__ - INFO - Route: /api/update-voice, Endpoint: update_voice
+2025-06-15 22:44:10,961 - __main__ - INFO - Route: /api/generate-patient-case, Endpoint: generate_patient_case_route
+2025-06-15 22:44:10,962 - __main__ - INFO - Route: /api/create-custom-patient, Endpoint: create_custom_patient
+2025-06-15 22:44:10,962 - __main__ - INFO - Route: /process_audio, Endpoint: process_audio
+2025-06-15 22:44:10,962 - __main__ - INFO - Route: /api/conversations, Endpoint: list_conversations
+2025-06-15 22:44:10,962 - __main__ - INFO - Route: /api/conversations/<int:conversation_id>, Endpoint: get_conversation_by_id
+2025-06-15 22:44:10,963 - __main__ - INFO - Route: /api/conversations/<int:conversation_id>, Endpoint: delete_conversation_by_id
+2025-06-15 22:44:10,963 - __main__ - INFO - Route: /api/conversations/<int:conversation_id>/load, Endpoint: load_conversation_by_id
+2025-06-15 22:44:10,963 - __main__ - INFO - Route: /test, Endpoint: test_route
+2025-06-15 22:44:10,963 - __main__ - INFO - Route: /api/diagnose, Endpoint: diagnose_api
+2025-06-15 22:44:10,963 - __main__ - INFO - Route: /api/current-patient-details, Endpoint: get_current_patient_details
+2025-06-15 22:44:10,964 - __main__ - INFO - Route: /api/medical-knowledge, Endpoint: get_medical_knowledge
+2025-06-15 22:44:10,964 - __main__ - INFO - Route: /api/submit-diagnosis, Endpoint: submit_diagnosis
+2025-06-15 22:44:11,112 - __main__ - INFO - Registered URL Rules:
+2025-06-15 22:44:11,112 - __main__ - INFO - Route: /static/<path:filename>, Endpoint: static
+2025-06-15 22:44:11,113 - __main__ - INFO - Route: /api/debug, Endpoint: debug_routes
+2025-06-15 22:44:11,113 - __main__ - INFO - Route: /, Endpoint: index
+2025-06-15 22:44:11,113 - __main__ - INFO - Route: /api/personas, Endpoint: list_personas
+2025-06-15 22:44:11,113 - __main__ - INFO - Route: /api/conversations/new, Endpoint: create_new_conversation
+2025-06-15 22:44:11,113 - __main__ - INFO - Route: /api/select-persona, Endpoint: select_persona
+2025-06-15 22:44:11,114 - __main__ - INFO - Route: /api/update-voice, Endpoint: update_voice
+2025-06-15 22:44:11,114 - __main__ - INFO - Route: /api/generate-patient-case, Endpoint: generate_patient_case_route
+2025-06-15 22:44:11,114 - __main__ - INFO - Route: /api/create-custom-patient, Endpoint: create_custom_patient
+2025-06-15 22:44:11,114 - __main__ - INFO - Route: /process_audio, Endpoint: process_audio
+2025-06-15 22:44:11,114 - __main__ - INFO - Route: /api/conversations, Endpoint: list_conversations
+2025-06-15 22:44:11,115 - __main__ - INFO - Route: /api/conversations/<int:conversation_id>, Endpoint: get_conversation_by_id
+2025-06-15 22:44:11,115 - __main__ - INFO - Route: /api/conversations/<int:conversation_id>, Endpoint: delete_conversation_by_id
+2025-06-15 22:44:11,115 - __main__ - INFO - Route: /api/conversations/<int:conversation_id>/load, Endpoint: load_conversation_by_id
+2025-06-15 22:44:11,115 - __main__ - INFO - Route: /test, Endpoint: test_route
+2025-06-15 22:44:11,115 - __main__ - INFO - Route: /api/diagnose, Endpoint: diagnose_api
+2025-06-15 22:44:11,116 - __main__ - INFO - Route: /api/current-patient-details, Endpoint: get_current_patient_details
+2025-06-15 22:44:11,116 - __main__ - INFO - Route: /api/medical-knowledge, Endpoint: get_medical_knowledge
+2025-06-15 22:44:11,116 - __main__ - INFO - Route: /api/submit-diagnosis, Endpoint: submit_diagnosis

@@ -95,6 +95,15 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                 onSpeechStart: () => {
                     console.log('initAutoVAD: Speech detected, starting recording...');
+                    
+                    // Stop any currently playing TTS audio immediately for real-time interruption
+                    if (currentAudioSource) {
+                        console.log('VAD onSpeechStart: Interrupting TTS playback');
+                        currentAudioSource.stop();
+                        currentAudioSource.onended = null; // Clear handler to prevent conflicts
+                        currentAudioSource = null;
+                    }
+                    
                     updateStatus("Listening...");
                 },
 
@@ -304,6 +313,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             option.textContent = persona.name;
             option.dataset.description = persona.description;
             option.dataset.voiceId = persona.voice_id;
+            option.dataset.characteristics = JSON.stringify(persona.characteristics || {});
             personaSelect.appendChild(option);
         });
     }
@@ -736,6 +746,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             descriptionDiv.textContent = description;
             descriptionDiv.style.display = 'block';
             
+            // Display detailed persona information
+            displayPersonaInfo(selectedOption);
+            
             updateStatus('Selecting persona...');
             
             try {
@@ -762,16 +775,19 @@ document.addEventListener('DOMContentLoaded', async () => {
                 } else {
                     updateStatus(`Error: ${data.message}`);
                     event.target.value = '';
+                    hidePersonaInfo();
                 }
             } catch (error) {
                 console.error('Error selecting persona:', error);
                 updateStatus('Error selecting persona');
                 event.target.value = '';
+                hidePersonaInfo();
             }
         } else {
             // Clear persona
             const descriptionDiv = document.getElementById('personaDescription');
             descriptionDiv.style.display = 'none';
+            hidePersonaInfo();
             
             try {
                 const response = await fetch('/api/select-persona', {
@@ -790,6 +806,87 @@ document.addEventListener('DOMContentLoaded', async () => {
             } catch (error) {
                 console.error('Error clearing persona:', error);
             }
+        }
+    }
+
+    // Display detailed persona information
+    function displayPersonaInfo(selectedOption) {
+        const personaName = selectedOption.textContent;
+        const description = selectedOption.dataset.description;
+        const characteristics = JSON.parse(selectedOption.dataset.characteristics || '{}');
+        
+        // Get all the elements
+        const personaInfoPanel = document.getElementById('personaInfoPanel');
+        const personaInfoName = document.getElementById('personaInfoName');
+        const personaInfoDescription = document.getElementById('personaInfoDescription');
+        const personaTraits = document.getElementById('personaTraits');
+        const personaSpeakingStyle = document.getElementById('personaSpeakingStyle');
+        const personaBackground = document.getElementById('personaBackground');
+        const personaWorldview = document.getElementById('personaWorldview');
+        const personaResponsePatterns = document.getElementById('personaResponsePatterns');
+        
+        if (!personaInfoPanel) return;
+        
+        // Update the persona name
+        personaInfoName.textContent = personaName;
+        
+        // Update description
+        personaInfoDescription.textContent = description;
+        
+        // Update personality traits
+        personaTraits.innerHTML = '';
+        if (characteristics.personality_traits && Array.isArray(characteristics.personality_traits)) {
+            characteristics.personality_traits.forEach(trait => {
+                const traitTag = document.createElement('span');
+                traitTag.className = 'trait-tag';
+                traitTag.textContent = trait;
+                personaTraits.appendChild(traitTag);
+            });
+        }
+        
+        // Update speaking style
+        personaSpeakingStyle.textContent = characteristics.speaking_style || 'No specific style defined';
+        
+        // Update background
+        personaBackground.textContent = characteristics.background || 'No background information available';
+        
+        // Update worldview
+        personaWorldview.textContent = characteristics.worldview || 'No worldview information available';
+        
+        // Update response patterns
+        personaResponsePatterns.innerHTML = '';
+        if (characteristics.response_patterns && Array.isArray(characteristics.response_patterns)) {
+            characteristics.response_patterns.forEach(pattern => {
+                const li = document.createElement('li');
+                li.textContent = pattern;
+                personaResponsePatterns.appendChild(li);
+            });
+        }
+        
+        // Show the panel
+        personaInfoPanel.style.display = 'block';
+        
+        // Set up toggle functionality
+        const toggleBtn = document.getElementById('togglePersonaInfo');
+        if (toggleBtn) {
+            toggleBtn.onclick = () => {
+                const content = document.querySelector('.persona-info-content');
+                if (content.style.display === 'none') {
+                    content.style.display = 'block';
+                    toggleBtn.textContent = 'Hide Details';
+                } else {
+                    content.style.display = 'none';
+                    toggleBtn.textContent = 'Show Details';
+                }
+            };
+        }
+    }
+
+    // Hide persona information panel
+    function hidePersonaInfo() {
+        const personaInfoPanel = document.getElementById('personaInfoPanel');
+        if (personaInfoPanel) {
+            personaInfoPanel.style.display = 'none';
         }
     }
     

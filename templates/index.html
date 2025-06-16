@@ -40,6 +40,107 @@
             border-color: #007bff;
             box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
         }
+
+        /* Persona Info Panel Styles */
+        .persona-info-panel {
+            margin: 20px 0;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background: #f9f9f9;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .persona-info-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            background: linear-gradient(135deg, #007bff, #0056b3);
+            color: white;
+            border-radius: 8px 8px 0 0;
+            margin: 0;
+        }
+
+        .persona-info-header h3 {
+            margin: 0;
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .toggle-btn {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.3);
+            padding: 5px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: background-color 0.2s;
+        }
+
+        .toggle-btn:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        .persona-info-content {
+            padding: 20px;
+        }
+
+        .persona-section {
+            margin-bottom: 20px;
+        }
+
+        .persona-section:last-child {
+            margin-bottom: 0;
+        }
+
+        .persona-section h4 {
+            color: #333;
+            margin: 0 0 8px 0;
+            font-size: 14px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 4px;
+        }
+
+        .persona-detail-text {
+            margin: 0;
+            color: #555;
+            line-height: 1.5;
+            font-size: 14px;
+        }
+
+        .trait-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .trait-tag {
+            background: #007bff;
+            color: white;
+            padding: 4px 10px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .response-patterns-list {
+            margin: 0;
+            padding-left: 18px;
+            color: #555;
+        }
+
+        .response-patterns-list li {
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+
+        .response-patterns-list li:last-child {
+            margin-bottom: 0;
+        }
     </style>
 </head>
 <body>
@@ -75,6 +176,46 @@
                     </select>
                     <div id="personaDescription" class="persona-description" style="display: none;">
                         <!-- Persona description will appear here -->
+                    </div>
+                </div>
+
+                <!-- Detailed Persona Information Panel -->
+                <div id="personaInfoPanel" class="persona-info-panel" style="display: none;">
+                    <div class="persona-info-header">
+                        <h3 id="personaInfoName">Persona Details</h3>
+                        <button id="togglePersonaInfo" class="toggle-btn">Hide Details</button>
+                    </div>
+                    
+                    <div class="persona-info-content">
+                        <div class="persona-section">
+                            <h4>About</h4>
+                            <p id="personaInfoDescription" class="persona-detail-text"></p>
+                        </div>
+                        
+                        <div class="persona-section">
+                            <h4>Personality Traits</h4>
+                            <div id="personaTraits" class="trait-tags"></div>
+                        </div>
+                        
+                        <div class="persona-section">
+                            <h4>Speaking Style</h4>
+                            <p id="personaSpeakingStyle" class="persona-detail-text"></p>
+                        </div>
+                        
+                        <div class="persona-section">
+                            <h4>Background</h4>
+                            <p id="personaBackground" class="persona-detail-text"></p>
+                        </div>
+                        
+                        <div class="persona-section">
+                            <h4>Worldview</h4>
+                            <p id="personaWorldview" class="persona-detail-text"></p>
+                        </div>
+                        
+                        <div class="persona-section">
+                            <h4>Conversation Approach</h4>
+                            <ul id="personaResponsePatterns" class="response-patterns-list"></ul>
+                        </div>
                     </div>
                 </div>
 

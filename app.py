@@ -169,7 +169,8 @@ def list_personas():
             key: {
                 'name': persona['name'],
                 'description': persona['description'],
-                'voice_id': persona['voice_id']
+                'voice_id': persona['voice_id'],
+                'characteristics': persona.get('characteristics', {})
             }
             for key, persona in personas.items()
         },
