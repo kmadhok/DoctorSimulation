@@ -257,22 +257,61 @@ document.addEventListener('DOMContentLoaded', async () => {
     //     }
     // }
     
-    // Load available simulations (now static only)
-    async function loadSimulations() {
-        // No need to fetch from API anymore - simulation options are static in HTML
-        // Just ensure current simulation is properly set if available
-        console.log('Simulation loading complete - using static options only');
-        
-        // Set current simulation if available
-        if (currentSimulation) {
-            simulationSelect.value = currentSimulation;
+    // Load available personas and populate the selector
+    async function loadPersonas() {
+        try {
+            const response = await fetch('/api/personas');
+            const data = await response.json();
+            
+            if (data.status === 'success') {
+                populatePersonaSelector(data.personas);
+                // Show current persona if any
+                if (data.current_persona) {
+                    const personaSelect = document.getElementById('personaSelect');
+                    if (personaSelect) {
+                        personaSelect.value = data.current_persona;
+                        // Show description for current persona
+                        const selectedOption = personaSelect.selectedOptions[0];
+                        if (selectedOption && selectedOption.dataset.description) {
+                            const descriptionDiv = document.getElementById('personaDescription');
+                            descriptionDiv.textContent = selectedOption.dataset.description;
+                            descriptionDiv.style.display = 'block';
+                        }
+                    }
+                }
+            } else {
+                console.error('Error loading personas:', data.message);
+            }
+        } catch (error) {
+            console.error('Error loading personas:', error);
         }
     }
+
+    // Populate persona selector with options
+    function populatePersonaSelector(personas) {
+        const personaSelect = document.getElementById('personaSelect');
+        if (!personaSelect) return;
+
+        // Clear existing options except the first
+        while (personaSelect.options.length > 1) {
+            personaSelect.removeChild(personaSelect.lastChild);
+        }
+
+        // Add persona options
+        Object.entries(personas).forEach(([key, persona]) => {
+            const option = document.createElement('option');
+            option.value = key;
+            option.textContent = persona.name;
+            option.dataset.description = persona.description;
+            option.dataset.voiceId = persona.voice_id;
+            personaSelect.appendChild(option);
+        });
+    }
     
-    // Load available simulations
-    console.log('<<<<< MAIN.JS: Awaiting loadSimulations... >>>>>');
-    await loadSimulations();
-    console.log('<<<<< MAIN.JS: loadSimulations complete. >>>>>');    
+    // Load available personas
+    console.log('<<<<< MAIN.JS: Awaiting loadPersonas... >>>>>');
+    await loadPersonas();
+    console.log('<<<<< MAIN.JS: loadPersonas complete. >>>>>');    
 
     console.log('<<<<< MAIN.JS: Awaiting loadConversationHistory... >>>>>');
     await loadConversationHistory();
@@ -285,10 +324,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     // recordButton.addEventListener('mousedown', startRecording);
     // recordButton.addEventListener('mouseup', stopRecording);
     // recordButton.addEventListener('mouseleave', stopRecording);
-    simulationSelect.addEventListener('change', handleSimulationChange);
+    const personaSelect = document.getElementById('personaSelect');
+    if (personaSelect) {
+        personaSelect.addEventListener('change', handlePersonaChange);
+    }
     voiceSelect.addEventListener('change', handleVoiceChange);
     refreshConversationsBtn.addEventListener('click', loadConversationHistory);
     newConversationBtn.addEventListener('click', createNewConversation);
+    
+    // Initialize currentVoiceId from the voice selector's current value
+    currentVoiceId = voiceSelect.value;
     
     // Custom Patient Form Event Listeners
     if (cancelCustomPatientBtn) {
@@ -410,10 +455,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         try {
             updateStatus('Creating new conversation...');
             
-            // Clear simulation selection and hide custom form
-            simulationSelect.value = '';
-            currentSimulation = null;
-            hideCustomPatientForm();
+            // Clear persona selection
+            const personaSelect = document.getElementById('personaSelect');
+            if (personaSelect) {
+                personaSelect.value = '';
+            }
+            const descriptionDiv = document.getElementById('personaDescription');
+            if (descriptionDiv) {
+                descriptionDiv.style.display = 'none';
+            }
             
             // Get current voice selection
             currentVoiceId = voiceSelect.value;
@@ -440,11 +490,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     })
                 });
                 
-                // Clear patient details panel
-                patientDetailsPanel.innerHTML = '';
-                
-                // Reset diagnosis panel for new conversation
-                resetDiagnosisPanel();
+                // Note: No patient details or diagnosis panel needed for persona chat
                 
                 // Refresh the conversation list
                 await loadConversationHistory();
@@ -580,23 +626,27 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (data.status === 'success') {
                 currentConversationId = conversationId;
                 
-                // Handle different simulation types
-                if (data.conversation.simulation_file === '__custom__') {
-                    // Custom patient conversation
-                    currentSimulation = '__custom__';
-                    simulationSelect.value = '__custom__';
-                    // Hide custom patient form since we're loading an existing conversation
-                    hideCustomPatientForm();
-                } else if (data.conversation.simulation_file) {
-                    // File-based patient simulation
-                    currentSimulation = data.conversation.simulation_file;
-                    simulationSelect.value = currentSimulation;
-                    hideCustomPatientForm();
+                // Handle persona information
+                const personaSelect = document.getElementById('personaSelect');
+                const descriptionDiv = document.getElementById('personaDescription');
+                
+                if (data.persona_info) {
+                    // Set persona selection and show description
+                    if (personaSelect) {
+                        personaSelect.value = data.conversation.simulation_file;
+                    }
+                    if (descriptionDiv) {
+                        descriptionDiv.textContent = data.persona_info.description;
+                        descriptionDiv.style.display = 'block';
+                    }
                 } else {
-                    // No simulation associated
-                    currentSimulation = null;
-                    simulationSelect.value = '';
-                    hideCustomPatientForm();
+                    // No persona associated
+                    if (personaSelect) {
+                        personaSelect.value = '';
+                    }
+                    if (descriptionDiv) {
+                        descriptionDiv.style.display = 'none';
+                    }
                 }
                 
                 // Set the voice if available
@@ -617,19 +667,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                     addMessage(message.role, message.content);
                 });
                 
-                // Load patient details for any type of patient simulation
-                if (data.conversation.simulation_file) {
-                    await loadPatientDetails();
-                } else {
-                    // Clear patient details panel if no simulation
-                    patientDetailsPanel.innerHTML = '';
-                }
-                
                 // Update UI
                 updateStatus('Ready');
                 
-                // Reset diagnosis panel for loaded conversation
-                resetDiagnosisPanel();
+                // Note: No patient details or diagnosis panel needed for persona chat
                 
                 // Update active conversation in sidebar
                 const items = conversationListElement.querySelectorAll('.conversation-item');
@@ -683,81 +724,72 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
     
-    // Handle simulation change
-    async function handleSimulationChange(event) {
-        const selectedSimulation = event.target.value;
+    // Handle persona selection change
+    async function handlePersonaChange(event) {
+        const personaId = event.target.value;
+        const selectedOption = event.target.selectedOptions[0];
         
-        // Check if custom patient is selected
-        if (selectedSimulation === '__custom__') {
-            console.log('Custom patient selected - showing wizard');
-            showPatientWizard();
-            statusElement.textContent = 'Create your custom patient';
-            patientDetailsPanel.innerHTML = '';
-            return;
-        }
-        
-        // Hide wizard if it was shown
-        hidePatientWizard();
-        
-        // Hide custom patient form if it was shown
-        hideCustomPatientForm();
-        
-        try {
-            statusElement.textContent = 'Loading simulation...';
+        if (personaId) {
+            // Show description
+            const description = selectedOption.dataset.description;
+            const descriptionDiv = document.getElementById('personaDescription');
+            descriptionDiv.textContent = description;
+            descriptionDiv.style.display = 'block';
             
-            // Keep track of current voice selection
-            currentVoiceId = voiceSelect.value;
+            updateStatus('Selecting persona...');
             
-            const response = await fetch('/api/select-simulation', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    simulation_file: selectedSimulation
-                })
-            });
-            
-            const data = await response.json();
-            
-            if (data.status === 'success') {
-                currentSimulation = data.current_simulation;
-                currentConversationId = data.conversation_id;
-                statusElement.textContent = 'Ready';
+            try {
+                const response = await fetch('/api/select-persona', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ persona_id: personaId })
+                });
                 
-                // Update voice preference for this conversation
-                if (currentConversationId) {
-                    await fetch('/api/update-voice', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            voice_id: currentVoiceId,
-                            conversation_id: currentConversationId
-                        })
-                    });
-                }
-                
-                // Load patient details if a simulation is selected
-                if (selectedSimulation) {
-                    await loadPatientDetails();
+                const data = await response.json();
+                if (data.status === 'success') {
+                    updateStatus(`Ready to chat with ${data.persona.name}`);
+                    currentConversationId = data.conversation_id;
+                    
+                    // Clear conversation display
+                    conversationElement.innerHTML = '';
+                    
+                    // Update voice selector to match persona's preferred voice
+                    voiceSelect.value = selectedOption.dataset.voiceId;
+                    currentVoiceId = selectedOption.dataset.voiceId;
+                    
+                    // Refresh conversation list
+                    await loadConversationHistory();
                 } else {
-                    // Clear patient details panel if no simulation selected
-                    patientDetailsPanel.innerHTML = '';
+                    updateStatus(`Error: ${data.message}`);
+                    event.target.value = '';
                 }
-                
-                // Refresh conversation list
-                await loadConversationHistory();
-                
-                // Reset diagnosis panel for new simulation
-                resetDiagnosisPanel();
-            } else {
-                throw new Error(data.message || 'Failed to select simulation');
+            } catch (error) {
+                console.error('Error selecting persona:', error);
+                updateStatus('Error selecting persona');
+                event.target.value = '';
             }
-        } catch (error) {
-            console.error('Error selecting simulation:', error);
-            statusElement.textContent = 'Error selecting simulation';
+        } else {
+            // Clear persona
+            const descriptionDiv = document.getElementById('personaDescription');
+            descriptionDiv.style.display = 'none';
+            
+            try {
+                const response = await fetch('/api/select-persona', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ persona_id: '' })
+                });
+                
+                const data = await response.json();
+                if (data.status === 'success') {
+                    updateStatus('Ready');
+                    currentConversationId = data.conversation_id;
+                    conversationElement.innerHTML = '';
+                    await loadConversationHistory();
+                }
+            } catch (error) {
+                console.error('Error clearing persona:', error);
+            }
         }
     }
     

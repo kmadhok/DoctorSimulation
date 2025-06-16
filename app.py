@@ -46,7 +46,7 @@ import json
 from utils.groq_integration import get_groq_response
 from utils.groq_transcribe import transcribe_audio_data
 from utils.groq_tts_speech import generate_speech_audio
-from utils.patient_simulation import get_patient_system_prompt
+from utils.persona_system import get_persona_system_prompt, get_all_personas, get_persona_by_id
 from utils.database import init_db, create_conversation, add_message, get_conversations, get_conversation, delete_conversation, update_conversation_title, store_conversation_data, get_conversation_data, validate_patient_data_structure, get_all_conversation_data
 from utils.ai_case_generator import generate_patient_case, get_all_specialties, get_available_symptoms_for_specialty, validate_symptom_specialty_combination
 
@@ -89,8 +89,8 @@ init_db()
 # Initialize conversation history
 conversation_history = []
 
-# Global variable to store the current patient simulation
-current_patient_simulation = None
+# Global variable to store the current persona
+current_persona = None
 
 # Global variable for current conversation ID
 current_conversation_id = None
@@ -158,14 +158,22 @@ def index():
     logger.info('Serving index page')
     return render_template('index.html')
 
-@app.route('/api/patient-simulations', methods=['GET'])
-def list_patient_simulations():
-    """List available patient simulation options - only static options"""
-    logger.info('Listing patient simulation options (static only)')
+@app.route('/api/personas', methods=['GET'])
+def list_personas():
+    """List available personas"""
+    logger.info('Listing available personas')
+    personas = get_all_personas()
     return jsonify({
         'status': 'success',
-        'simulations': [],  # No file-based simulations
-        'current_simulation': current_patient_simulation
+        'personas': {
+            key: {
+                'name': persona['name'],
+                'description': persona['description'],
+                'voice_id': persona['voice_id']
+            }
+            for key, persona in personas.items()
+        },
+        'current_persona': current_persona
     })
 
 @app.route('/api/conversations/new', methods=['POST'])
@@ -195,39 +203,26 @@ def create_new_conversation():
             'message': f'Error creating conversation: {str(e)}'
         }), 500
 
-@app.route('/api/select-simulation', methods=['POST'])
-def select_simulation():
-    """Select a patient simulation - now only handles custom patients"""
-    global patient_data, current_patient_simulation, current_conversation_id, conversation_history
+@app.route('/api/select-persona', methods=['POST'])
+def select_persona():
+    """Select a persona for conversation"""
+    global current_persona, current_conversation_id, conversation_history
     
     try:
         data = request.get_json()
-        if not data or 'simulation_file' not in data:
+        if not data or 'persona_id' not in data:
             return jsonify({
                 'status': 'error',
-                'message': 'No simulation file specified'
+                'message': 'No persona specified'
             }), 400
             
-        simulation_file = data['simulation_file']
-        logger.info(f"Selecting simulation: {simulation_file}")
+        persona_id = data['persona_id']
+        logger.info(f"Selecting persona: {persona_id}")
         
-        # Handle custom patient selection
-        if simulation_file == "__custom__":
-            logger.info("Custom patient selected - frontend will show form")
-            current_patient_simulation = None
-            patient_data = {}
-            return jsonify({
-                'status': 'success',
-                'message': 'Custom patient selection acknowledged - please fill out the form',
-                'current_simulation': '__custom__',
-                'conversation_id': None
-            })
-        
-        # Clear simulation (empty string)
-        if simulation_file == "":
-            logger.info("Clearing current simulation")
-            current_patient_simulation = None
-            patient_data = {}
+        # Clear persona (empty string)
+        if persona_id == "":
+            logger.info("Clearing current persona")
+            current_persona = None
             conversation_history = []
             
             # Create a new empty conversation
@@ -236,22 +231,46 @@ def select_simulation():
             
             return jsonify({
                 'status': 'success',
-                'message': 'Simulation cleared',
-                'current_simulation': None,
+                'message': 'Persona cleared',
+                'current_persona': None,
                 'conversation_id': current_conversation_id
             })
         
-        # If we get here, it's an unsupported simulation type
+        persona_data = get_persona_by_id(persona_id)
+        if not persona_data:
+            return jsonify({
+                'status': 'error', 
+                'message': 'Persona not found'
+            }), 404
+        
+        # Create new conversation with persona
+        title = f"Chat with {persona_data['name']}"
+        current_conversation_id = create_conversation(title, persona_id)
+        conversation_history = []
+        current_persona = persona_id
+        
+        # Store persona data
+        store_conversation_data(current_conversation_id, 'persona_data', persona_data)
+        store_conversation_data(current_conversation_id, 'voice_id', persona_data['voice_id'])
+        
+        logger.info(f"Created conversation {current_conversation_id} with persona {persona_data['name']}")
+        
         return jsonify({
-            'status': 'error',
-            'message': 'File-based simulations are no longer supported. Please use Custom Patient or AI-generated cases.'
-        }), 400
+            'status': 'success',
+            'message': f'Selected {persona_data["name"]}',
+            'conversation_id': current_conversation_id,
+            'persona': {
+                'name': persona_data['name'],
+                'description': persona_data['description'],
+                'voice_id': persona_data['voice_id']
+            }
+        })
         
     except Exception as e:
-        logger.error(f"Error selecting simulation: {str(e)}", exc_info=True)
+        logger.error(f"Error selecting persona: {str(e)}", exc_info=True)
         return jsonify({
             'status': 'error',
-            'message': f'Error selecting simulation: {str(e)}'
+            'message': f'Error selecting persona: {str(e)}'
         }), 500
 
 @app.route('/api/update-voice', methods=['POST'])
@@ -772,8 +791,9 @@ def process_audio():
                 'assistant_response_audio': ''  # Empty as we don't need audio for exit
             })
         
-        # Get system prompt from patient simulation if available
-        system_prompt = get_patient_system_prompt(patient_data) if patient_data else None
+        # Get system prompt from persona if available
+        persona_data = get_conversation_data(current_conversation_id, 'persona_data') if current_conversation_id else None
+        system_prompt = get_persona_system_prompt(persona_data) if persona_data else None
         
         # Check for repetition of last assistant message
         if conversation_history and len(conversation_history) >= 2:
@@ -922,9 +942,9 @@ def delete_conversation_by_id(conversation_id):
 def load_conversation_by_id(conversation_id):
     """
     Load a conversation into the active session.
-    Enhanced loading for custom and AI-generated patient conversations only.
+    Enhanced loading for persona-based conversations.
     """
-    global conversation_history, current_conversation_id, current_patient_simulation, patient_data
+    global conversation_history, current_conversation_id, current_persona
     
     try:
         conversation = get_conversation(conversation_id)
@@ -938,47 +958,18 @@ def load_conversation_by_id(conversation_id):
         current_conversation_id = conversation_id
         logger.info(f"Loading conversation {conversation_id}: {conversation.get('title', 'Untitled')}")
         
-        # Enhanced patient data loading - only custom and AI-generated patients
-        simulation_file = conversation.get('simulation_file')
+        # Load stored persona data
+        persona_file = conversation.get('simulation_file')  # This holds the persona_id now
+        retrieved_persona_data = get_conversation_data(conversation_id, 'persona_data')
         
-        if simulation_file and simulation_file != '__custom__' and simulation_file != 'AI Generated Case':
-            # Legacy file-based simulation - log warning and clear
-            logger.warning(f"Legacy file-based simulation found: {simulation_file}")
-            logger.info("File-based simulations are no longer supported")
-            patient_data = None
-            current_patient_simulation = None
+        if retrieved_persona_data:
+            current_persona = persona_file
+            logger.info(f"🎭 Persona Information:")
+            logger.info(f"      Name: {retrieved_persona_data.get('name', 'Unknown')}")
+            logger.info(f"      Voice: {retrieved_persona_data.get('voice_id', 'Unknown')}")
         else:
-            # Load stored patient data (custom or AI-generated)
-            retrieved_patient_data = get_conversation_data(conversation_id, 'patient_data')
-            
-            if retrieved_patient_data:
-                patient_data = retrieved_patient_data
-                patient_type = patient_data.get('type', 'unknown')
-                
-                if patient_type == 'ai_generated':
-                    generation_metadata = retrieved_patient_data.get('generation_metadata', {})
-                    patient_details = retrieved_patient_data.get('patient_details', {})
-                    
-                    logger.info(f"🏥 AI Case Information:")
-                    logger.info(f"      Specialty: {generation_metadata.get('specialty', 'Unknown')}")
-                    logger.info(f"      Diagnosis: {patient_details.get('illness', 'Unknown')}")
-                    
-                    current_patient_simulation = 'AI Generated Case'
-                    
-                elif patient_type == 'custom':
-                    patient_details = retrieved_patient_data.get('patient_details', {})
-                    logger.info(f"👤 Custom Patient Information:")
-                    logger.info(f"      Age: {patient_details.get('age', 'Unknown')}")
-                    logger.info(f"      Gender: {patient_details.get('gender', 'Unknown')}")
-                    
-                    current_patient_simulation = 'Custom Patient'
-                    
-                else:
-                    logger.warning(f"Unknown patient type: {patient_type}")
-                    current_patient_simulation = 'Unknown Patient Type'
-            else:
-                patient_data = None
-                current_patient_simulation = None
+            current_persona = None
+            logger.info("No persona data found for this conversation")
         
         # Get additional conversation metadata
         voice_id = get_conversation_data(conversation_id, 'voice_id')
@@ -997,26 +988,16 @@ def load_conversation_by_id(conversation_id):
             'conversation': conversation,
             'voice_id': voice_id,
             'message_count': len(conversation_history),
-            'has_patient_data': patient_data is not None
+            'has_persona_data': retrieved_persona_data is not None
         }
         
-        # Add patient type information if available
-        if patient_data:
-            response_data['patient_type'] = patient_data.get('type', 'unknown')
-            
-            # Add AI-generated case info for display
-            if patient_data.get('type') == 'ai_generated':
-                generation_metadata = patient_data.get('generation_metadata', {})
-                response_data['ai_case_summary'] = {
-                    'specialty': generation_metadata.get('specialty', 'Unknown'),
-                    'symptoms': generation_metadata.get('input_symptoms', []),
-                    'severity': generation_metadata.get('severity', 'Unknown'),
-                    'difficulty': generation_metadata.get('difficulty_level', 'intermediate')
-                }
-            
-            # Add migration info if available
-            if 'migration_metadata' in patient_data:
-                response_data['migration_info'] = patient_data['migration_metadata']
+        # Add persona information if available
+        if retrieved_persona_data:
+            response_data['persona_info'] = {
+                'name': retrieved_persona_data.get('name', 'Unknown'),
+                'description': retrieved_persona_data.get('description', ''),
+                'voice_id': retrieved_persona_data.get('voice_id', 'Unknown')
+            }
         
         # Add any additional stored data keys (for debugging/admin purposes)
         if all_conversation_data:
