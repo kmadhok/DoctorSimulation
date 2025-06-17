@@ -7,6 +7,47 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+def _create_groq_client_safe():
+    """Create a Groq client with safe proxy handling"""
+    api_key = os.environ.get("GROQ_API_KEY")
+    if not api_key:
+        raise ValueError("GROQ_API_KEY environment variable not set")
+    
+    # Clear any proxy settings that might interfere
+    proxy_vars = ['HTTP_PROXY', 'HTTPS_PROXY', 'http_proxy', 'https_proxy']
+    for var in proxy_vars:
+        if var in os.environ:
+            del os.environ[var]
+    
+    # Create client with minimal parameters to avoid proxy issues
+    try:
+        import requests
+        # Temporarily patch requests to avoid proxy issues
+        original_request = requests.request
+        
+        def patched_request(*args, **kwargs):
+            # Remove any proxy settings from the request
+            kwargs.pop('proxies', None)
+            return original_request(*args, **kwargs)
+        
+        requests.request = patched_request
+        
+        # Create the Groq client
+        client = Groq(api_key=api_key)
+        
+        # Restore original request function
+        requests.request = original_request
+        
+        return client
+        
+    except Exception as e:
+        # Restore original request function even if there's an error
+        try:
+            requests.request = original_request
+        except:
+            pass
+        raise e
+
 def get_groq_response(input_text, model="llama-3.3-70b-versatile", history=None, system_prompt=None):
     """
     Get a response from Groq LLM with conversation history support.
@@ -34,11 +75,9 @@ def get_groq_response(input_text, model="llama-3.3-70b-versatile", history=None,
         # Debug: Print incoming history
         print(f"Processing request with {len(history)} previous messages")
         
-        # Initialize Groq client - explicitly use only api_key
+        # Initialize Groq client with safe proxy handling
         try:
-            # Explicitly avoid proxy settings by using only the api_key parameter
-            client = Groq(api_key=api_key)
-            # Test the client with a simple call to ensure it works
+            client = _create_groq_client_safe()
             print("Groq client initialized successfully")
         except Exception as client_error:
             print(f"Error initializing Groq client: {client_error}")

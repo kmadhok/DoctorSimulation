@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Voice Conversation App</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/multi-agent.css') }}">
     <style>
         .persona-selector {
             margin-bottom: 20px;
@@ -243,9 +244,16 @@
                 
                 <!-- ❷ NEW  insert in exactly the same place -->
                 <div class="controls">
+                    <button id="multiAgentModeBtn" class="btn btn-primary" style="margin-right: 10px;">
+                        🎯 Start Conference Call
+                    </button>
                     <button id="autoListenBtn" class="record-button">
                         <span class="record-icon"></span>
                         Auto Listen
+                    </button>
+                    <button id="manualRecordBtn" class="record-button" style="margin-left: 10px; display: none;">
+                        <span class="record-icon"></span>
+                        Manual Record
                     </button>
                 </div>
 
@@ -305,9 +313,20 @@
     </script>
 
     <!-- onnxruntime – must be first so it defines global `ort` -->
+    <script>
+        // Configure ONNX runtime before it loads to avoid threading issues
+        window.onrtLoaded = function() {
+            if (typeof ort !== 'undefined') {
+                ort.env.wasm.wasmPaths = '/static/vad-model/';
+                ort.env.wasm.numThreads = 1; // Disable threading to avoid .mjs issues
+                ort.env.wasm.simd = true;
+                vadLogger.success('CONFIG', 'ONNX Runtime configured for local files');
+            }
+        };
+    </script>
     <script
     src="{{ url_for('static', filename='vad-model/ort.min.js') }}"
-    onload="vadLogger.success('DEPS', 'ONNX Runtime loaded successfully')"
+    onload="vadLogger.success('DEPS', 'ONNX Runtime loaded successfully'); if(window.onrtLoaded) window.onrtLoaded();"
     onerror="vadLogger.error('DEPS', 'Failed to load ONNX Runtime')">
     </script>
 
@@ -635,6 +654,187 @@
 
             // Form submission will be handled in main.js
             console.log('Medical form management initialized');
+        });
+    </script>
+
+    <!-- Multi-Agent Conference Call Script -->
+    <script>
+        // Multi-agent conversation state
+        let multiAgentMode = false;
+        let activeAgents = [];
+        let currentMultiAgentConversationId = null;
+
+        // Function to show multi-agent setup modal
+        function showMultiAgentSetup() {
+            // Create modal if it doesn't exist
+            if (!document.getElementById('multiAgentSetup')) {
+                createMultiAgentSetupUI();
+            }
+            populateAgentSelection();
+            document.getElementById('multiAgentSetup').style.display = 'flex';
+        }
+
+        // Create the multi-agent setup UI
+        function createMultiAgentSetupUI() {
+            const setupHTML = `
+                <div class="multi-agent-setup" id="multiAgentSetup" style="display: none;">
+                    <div>
+                        <div class="multi-agent-header">
+                            <h3>🎯 Start Conference Call</h3>
+                            <button class="close-btn" onclick="hideMultiAgentSetup()">&times;</button>
+                        </div>
+                        <div class="multi-agent-content">
+                            <p>Select 2 or more personas to participate in a group conversation:</p>
+                            <div class="agent-selection-list" id="agentSelectionList">
+                                <!-- Agents will be populated here -->
+                            </div>
+                            <div class="multi-agent-actions">
+                                <button class="btn btn-secondary" onclick="hideMultiAgentSetup()">Cancel</button>
+                                <button class="btn btn-primary" id="startMultiAgentBtn" onclick="startMultiAgentConversation()" disabled>
+                                    Start Conference Call
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.body.insertAdjacentHTML('beforeend', setupHTML);
+        }
+
+        // Hide the multi-agent setup modal
+        function hideMultiAgentSetup() {
+            const setup = document.getElementById('multiAgentSetup');
+            if (setup) {
+                setup.remove();
+            }
+        }
+
+        // Populate agent selection list
+        async function populateAgentSelection() {
+            try {
+                const response = await fetch('/api/personas');
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    const agentsList = document.getElementById('agentSelectionList');
+                    agentsList.innerHTML = '';
+                    
+                    for (const [personaId, persona] of Object.entries(data.personas)) {
+                        const agentItem = document.createElement('div');
+                        agentItem.className = 'agent-selection-item';
+                        agentItem.innerHTML = `
+                            <label class="agent-checkbox-label">
+                                <input type="checkbox" value="${personaId}" onchange="updateStartButtonState()">
+                                <div class="agent-info">
+                                    <strong>${persona.name}</strong>
+                                    <p>${persona.description}</p>
+                                    <small>Voice: ${persona.voice_id}</small>
+                                </div>
+                            </label>
+                        `;
+                        agentsList.appendChild(agentItem);
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading agents:', error);
+            }
+        }
+
+        // Update start button state based on selection
+        function updateStartButtonState() {
+            const checkboxes = document.querySelectorAll('#agentSelectionList input[type="checkbox"]:checked');
+            const startBtn = document.getElementById('startMultiAgentBtn');
+            if (startBtn) {
+                startBtn.disabled = checkboxes.length < 2;
+            }
+        }
+
+        // Start multi-agent conversation
+        async function startMultiAgentConversation() {
+            try {
+                const checkboxes = document.querySelectorAll('#agentSelectionList input[type="checkbox"]:checked');
+                const selectedAgents = Array.from(checkboxes).map(cb => cb.value);
+                
+                const response = await fetch('/api/multi-agent/create', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        agent_ids: selectedAgents
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    multiAgentMode = true;
+                    activeAgents = data.active_agents;
+                    currentMultiAgentConversationId = data.conversation_id;
+                    
+                    // Clear conversation and update UI
+                    const conversationElement = document.getElementById('conversation');
+                    if (conversationElement) {
+                        conversationElement.innerHTML = '';
+                    }
+                    
+                    updateUIForMultiAgent();
+                    hideMultiAgentSetup();
+                    
+                    console.log('Multi-agent conversation started with agents:', activeAgents.map(a => a.name));
+                    alert('Conference call started with ' + activeAgents.map(a => a.name).join(', '));
+                } else {
+                    alert('Error starting multi-agent conversation: ' + data.message);
+                }
+            } catch (error) {
+                console.error('Error starting multi-agent conversation:', error);
+                alert('Error starting multi-agent conversation');
+            }
+        }
+
+        // Update UI for multi-agent mode
+        function updateUIForMultiAgent() {
+            // Add multi-agent indicator
+            const indicator = document.createElement('div');
+            indicator.className = 'multi-agent-indicator';
+            indicator.id = 'multiAgentIndicator';
+            indicator.innerHTML = `
+                <div>
+                    <strong>🎯 Conference Call Active</strong>
+                    <div class="active-agents">
+                        ${activeAgents.map(agent => `<span class="agent-badge">${agent.name}</span>`).join('')}
+                    </div>
+                </div>
+                <button class="btn btn-secondary" onclick="exitMultiAgent()">Exit Conference</button>
+            `;
+            
+            // Insert after header
+            const header = document.querySelector('header');
+            header.insertAdjacentElement('afterend', indicator);
+        }
+
+        // Exit multi-agent mode
+        function exitMultiAgent() {
+            multiAgentMode = false;
+            activeAgents = [];
+            currentMultiAgentConversationId = null;
+            
+            // Remove multi-agent indicator
+            const indicator = document.getElementById('multiAgentIndicator');
+            if (indicator) {
+                indicator.remove();
+            }
+            
+            console.log('Exited multi-agent mode');
+            alert('Conference call ended');
+        }
+
+        // Initialize multi-agent button
+        document.addEventListener('DOMContentLoaded', () => {
+            const multiAgentBtn = document.getElementById('multiAgentModeBtn');
+            if (multiAgentBtn) {
+                multiAgentBtn.addEventListener('click', showMultiAgentSetup);
+            }
         });
     </script>
 

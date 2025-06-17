@@ -49,6 +49,8 @@ from utils.groq_tts_speech import generate_speech_audio
 from utils.persona_system import get_persona_system_prompt, get_all_personas, get_persona_by_id
 from utils.database import init_db, create_conversation, add_message, get_conversations, get_conversation, delete_conversation, update_conversation_title, store_conversation_data, get_conversation_data, validate_patient_data_structure, get_all_conversation_data
 from utils.ai_case_generator import generate_patient_case, get_all_specialties, get_available_symptoms_for_specialty, validate_symptom_specialty_combination
+# NEW: Import multi-agent crew system
+from utils.crew_agents import MultiAgentConversationOrchestrator
 
 # Add template folder check before app creation
 template_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates')
@@ -94,6 +96,9 @@ current_persona = None
 
 # Global variable for current conversation ID
 current_conversation_id = None
+
+# NEW: Global variable for multi-agent conversations
+multi_agent_orchestrator = None
 
 # NEW: Medical synonyms dictionary for diagnosis evaluation
 MEDICAL_SYNONYMS = {
@@ -311,6 +316,236 @@ def update_voice():
         return jsonify({
             'status': 'error',
             'message': f'Error updating voice: {str(e)}'
+        }), 500
+
+# NEW: Multi-agent conversation endpoints
+@app.route('/api/multi-agent/create', methods=['POST'])
+def create_multi_agent_conversation():
+    """Create a new multi-agent conversation"""
+    global multi_agent_orchestrator, current_conversation_id, conversation_history
+    
+    try:
+        data = request.get_json()
+        agent_ids = data.get('agent_ids', [])
+        
+        if len(agent_ids) < 2:
+            return jsonify({
+                'status': 'error',
+                'message': 'At least 2 agents required for multi-agent conversation'
+            }), 400
+        
+        # Create new orchestrator
+        multi_agent_orchestrator = MultiAgentConversationOrchestrator()
+        
+        # Add agents
+        added_agents = []
+        for agent_id in agent_ids:
+            if multi_agent_orchestrator.add_agent(agent_id):
+                persona_data = get_persona_by_id(agent_id)
+                added_agents.append({
+                    'id': agent_id,
+                    'name': persona_data['name'],
+                    'voice_id': persona_data['voice_id']
+                })
+        
+        if len(added_agents) < 2:
+            return jsonify({
+                'status': 'error',
+                'message': 'Failed to add sufficient agents'
+            }), 500
+        
+        # Create conversation in database
+        agent_names = [agent['name'] for agent in added_agents]
+        title = f"Conference Call: {', '.join(agent_names)}"
+        current_conversation_id = create_conversation(title, 'multi_agent')
+        conversation_history = []
+        
+        # Store multi-agent metadata
+        store_conversation_data(current_conversation_id, 'conversation_type', 'multi_agent')
+        store_conversation_data(current_conversation_id, 'active_agents', added_agents)
+        
+        logger.info(f"Created multi-agent conversation with agents: {agent_names}")
+        
+        return jsonify({
+            'status': 'success',
+            'conversation_id': current_conversation_id,
+            'active_agents': added_agents,
+            'message': f'Multi-agent conversation created with {len(added_agents)} participants'
+        })
+        
+    except Exception as e:
+        logger.error(f"Error creating multi-agent conversation: {str(e)}", exc_info=True)
+        return jsonify({
+            'status': 'error',
+            'message': f'Error creating multi-agent conversation: {str(e)}'
+        }), 500
+
+@app.route('/api/multi-agent/add-agent', methods=['POST'])
+def add_agent_to_conversation():
+    """Add an agent to existing multi-agent conversation"""
+    global multi_agent_orchestrator, current_conversation_id
+    
+    try:
+        data = request.get_json()
+        agent_id = data.get('agent_id')
+        
+        if not multi_agent_orchestrator:
+            return jsonify({
+                'status': 'error',
+                'message': 'No active multi-agent conversation'
+            }), 400
+        
+        if multi_agent_orchestrator.add_agent(agent_id):
+            persona_data = get_persona_by_id(agent_id)
+            
+            # Update stored agent list
+            if current_conversation_id:
+                active_agents = get_conversation_data(current_conversation_id, 'active_agents') or []
+                active_agents.append({
+                    'id': agent_id,
+                    'name': persona_data['name'],
+                    'voice_id': persona_data['voice_id']
+                })
+                store_conversation_data(current_conversation_id, 'active_agents', active_agents)
+            
+            return jsonify({
+                'status': 'success',
+                'message': f'Added {persona_data["name"]} to conversation',
+                'agent': {
+                    'id': agent_id,
+                    'name': persona_data['name'],
+                    'voice_id': persona_data['voice_id']
+                }
+            })
+        else:
+            return jsonify({
+                'status': 'error',
+                'message': 'Failed to add agent'
+            }), 500
+            
+    except Exception as e:
+        logger.error(f"Error adding agent: {str(e)}", exc_info=True)
+        return jsonify({
+            'status': 'error',
+            'message': f'Error adding agent: {str(e)}'
+        }), 500
+
+@app.route('/api/multi-agent/process-message', methods=['POST'])
+def process_multi_agent_message():
+    """Process a message in multi-agent conversation"""
+    global multi_agent_orchestrator, current_conversation_id
+    
+    try:
+        data = request.get_json()
+        user_message = data.get('message', '').strip()
+        addressed_to = data.get('addressed_to')  # Optional: direct message to specific agent
+        
+        if not user_message:
+            return jsonify({
+                'status': 'error',
+                'message': 'No message provided'
+            }), 400
+        
+        if not multi_agent_orchestrator:
+            return jsonify({
+                'status': 'error',
+                'message': 'No active multi-agent conversation'
+            }), 400
+        
+        # Process the message
+        responses = multi_agent_orchestrator.process_user_message(user_message, addressed_to)
+        
+        # Save to database
+        if current_conversation_id:
+            # Save user message
+            add_message(current_conversation_id, "user", user_message)
+            
+            # Save agent responses
+            for response in responses:
+                add_message(current_conversation_id, "assistant", response['content'])
+                # Also store metadata
+                message_metadata = {
+                    'speaker': response['speaker'],
+                    'agent_id': response['agent_id'],
+                    'voice_id': response['voice_id']
+                }
+                # You might want to extend your database schema to store this metadata
+        
+        return jsonify({
+            'status': 'success',
+            'user_message': user_message,
+            'responses': responses,
+            'conversation_summary': multi_agent_orchestrator.get_conversation_summary()
+        })
+        
+    except Exception as e:
+        logger.error(f"Error processing multi-agent message: {str(e)}", exc_info=True)
+        return jsonify({
+            'status': 'error',
+            'message': f'Error processing message: {str(e)}'
+        }), 500
+
+# Modified process_audio for multi-agent support
+@app.route('/process_audio_multi_agent', methods=['POST'])
+def process_audio_multi_agent():
+    """Process audio in multi-agent conversation"""
+    global multi_agent_orchestrator, current_conversation_id
+    
+    try:
+        # Similar to your existing process_audio but handles multiple responses
+        
+        # Get audio file and transcribe (same as before)
+        if 'audio' not in request.files:
+            return jsonify({
+                'status': 'error',
+                'message': 'No audio file provided'
+            }), 400
+        
+        audio_file = request.files['audio']
+        audio_bytes = audio_file.read()
+        transcription = transcribe_audio_data(audio_bytes)
+        
+        if not transcription:
+            return jsonify({
+                'status': 'error',
+                'message': 'Failed to transcribe audio'
+            }), 500
+        
+        # Process with multi-agent orchestrator
+        responses = multi_agent_orchestrator.process_user_message(transcription)
+        
+        # Generate speech for each response
+        response_audios = []
+        for response in responses:
+            voice_id = response.get('voice_id', 'Fritz-PlayAI')
+            speech_audio = generate_speech_audio(response['content'], voice_id)
+            
+            if speech_audio:
+                base64_audio = base64.b64encode(speech_audio).decode('utf-8')
+                response_audios.append({
+                    'speaker': response['speaker'],
+                    'agent_id': response['agent_id'],
+                    'content': response['content'],
+                    'audio': base64_audio
+                })
+        
+        # Save to database (similar to single agent)
+        if current_conversation_id:
+            add_message(current_conversation_id, "user", transcription)
+            for response in responses:
+                add_message(current_conversation_id, "assistant", response['content'])
+        
+        return jsonify({
+            'status': 'success',
+            'user_transcription': transcription,
+            'responses': response_audios
+        })
+        
+    except Exception as e:
+        logger.error(f"Error processing multi-agent audio: {str(e)}", exc_info=True)
+        return jsonify({
+            'status': 'error',
+            'message': f'Error processing audio: {str(e)}'
         }), 500
 
 @app.route('/api/generate-patient-case', methods=['POST'])
