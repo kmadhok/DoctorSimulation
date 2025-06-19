@@ -169,15 +169,26 @@ class MultiAgentConversationOrchestrator:
         })
         
         try:
+            # --- 1. Direct addressing takes precedence over moderator logic ---
             if addressed_to and addressed_to in self.agents:
-                # Direct message to specific agent
                 response = self._get_agent_response_simple(addressed_to, user_message, is_direct=True)
                 if response:
                     responses.append(response)
             else:
-                # Group conversation - multiple agents may respond
-                responses.extend(self._orchestrate_group_response_simple(user_message))
-                
+                # --- 2. Use LLM "floor-manager" to decide turn taking ---
+                next_speakers = self._moderator_pick(user_message)
+
+                # Fallback – if moderator fails, keep previous simple logic
+                if not next_speakers:
+                    next_speakers = self._select_responding_agents(user_message, max_responses=2)
+
+                for agent_id in next_speakers:
+                    if agent_id not in self.agents:
+                        continue
+                    response = self._get_agent_response_simple(agent_id, user_message)
+                    if response:
+                        responses.append(response)
+                        self.conversation_history.append(response)
         except Exception as e:
             logger.error(f"Error processing user message: {str(e)}")
             responses.append({
@@ -339,6 +350,87 @@ Respond as {persona_data['name']} would respond naturally in this conversation:"
         }
     
     def clear_conversation(self):
-        """Clear conversation history"""
+        """Clear conversation history and reset state"""
         self.conversation_history = []
-        self.current_turn_index = 0 
+        self.turn_order = []
+        self.current_turn_index = 0
+        self.conversation_context = ""
+
+    # --- Automatic turn when the user is silent ---
+    def generate_auto_turn(self, max_responses: int = 2) -> List[Dict]:
+        """Let the moderator decide who should speak next without new user input."""
+        try:
+            next_speakers = self._moderator_pick(user_message="", max_attempts=1)
+            if not next_speakers:
+                next_speakers = self._select_responding_agents("", max_responses=max_responses)
+
+            responses: List[Dict] = []
+            for agent_id in next_speakers:
+                if agent_id not in self.agents:
+                    continue
+                resp = self._get_agent_response_simple(agent_id, "", is_direct=False)
+                if resp:
+                    responses.append(resp)
+                    self.conversation_history.append(resp)
+            return responses
+        except Exception as e:
+            logger.error(f"Error generating auto turn: {e}")
+            return []
+
+    # ------------------------------------------------------------------
+    # Floor-manager helper
+    # ------------------------------------------------------------------
+    def _moderator_pick(self, user_message: str, max_attempts: int = 1) -> List[str]:
+        """Use an LLM call to decide the ordered list of agents who should
+        speak next. Returns a list of agent IDs. If the LLM output cannot be
+        parsed, returns an empty list so that fallback heuristics can apply.
+        """
+
+        try:
+            # Build a short description of participants for the prompt
+            participants_desc = []
+            for aid, ainfo in self.agents.items():
+                pdata = ainfo["persona_data"]
+                participants_desc.append(f"{aid} – {pdata['name']}, {pdata['description']}")
+
+            participants_block = "\n".join(participants_desc) if participants_desc else "(none)"
+
+            context = self._get_recent_context(8)
+
+            system_prompt = (
+                "You are the floor-manager of a group conversation. "
+                "Choose **at most one** agent for next_speakers. "
+                "Return JSON ONLY, no prose. The format:\n"
+                "{\n  \"next_speakers\": [<agent_id>, ...] \n}\n"
+                "Return an empty list if no agent should speak yet."
+            )
+
+            user_prompt = (
+                f"Participants:\n{participants_block}\n\n"
+                f"Recent conversation:\n{context}\n\n"
+                f"User just said: \"{user_message}\"\n"
+                f"Respond with JSON now."
+            )
+
+            raw = get_groq_response(
+                input_text=user_prompt,
+                model="llama3-8b-8192",
+                history=[],
+                system_prompt=system_prompt
+            )
+
+            # Expect a small JSON blob. Try to parse first {...} found.
+            json_start = raw.find("{")
+            json_end = raw.rfind("}")
+            if json_start == -1 or json_end == -1:
+                raise ValueError("No JSON object found in moderator response")
+
+            data = json.loads(raw[json_start:json_end+1])
+            speakers = data.get("next_speakers", [])
+            logger.debug(f"--Moderator chose: {speakers}   raw: {raw[:120]!r}")
+            # Ensure we return only valid agent IDs and respect turn order
+            return [s for s in speakers if s in self.agents]
+
+        except Exception as e:
+            logger.warning(f"Moderator pick failed: {e}")
+            return [] 

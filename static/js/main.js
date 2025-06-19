@@ -57,6 +57,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     let recordedChunks = [];
     let isManualRecording = false;
 
+    // --- Audio queue state ---
+    const IDLE_MS = 5000;           // 5 s of silence triggers auto-turn
+    let audioQueue = [];
+    let isAudioPlaying = false;
+    let idleHandle = null;
+
+    function cancelIdleTimer() {
+        if (idleHandle) {
+            clearTimeout(idleHandle);
+            idleHandle = null;
+        }
+    }
+
     async function initAutoVAD() {
         console.log('initAutoVAD: Starting VAD initialization...');
         
@@ -103,6 +116,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     }
                     
                     updateStatus("Listening...");
+                    cancelIdleTimer();
                 },
 
                 onSpeechEnd: async (float32Audio) => {
@@ -425,7 +439,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     
                     // Play audio response
                     if (response.audio) {
-                        await playAudioResponse(response.audio);
+                        await playAudioResponse(response.audio, response.speaker);
                         // Small delay between agent speeches
                         await new Promise(resolve => setTimeout(resolve, 500));
                     }
@@ -506,7 +520,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 addMessage('assistant', data.assistant_response_text);
                 
                 if (data.assistant_response_audio) {
-                    playAudioResponse(data.assistant_response_audio);
+                    await playAudioResponse(data.assistant_response_audio, 'Assistant');
                 }
                 
                 await loadConversationHistory();
@@ -572,80 +586,84 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    async function playAudioResponse(base64Audio) {
+    async function playAudioResponse(base64Audio, speaker = 'Assistant') {
+        return new Promise(resolve => {
+            cancelIdleTimer();
+            audioQueue.push({ base64Audio, speaker, resolve });
+            processAudioQueue();
+        });
+    }
+
+    async function processAudioQueue() {
+        if (isAudioPlaying || audioQueue.length === 0) return;
+
+        const { base64Audio, speaker, resolve } = audioQueue.shift();
+        isAudioPlaying = true;
+
         try {
-            if (!base64Audio || base64Audio.length === 0) {
-                console.error('playAudioResponse: Empty audio data received');
+            if (!base64Audio) {
+                console.error(`[AUDIO] ${speaker} – empty payload`);
+                isAudioPlaying = false;
+                resolve();
+                processAudioQueue();
                 return;
             }
 
-            if (!audioContext) {
-                console.error('playAudioResponse: AudioContext not initialized!');
-                const audioElement = new Audio(`data:audio/mp3;base64,${base64Audio}`);
-                audioElement.play();
+            // Fallback when AudioContext is not ready
+            if (!audioContext || audioContext.state !== 'running') {
+                const element = new Audio(`data:audio/mp3;base64,${base64Audio}`);
+                element.onended = () => {
+                    isAudioPlaying = false;
+                    resolve();
+                    processAudioQueue();
+                };
+                element.play();
                 return;
             }
 
-            if (audioContext.state !== 'running') {
-                console.warn('playAudioResponse: AudioContext is not running');
-                const audioElement = new Audio(`data:audio/mp3;base64,${base64Audio}`);
-                audioElement.play();
-                return;
-            }
-            
-            // Stop any currently playing audio
-            if (currentAudioSource) {
-                currentAudioSource.stop();
-                currentAudioSource.onended = null;
-                currentAudioSource = null;
-            }
-            
-            // Convert base64 to ArrayBuffer
-            const binaryString = atob(base64Audio);
-            const len = binaryString.length;
-            const bytes = new Uint8Array(len);
-            
-            for (let i = 0; i < len; i++) {
-                bytes[i] = binaryString.charCodeAt(i);
-            }
-            
-            // Decode audio data
-            let audioBuffer;
-            try {
-                audioBuffer = await audioContext.decodeAudioData(bytes.buffer);
-            } catch (decodeError) {
-                console.error('playAudioResponse: Failed to decode audio:', decodeError);
-                const audioElement = new Audio(`data:audio/mp3;base64,${base64Audio}`);
-                audioElement.play();
-                return;
-            }
-            
-            // Create and play audio source
+            // Base-64 → Uint8Array
+            const bytes = Uint8Array.from(atob(base64Audio), c => c.charCodeAt(0));
+            const audioBuffer = await audioContext.decodeAudioData(bytes.buffer);
+
             const source = audioContext.createBufferSource();
             source.buffer = audioBuffer;
             source.connect(audioContext.destination);
-            
             currentAudioSource = source;
-            
+
             source.onended = () => {
                 currentAudioSource = null;
+                isAudioPlaying = false;
+                resolve();
+                processAudioQueue();
+                if (!isAudioPlaying && audioQueue.length === 0 && !idleHandle) {
+                    idleHandle = setTimeout(onIdle, IDLE_MS);
+                }
             };
-            
+
             source.start(0);
-            
-        } catch (error) {
-            console.error('playAudioResponse: Error playing audio:', error);
-            try {
-                const audioBlob = new Blob(
-                    [Uint8Array.from(atob(base64Audio), c => c.charCodeAt(0))], 
-                    {type: 'audio/mp3'}
-                );
-                const audioUrl = URL.createObjectURL(audioBlob);
-                const audio = new Audio(audioUrl);
-                audio.play();
-            } catch (fallbackError) {
-                console.error('playAudioResponse: All audio playback attempts failed:', fallbackError);
+        } catch (err) {
+            console.error('Audio playback failed', err);
+            isAudioPlaying = false;
+            resolve();
+            processAudioQueue();
+        }
+    }
+
+    async function onIdle() {
+        cancelIdleTimer();
+        try {
+            const resp = await fetch('/continue_multi_agent', { method: 'POST' });
+            const data = await resp.json();
+            if (data.status === 'success') {
+                for (const r of data.responses) {
+                    addMultiAgentMessage(r);
+                    if (r.audio) {
+                        await playAudioResponse(r.audio, r.speaker);
+                    }
+                }
             }
+        } catch (err) {
+            console.error('onIdle error', err);
         }
     }
 

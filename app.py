@@ -1789,6 +1789,58 @@ def generate_diagnosis_feedback(
         logger.error(f"Error generating feedback: {str(e)}")
         return "Unable to generate feedback. Please try again."
 
+# ----------------------------
+# Auto-turn when user is silent
+# ----------------------------
+
+@app.route('/continue_multi_agent', methods=['POST'])
+def continue_multi_agent():
+    """Let the agents continue the conversation without new user input, including TTS audio."""
+    global multi_agent_orchestrator, current_conversation_id
+
+    if not multi_agent_orchestrator:
+        return jsonify({'status': 'error',
+                        'message': 'No active multi-agent conversation'}), 400
+
+    try:
+        logger.info("/continue_multi_agent invoked – generating auto turn …")
+        raw_responses = multi_agent_orchestrator.generate_auto_turn()
+        logger.info(f"Auto-turn produced {len(raw_responses)} replies")
+
+        # 2️⃣  Text-to-speech for every reply so the front-end can play it
+        response_audios = []
+        for resp in raw_responses:
+            voice_id = resp.get('voice_id', 'Fritz-PlayAI')
+            speech_audio = generate_speech_audio(resp['content'], voice_id)
+
+            base64_audio = (base64.b64encode(speech_audio).decode('utf-8')
+                            if speech_audio else None)
+
+            response_audios.append({
+                'speaker': resp['speaker'],
+                'agent_id': resp['agent_id'],
+                'content': resp['content'],
+                'audio': base64_audio
+            })
+
+            if speech_audio:
+                logger.debug(f"   ✓ TTS bytes: {len(speech_audio)}")
+            else:
+                logger.warning("   ⚠️ TTS generation failed – audio will be null")
+
+        # 3️⃣  Persist messages so they appear in the conversation log
+        if current_conversation_id:
+            for resp in raw_responses:
+                add_message(current_conversation_id, "assistant", resp['content'])
+
+        logger.info(f"/continue_multi_agent returning {len(response_audios)} enriched replies")
+        return jsonify({'status': 'success', 'responses': response_audios})
+
+    except Exception as e:
+        logger.error(f"/continue_multi_agent failed: {e}", exc_info=True)
+        return jsonify({'status': 'error',
+                        'message': 'Failed to generate auto turn'}), 500
+
 # Keep the if __name__ == '__main__' block for running the app
 if __name__ == '__main__':
     # Parse command line arguments only when running directly with Python
