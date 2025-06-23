@@ -30,14 +30,6 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Apply patch to Groq client before importing any Groq modules
-print("Applying Groq client patch...")
-from utils.patch_groq import patch_successful
-if not patch_successful:
-    print("WARNING: Failed to patch Groq client, proxy issues may occur")
-else:
-    print("Groq client patch applied successfully")
-
 # Initialize Flask only after patching
 from flask import Flask, request, jsonify, render_template, session
 import json

@@ -8,45 +8,14 @@ from dotenv import load_dotenv
 load_dotenv()
 
 def _create_groq_client_safe():
-    """Create a Groq client with safe proxy handling"""
+    """Create a Groq client."""
     api_key = os.environ.get("GROQ_API_KEY")
     if not api_key:
         raise ValueError("GROQ_API_KEY environment variable not set")
     
-    # Clear any proxy settings that might interfere
-    proxy_vars = ['HTTP_PROXY', 'HTTPS_PROXY', 'http_proxy', 'https_proxy']
-    for var in proxy_vars:
-        if var in os.environ:
-            del os.environ[var]
-    
-    # Create client with minimal parameters to avoid proxy issues
-    try:
-        import requests
-        # Temporarily patch requests to avoid proxy issues
-        original_request = requests.request
-        
-        def patched_request(*args, **kwargs):
-            # Remove any proxy settings from the request
-            kwargs.pop('proxies', None)
-            return original_request(*args, **kwargs)
-        
-        requests.request = patched_request
-        
-        # Create the Groq client
-        client = Groq(api_key=api_key)
-        
-        # Restore original request function
-        requests.request = original_request
-        
-        return client
-        
-    except Exception as e:
-        # Restore original request function even if there's an error
-        try:
-            requests.request = original_request
-        except:
-            pass
-        raise e
+    # With the upgraded groq library, we no longer need to manually handle proxies.
+    # The client will correctly handle them.
+    return Groq(api_key=api_key)
 
 def get_groq_response(input_text, model="llama-3.3-70b-versatile", history=None, system_prompt=None):
     """
