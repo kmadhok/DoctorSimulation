@@ -503,16 +503,86 @@ def process_audio_multi_agent():
     """Process audio in multi-agent conversation"""
     global multi_agent_orchestrator, current_conversation_id
     
+    # ✅ ADD: Initialize logging context for this request
+    request_id = secrets.token_urlsafe(8)  # Short unique ID for this request
+    
     try:
+        logger.info(f"🎙️ MULTI-AGENT AUDIO REQUEST STARTED [REQ:{request_id}]")
+        logger.info(f"   📊 Request Stats: Audio file present: {'audio' in request.files}, Form keys: {list(request.form.keys())}")
+        
+        # ✅ ENHANCED: Conversation ID retrieval with detailed logging
+        target_conversation_id = current_conversation_id  # Start with global value
+        logger.info(f"   🔄 Initial conversation state - Global ID: {current_conversation_id}")
+        
+        # Get conversation ID from form data if provided
+        form_conversation_id = request.form.get('conversation_id')
+        if form_conversation_id:
+            try:
+                target_conversation_id = int(form_conversation_id)
+                logger.info(f"   ✅ Using conversation_id from form: {target_conversation_id}")
+            except (ValueError, TypeError):
+                logger.warning(f"   ⚠️ Invalid conversation_id in form: {form_conversation_id}")
+                return jsonify({
+                    'status': 'error',
+                    'message': 'Invalid conversation ID format'
+                }), 400
+        else:
+            logger.warning(f"   ⚠️ No conversation_id in form data, using global: {target_conversation_id}")
+        
+        # Update the global variable
+        current_conversation_id = target_conversation_id
+        
+        # ✅ ADD: Validate conversation exists and log details
+        if not current_conversation_id:
+            logger.error(f"   ❌ [REQ:{request_id}] No conversation ID available")
+            return jsonify({
+                'status': 'error',
+                'message': 'No active conversation. Please create a multi-agent conversation first.'
+            }), 400
+        
+        # ✅ ADD: Log conversation details from database
+        conversation = get_conversation(current_conversation_id)
+        if conversation:
+            logger.info(f"   📄 [REQ:{request_id}] Conversation found: '{conversation.get('title', 'Untitled')}' ({len(conversation.get('messages', []))} messages)")
+        else:
+            logger.error(f"   ❌ [REQ:{request_id}] Conversation {current_conversation_id} not found in database")
+            return jsonify({
+                'status': 'error',
+                'message': 'Conversation not found in database'
+            }), 404
+        
+        # ✅ ADD: Log orchestrator state and agent details
+        if multi_agent_orchestrator:
+            agent_count = len(multi_agent_orchestrator.agents) if hasattr(multi_agent_orchestrator, 'agents') else 0
+            logger.info(f"   🤖 [REQ:{request_id}] Orchestrator available with {agent_count} agents")
+            
+            # Log active agents details
+            try:
+                active_agents_data = get_conversation_data(current_conversation_id, 'active_agents')
+                if active_agents_data:
+                    agent_names = [agent.get('name', agent.get('id', 'Unknown')) for agent in active_agents_data]
+                    logger.info(f"   👥 [REQ:{request_id}] Active agents from DB: {', '.join(agent_names)}")
+                else:
+                    logger.warning(f"   ⚠️ [REQ:{request_id}] No active agents data in database")
+            except Exception as e:
+                logger.error(f"   ❌ [REQ:{request_id}] Error getting agent data: {str(e)}")
+        else:
+            logger.warning(f"   ⚠️ [REQ:{request_id}] Multi-agent orchestrator not initialized")
+        
         # Check if multi-agent orchestrator is initialized
         if not multi_agent_orchestrator:
+            logger.error(f"   ❌ [REQ:{request_id}] No active multi-agent orchestrator available")
             return jsonify({
                 'status': 'error',
                 'message': 'No active multi-agent conversation. Please create a multi-agent conversation first.'
             }), 400
         
+        # ✅ ENHANCED: Audio processing with detailed logging
+        logger.info(f"   🎵 [REQ:{request_id}] STARTING AUDIO PROCESSING")
+        
         # Get audio file and transcribe (same as before)
         if 'audio' not in request.files:
+            logger.error(f"   ❌ [REQ:{request_id}] No audio file in request")
             return jsonify({
                 'status': 'error',
                 'message': 'No audio file provided'
@@ -520,37 +590,142 @@ def process_audio_multi_agent():
         
         audio_file = request.files['audio']
         audio_bytes = audio_file.read()
+        logger.info(f"   📁 [REQ:{request_id}] Audio file received: {len(audio_bytes)} bytes, filename: {getattr(audio_file, 'filename', 'unknown')}")
+        
+        # ✅ ENHANCED: Transcription with logging
+        logger.info(f"   🔤 [REQ:{request_id}] STARTING TRANSCRIPTION")
         transcription = transcribe_audio_data(audio_bytes)
         
         if not transcription:
+            logger.error(f"   ❌ [REQ:{request_id}] TRANSCRIPTION FAILED - no text returned")
             return jsonify({
                 'status': 'error',
                 'message': 'Failed to transcribe audio'
             }), 500
         
-        # Process with multi-agent orchestrator
-        responses = multi_agent_orchestrator.process_user_message(transcription)
+        logger.info(f"   ✅ [REQ:{request_id}] TRANSCRIPTION SUCCESS: '{transcription}' ({len(transcription)} chars)")
         
-        # Generate speech for each response
-        response_audios = []
-        for response in responses:
-            voice_id = response.get('voice_id', 'Fritz-PlayAI')
-            speech_audio = generate_speech_audio(response['content'], voice_id)
+        # ✅ ENHANCED: Text generation with logging
+        logger.info(f"   🧠 [REQ:{request_id}] STARTING MULTI-AGENT TEXT GENERATION")
+        try:
+            responses = multi_agent_orchestrator.process_user_message(transcription)
+            logger.info(f"   ✅ [REQ:{request_id}] TEXT GENERATION SUCCESS: {len(responses)} agent responses")
             
-            if speech_audio:
-                base64_audio = base64.b64encode(speech_audio).decode('utf-8')
+            # Log each agent response
+            for i, response in enumerate(responses):
+                speaker = response.get('speaker', 'Unknown')
+                content_preview = response.get('content', '')[:100] + "..." if len(response.get('content', '')) > 100 else response.get('content', '')
+                agent_id = response.get('agent_id', 'unknown')
+                voice_id = response.get('voice_id', 'unknown')
+                logger.info(f"     📝 [REQ:{request_id}] Response {i+1}: {speaker} ({agent_id}) - Voice: {voice_id}")
+                logger.info(f"        Content preview: '{content_preview}'")
+        except Exception as e:
+            logger.error(f"   ❌ [REQ:{request_id}] TEXT GENERATION FAILED: {str(e)}", exc_info=True)
+            return jsonify({
+                'status': 'error',
+                'message': f'Error generating responses: {str(e)}'
+            }), 500
+        
+        # ✅ ENHANCED: TTS generation with detailed logging
+        logger.info(f"   🔊 [REQ:{request_id}] STARTING TTS GENERATION for {len(responses)} responses")
+        response_audios = []
+        tts_success_count = 0
+        tts_failure_count = 0
+        
+        for i, response in enumerate(responses):
+            speaker = response.get('speaker', 'Unknown')
+            agent_id = response.get('agent_id', 'unknown')
+            voice_id = response.get('voice_id', 'Fritz-PlayAI')
+            content = response.get('content', '')
+            
+            logger.info(f"     🎤 [REQ:{request_id}] TTS {i+1}/{len(responses)}: {speaker} using voice '{voice_id}' ({len(content)} chars)")
+            
+            try:
+                speech_audio = generate_speech_audio(content, voice_id)
+                
+                if speech_audio:
+                    audio_size = len(speech_audio)
+                    base64_audio = base64.b64encode(speech_audio).decode('utf-8')
+                    base64_size = len(base64_audio)
+                    
+                    response_audios.append({
+                        'speaker': speaker,
+                        'agent_id': agent_id,
+                        'content': content,
+                        'audio': base64_audio
+                    })
+                    
+                    tts_success_count += 1
+                    logger.info(f"     ✅ [REQ:{request_id}] TTS SUCCESS {i+1}: {speaker} - {audio_size} bytes audio, {base64_size} chars base64")
+                else:
+                    tts_failure_count += 1
+                    logger.error(f"     ❌ [REQ:{request_id}] TTS FAILED {i+1}: {speaker} - generate_speech_audio returned None")
+                    
+                    # Still add response without audio
+                    response_audios.append({
+                        'speaker': speaker,
+                        'agent_id': agent_id,
+                        'content': content,
+                        'audio': None
+                    })
+                    
+            except Exception as tts_error:
+                tts_failure_count += 1
+                logger.error(f"     ❌ [REQ:{request_id}] TTS EXCEPTION {i+1}: {speaker} - {str(tts_error)}", exc_info=True)
+                
+                # Still add response without audio
                 response_audios.append({
-                    'speaker': response['speaker'],
-                    'agent_id': response['agent_id'],
-                    'content': response['content'],
-                    'audio': base64_audio
+                    'speaker': speaker,
+                    'agent_id': agent_id,
+                    'content': content,
+                    'audio': None
                 })
         
-        # Save to database (similar to single agent)
-        if current_conversation_id:
-            add_message(current_conversation_id, "user", transcription)
-            for response in responses:
-                add_message(current_conversation_id, "assistant", response['content'])
+        logger.info(f"   📊 [REQ:{request_id}] TTS SUMMARY: {tts_success_count} successes, {tts_failure_count} failures")
+        
+        # ✅ ENHANCED: Database saving with logging
+        logger.info(f"   💾 [REQ:{request_id}] SAVING TO DATABASE")
+        try:
+            if current_conversation_id:
+                add_message(current_conversation_id, "user", transcription)
+                logger.info(f"   ✅ [REQ:{request_id}] Saved user message: '{transcription[:50]}...'")
+                
+                for i, response in enumerate(responses):
+                    add_message(current_conversation_id, "assistant", response['content'])
+                    logger.info(f"   ✅ [REQ:{request_id}] Saved assistant response {i+1}: {response.get('speaker', 'Unknown')}")
+                
+                logger.info(f"   ✅ [REQ:{request_id}] DATABASE SAVE COMPLETE")
+            else:
+                logger.warning(f"   ⚠️ [REQ:{request_id}] No conversation ID for database save")
+        except Exception as db_error:
+            logger.error(f"   ❌ [REQ:{request_id}] DATABASE SAVE FAILED: {str(db_error)}", exc_info=True)
+        
+        # ✅ ADD: Final success summary
+        total_audio_size = sum(len(r.get('audio', '') or '') for r in response_audios)
+        logger.info(f"   🎉 [REQ:{request_id}] REQUEST COMPLETE")
+        logger.info(f"   📊 [REQ:{request_id}] FINAL STATS:")
+        logger.info(f"      Conversation ID: {current_conversation_id}")
+        logger.info(f"      Transcription: '{transcription}'")
+        logger.info(f"      Agent responses: {len(responses)}")
+        logger.info(f"      TTS success rate: {tts_success_count}/{len(responses)}")
+        logger.info(f"      Total audio data: {total_audio_size} chars base64")
+        
+        # ✅ ADD: Heroku monitoring structured log
+        logger.info("📊 HEROKU_MULTI_AGENT_REQUEST: " + json.dumps({
+            'event': 'multi_agent_audio_processed',
+            'request_id': request_id,
+            'conversation_id': current_conversation_id,
+            'conversation_title': conversation.get('title', 'Unknown') if conversation else 'Not found',
+            'transcription_success': bool(transcription),
+            'transcription_length': len(transcription) if transcription else 0,
+            'agent_responses': len(responses),
+            'tts_success_count': tts_success_count,
+            'tts_failure_count': tts_failure_count,
+            'total_audio_size': total_audio_size,
+            'processing_time_start': datetime.now().isoformat(),
+            'agents_used': [r.get('speaker', 'Unknown') for r in responses],
+            'timestamp': datetime.now().isoformat()
+        }))
         
         return jsonify({
             'status': 'success',
@@ -559,7 +734,18 @@ def process_audio_multi_agent():
         })
         
     except Exception as e:
-        logger.error(f"Error processing multi-agent audio: {str(e)}", exc_info=True)
+        logger.error(f"   ❌ [REQ:{request_id}] CRITICAL ERROR in multi-agent audio processing: {str(e)}", exc_info=True)
+        
+        # ✅ ADD: Error monitoring
+        logger.info("📊 HEROKU_MULTI_AGENT_ERROR: " + json.dumps({
+            'event': 'multi_agent_audio_error',
+            'request_id': request_id,
+            'conversation_id': current_conversation_id,
+            'error_message': str(e),
+            'error_type': type(e).__name__,
+            'timestamp': datetime.now().isoformat()
+        }))
+        
         return jsonify({
             'status': 'error',
             'message': f'Error processing audio: {str(e)}'
@@ -1861,91 +2047,123 @@ def continue_multi_agent():
 def restore_multi_agent_orchestrator():
     """
     Restore multi-agent orchestrator from database if needed.
-    
-    This function recreates the MultiAgentConversationOrchestrator instance
-    from stored database data when the global orchestrator is None (typically
-    after a Heroku dyno restart or new request in stateless environment).
-    
-    Returns:
-        bool: True if orchestrator is available (restored or already exists),
-              False if restoration failed or not applicable
+    Enhanced with comprehensive logging for Heroku monitoring.
     """
     global multi_agent_orchestrator, current_conversation_id
     
+    restore_id = secrets.token_urlsafe(6)  # Short ID for this restoration attempt
+    logger.info(f"🔄 ORCHESTRATOR RESTORATION STARTED [RESTORE:{restore_id}]")
+    
     # Check if orchestrator already exists
     if multi_agent_orchestrator is not None:
-        logger.debug("Multi-agent orchestrator already exists, no restoration needed")
+        logger.info(f"   ✅ [RESTORE:{restore_id}] Orchestrator already exists, no restoration needed")
         return True
     
     # Check if we have an active conversation
     if not current_conversation_id:
-        logger.debug("No active conversation ID, cannot restore multi-agent orchestrator")
+        logger.info(f"   ❌ [RESTORE:{restore_id}] No active conversation ID, cannot restore")
         return False
+    
+    logger.info(f"   🔍 [RESTORE:{restore_id}] Attempting restoration for conversation {current_conversation_id}")
     
     try:
         # Check if this is a multi-agent conversation
         conversation_type = get_conversation_data(current_conversation_id, 'conversation_type')
+        logger.info(f"   📋 [RESTORE:{restore_id}] Conversation type: {conversation_type}")
+        
         if conversation_type != 'multi_agent':
-            logger.debug(f"Conversation {current_conversation_id} is not multi-agent type (got: {conversation_type})")
+            logger.info(f"   ❌ [RESTORE:{restore_id}] Not a multi-agent conversation (type: {conversation_type})")
             return False
         
         # Get active agents from database
         active_agents = get_conversation_data(current_conversation_id, 'active_agents')
+        logger.info(f"   👥 [RESTORE:{restore_id}] Retrieved agent data: {type(active_agents)} with {len(active_agents) if active_agents else 0} agents")
+        
         if not active_agents:
-            logger.warning(f"Multi-agent conversation {current_conversation_id} has no stored active agents")
+            logger.warning(f"   ⚠️ [RESTORE:{restore_id}] No stored active agents found")
             return False
         
         if not isinstance(active_agents, list):
-            logger.error(f"Invalid active_agents data type: {type(active_agents)}, expected list")
+            logger.error(f"   ❌ [RESTORE:{restore_id}] Invalid active_agents data type: {type(active_agents)}")
             return False
         
-        logger.info(f"Attempting to restore multi-agent orchestrator for conversation {current_conversation_id}")
-        logger.info(f"Found {len(active_agents)} agents to restore: {[agent.get('name', agent.get('id', 'Unknown')) for agent in active_agents]}")
+        # Log agent details
+        agent_names = [agent.get('name', agent.get('id', 'Unknown')) for agent in active_agents]
+        logger.info(f"   📝 [RESTORE:{restore_id}] Agents to restore: {', '.join(agent_names)}")
         
         # Create new orchestrator instance
+        logger.info(f"   🏗️ [RESTORE:{restore_id}] Creating new orchestrator instance")
         multi_agent_orchestrator = MultiAgentConversationOrchestrator()
         
         # Re-add all agents
         restored_count = 0
         failed_agents = []
         
-        for agent_info in active_agents:
+        for i, agent_info in enumerate(active_agents):
             agent_id = agent_info.get('id')
             agent_name = agent_info.get('name', 'Unknown')
             
             if not agent_id:
-                logger.warning(f"Agent info missing 'id' field: {agent_info}")
+                logger.warning(f"   ⚠️ [RESTORE:{restore_id}] Agent {i+1} missing 'id' field: {agent_info}")
+                failed_agents.append(f"{agent_name} (no ID)")
                 continue
             
             try:
+                logger.info(f"   🤖 [RESTORE:{restore_id}] Adding agent {i+1}/{len(active_agents)}: {agent_name} ({agent_id})")
+                
                 if multi_agent_orchestrator.add_agent(agent_id):
                     restored_count += 1
-                    logger.debug(f"Successfully restored agent: {agent_name} ({agent_id})")
+                    logger.info(f"   ✅ [RESTORE:{restore_id}] Successfully restored: {agent_name}")
                 else:
                     failed_agents.append(f"{agent_name} ({agent_id})")
-                    logger.warning(f"Failed to add agent {agent_name} ({agent_id}) to orchestrator")
+                    logger.warning(f"   ❌ [RESTORE:{restore_id}] Failed to add: {agent_name}")
                     
             except Exception as agent_error:
                 failed_agents.append(f"{agent_name} ({agent_id})")
-                logger.error(f"Exception while adding agent {agent_name} ({agent_id}): {agent_error}")
+                logger.error(f"   ❌ [RESTORE:{restore_id}] Exception adding {agent_name}: {str(agent_error)}")
         
         # Check if we successfully restored any agents
         if restored_count == 0:
-            logger.error("Failed to restore any agents to the orchestrator")
+            logger.error(f"   ❌ [RESTORE:{restore_id}] Failed to restore any agents")
             multi_agent_orchestrator = None
             return False
         
         # Log restoration results
-        logger.info(f"✅ Multi-agent orchestrator restored successfully for conversation {current_conversation_id}")
-        logger.info(f"   Restored agents: {restored_count}/{len(active_agents)}")
+        logger.info(f"   🎉 [RESTORE:{restore_id}] RESTORATION COMPLETE")
+        logger.info(f"   📊 [RESTORE:{restore_id}] Success rate: {restored_count}/{len(active_agents)} agents")
         
         if failed_agents:
-            logger.warning(f"   Failed to restore: {', '.join(failed_agents)}")
+            logger.warning(f"   ⚠️ [RESTORE:{restore_id}] Failed agents: {', '.join(failed_agents)}")
+        
+        # ✅ ADD: Structured logging for Heroku monitoring
+        logger.info("📊 HEROKU_ORCHESTRATOR_RESTORE: " + json.dumps({
+            'event': 'orchestrator_restored',
+            'restore_id': restore_id,
+            'conversation_id': current_conversation_id,
+            'total_agents': len(active_agents),
+            'restored_count': restored_count,
+            'failed_count': len(failed_agents),
+            'success_rate': restored_count / len(active_agents) if active_agents else 0,
+            'agent_names': agent_names,
+            'failed_agents': failed_agents,
+            'timestamp': datetime.now().isoformat()
+        }))
         
         return True
         
     except Exception as e:
-        logger.error(f"Error during multi-agent orchestrator restoration: {str(e)}", exc_info=True)
+        logger.error(f"   ❌ [RESTORE:{restore_id}] CRITICAL ERROR during restoration: {str(e)}", exc_info=True)
+        
+        # ✅ ADD: Error monitoring for restoration
+        logger.info("📊 HEROKU_RESTORE_ERROR: " + json.dumps({
+            'event': 'orchestrator_restore_failed',
+            'restore_id': restore_id,
+            'conversation_id': current_conversation_id,
+            'error_message': str(e),
+            'error_type': type(e).__name__,
+            'timestamp': datetime.now().isoformat()
+        }))
+        
         # Ensure we don't leave a partially initialized orchestrator
         multi_agent_orchestrator = None
         return False
