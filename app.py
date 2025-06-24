@@ -11,6 +11,7 @@ import secrets
 from difflib import SequenceMatcher
 import re
 from typing import Dict, Tuple, Any
+from functools import wraps
 
 # Load environment variables first
 from dotenv import load_dotenv
@@ -42,7 +43,7 @@ from utils.persona_system import get_persona_system_prompt, get_all_personas, ge
 from utils.database import init_db, create_conversation, add_message, get_conversations, get_conversation, delete_conversation, update_conversation_title, store_conversation_data, get_conversation_data, validate_patient_data_structure, get_all_conversation_data
 from utils.ai_case_generator import generate_patient_case, get_all_specialties, get_available_symptoms_for_specialty, validate_symptom_specialty_combination
 # NEW: Import multi-agent crew system
-from utils.crew_agents import MultiAgentConversationOrchestrator
+from utils.crew_agents import MultiAgentConversationOrchestrator, restore_multi_agent_orchestrator
 
 # Add template folder check before app creation
 template_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates')
@@ -422,7 +423,25 @@ def add_agent_to_conversation():
             'message': f'Error adding agent: {str(e)}'
         }), 500
 
+def ensure_multi_agent_orchestrator(f):
+    """Decorator to ensure multi-agent orchestrator is available"""
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        global multi_agent_orchestrator
+        
+        if not multi_agent_orchestrator:
+            success = restore_multi_agent_orchestrator()
+            if not success:
+                return jsonify({
+                    'status': 'error',
+                    'message': 'No active multi-agent conversation. Please create a multi-agent conversation first.'
+                }), 400
+        
+        return f(*args, **kwargs)
+    return decorated_function
+
 @app.route('/api/multi-agent/process-message', methods=['POST'])
+@ensure_multi_agent_orchestrator
 def process_multi_agent_message():
     """Process a message in multi-agent conversation"""
     global multi_agent_orchestrator, current_conversation_id
@@ -479,6 +498,7 @@ def process_multi_agent_message():
 
 # Modified process_audio for multi-agent support
 @app.route('/process_audio_multi_agent', methods=['POST'])
+@ensure_multi_agent_orchestrator
 def process_audio_multi_agent():
     """Process audio in multi-agent conversation"""
     global multi_agent_orchestrator, current_conversation_id
