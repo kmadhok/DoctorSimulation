@@ -417,6 +417,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             
             const formData = new FormData();
             formData.append('audio', audioBlob);
+            formData.append('conversation_id', currentConversationId);
             
             if (currentVoiceId) {
                 formData.append('voice_id', currentVoiceId);

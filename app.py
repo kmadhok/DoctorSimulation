@@ -62,11 +62,14 @@ app.secret_key = secrets.token_urlsafe(24)
 @app.before_request
 def log_request_info():
     logger.debug('Request: %s %s', request.method, request.path)
-    # Only log headers and body in development, not in production
-    if not os.environ.get('HEROKU'):  # or use another environment check
+    
+    # Don't log request bodies in production OR for audio endpoints
+    is_production = os.environ.get('HEROKU') or os.environ.get('DYNO')
+    is_audio_endpoint = request.path in ['/process_audio', '/process_audio_multi_agent']
+    
+    if not is_production and not is_audio_endpoint:
         logger.debug('Headers: %s', request.headers)
-        if request.path != '/process_audio':
-            logger.debug('Body: %s', request.get_data())
+        logger.debug('Body: %s', request.get_data())
 
 # Add error handlers
 @app.errorhandler(404)
