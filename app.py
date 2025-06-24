@@ -43,7 +43,7 @@ from utils.persona_system import get_persona_system_prompt, get_all_personas, ge
 from utils.database import init_db, create_conversation, add_message, get_conversations, get_conversation, delete_conversation, update_conversation_title, store_conversation_data, get_conversation_data, validate_patient_data_structure, get_all_conversation_data
 from utils.ai_case_generator import generate_patient_case, get_all_specialties, get_available_symptoms_for_specialty, validate_symptom_specialty_combination
 # NEW: Import multi-agent crew system
-from utils.crew_agents import MultiAgentConversationOrchestrator, restore_multi_agent_orchestrator
+from utils.crew_agents import MultiAgentConversationOrchestrator
 
 # Add template folder check before app creation
 template_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates')
@@ -1857,6 +1857,98 @@ def continue_multi_agent():
         logger.error(f"/continue_multi_agent failed: {e}", exc_info=True)
         return jsonify({'status': 'error',
                         'message': 'Failed to generate auto turn'}), 500
+
+def restore_multi_agent_orchestrator():
+    """
+    Restore multi-agent orchestrator from database if needed.
+    
+    This function recreates the MultiAgentConversationOrchestrator instance
+    from stored database data when the global orchestrator is None (typically
+    after a Heroku dyno restart or new request in stateless environment).
+    
+    Returns:
+        bool: True if orchestrator is available (restored or already exists),
+              False if restoration failed or not applicable
+    """
+    global multi_agent_orchestrator, current_conversation_id
+    
+    # Check if orchestrator already exists
+    if multi_agent_orchestrator is not None:
+        logger.debug("Multi-agent orchestrator already exists, no restoration needed")
+        return True
+    
+    # Check if we have an active conversation
+    if not current_conversation_id:
+        logger.debug("No active conversation ID, cannot restore multi-agent orchestrator")
+        return False
+    
+    try:
+        # Check if this is a multi-agent conversation
+        conversation_type = get_conversation_data(current_conversation_id, 'conversation_type')
+        if conversation_type != 'multi_agent':
+            logger.debug(f"Conversation {current_conversation_id} is not multi-agent type (got: {conversation_type})")
+            return False
+        
+        # Get active agents from database
+        active_agents = get_conversation_data(current_conversation_id, 'active_agents')
+        if not active_agents:
+            logger.warning(f"Multi-agent conversation {current_conversation_id} has no stored active agents")
+            return False
+        
+        if not isinstance(active_agents, list):
+            logger.error(f"Invalid active_agents data type: {type(active_agents)}, expected list")
+            return False
+        
+        logger.info(f"Attempting to restore multi-agent orchestrator for conversation {current_conversation_id}")
+        logger.info(f"Found {len(active_agents)} agents to restore: {[agent.get('name', agent.get('id', 'Unknown')) for agent in active_agents]}")
+        
+        # Create new orchestrator instance
+        multi_agent_orchestrator = MultiAgentConversationOrchestrator()
+        
+        # Re-add all agents
+        restored_count = 0
+        failed_agents = []
+        
+        for agent_info in active_agents:
+            agent_id = agent_info.get('id')
+            agent_name = agent_info.get('name', 'Unknown')
+            
+            if not agent_id:
+                logger.warning(f"Agent info missing 'id' field: {agent_info}")
+                continue
+            
+            try:
+                if multi_agent_orchestrator.add_agent(agent_id):
+                    restored_count += 1
+                    logger.debug(f"Successfully restored agent: {agent_name} ({agent_id})")
+                else:
+                    failed_agents.append(f"{agent_name} ({agent_id})")
+                    logger.warning(f"Failed to add agent {agent_name} ({agent_id}) to orchestrator")
+                    
+            except Exception as agent_error:
+                failed_agents.append(f"{agent_name} ({agent_id})")
+                logger.error(f"Exception while adding agent {agent_name} ({agent_id}): {agent_error}")
+        
+        # Check if we successfully restored any agents
+        if restored_count == 0:
+            logger.error("Failed to restore any agents to the orchestrator")
+            multi_agent_orchestrator = None
+            return False
+        
+        # Log restoration results
+        logger.info(f"✅ Multi-agent orchestrator restored successfully for conversation {current_conversation_id}")
+        logger.info(f"   Restored agents: {restored_count}/{len(active_agents)}")
+        
+        if failed_agents:
+            logger.warning(f"   Failed to restore: {', '.join(failed_agents)}")
+        
+        return True
+        
+    except Exception as e:
+        logger.error(f"Error during multi-agent orchestrator restoration: {str(e)}", exc_info=True)
+        # Ensure we don't leave a partially initialized orchestrator
+        multi_agent_orchestrator = None
+        return False
 
 # Keep the if __name__ == '__main__' block for running the app
 if __name__ == '__main__':
