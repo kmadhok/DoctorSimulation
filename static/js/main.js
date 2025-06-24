@@ -356,6 +356,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                 currentMultiAgentConversationId = data.conversation_id;
                 currentConversationId = data.conversation_id;
                 
+                // ✅ FIX: Initialize AudioContext for multi-agent playback
+                if (!audioContext) {
+                    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    console.log('AudioContext initialized for multi-agent mode');
+                }
+                
                 // Clear conversation history and update UI
                 conversationElement.innerHTML = '';
                 
@@ -612,17 +618,31 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             // Fallback when AudioContext is not ready
             if (!audioContext || audioContext.state !== 'running') {
+                console.log(`[AUDIO] Using HTML Audio fallback for ${speaker}`);
                 const element = new Audio(`data:audio/mp3;base64,${base64Audio}`);
                 element.onended = () => {
+                    console.log(`[AUDIO] ${speaker} playback completed (HTML Audio)`);
                     isAudioPlaying = false;
                     resolve();
                     processAudioQueue();
                 };
-                element.play();
+                element.onerror = (err) => {
+                    console.error(`[AUDIO] ${speaker} playback failed (HTML Audio):`, err);
+                    isAudioPlaying = false;
+                    resolve();
+                    processAudioQueue();
+                };
+                element.play().catch(err => {
+                    console.error(`[AUDIO] ${speaker} play() failed:`, err);
+                    isAudioPlaying = false;
+                    resolve();
+                    processAudioQueue();
+                });
                 return;
             }
 
             // Base-64 → Uint8Array
+            console.log(`[AUDIO] Decoding audio for ${speaker} using AudioContext`);
             const bytes = Uint8Array.from(atob(base64Audio), c => c.charCodeAt(0));
             const audioBuffer = await audioContext.decodeAudioData(bytes.buffer);
 
@@ -632,6 +652,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             currentAudioSource = source;
 
             source.onended = () => {
+                console.log(`[AUDIO] ${speaker} playback completed (AudioContext)`);
                 currentAudioSource = null;
                 isAudioPlaying = false;
                 resolve();
@@ -641,6 +662,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
             };
 
+            console.log(`[AUDIO] Starting playback for ${speaker}`);
             source.start(0);
         } catch (err) {
             console.error('Audio playback failed', err);
