@@ -2054,6 +2054,15 @@ def restore_multi_agent_orchestrator():
     """
     global multi_agent_orchestrator, current_conversation_id
     
+    # ✅ NEW: Get conversation ID from form data FIRST
+    if request and hasattr(request, 'form'):
+        form_conversation_id = request.form.get('conversation_id')
+        if form_conversation_id:
+            current_conversation_id = int(form_conversation_id)
+    
+    if not current_conversation_id:  # ✅ Now this has a value!
+        return False
+    
     restore_id = secrets.token_urlsafe(6)  # Short ID for this restoration attempt
     logger.info(f"🔄 ORCHESTRATOR RESTORATION STARTED [RESTORE:{restore_id}]")
     
