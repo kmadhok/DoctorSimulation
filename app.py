@@ -484,7 +484,12 @@ def process_audio_multi_agent():
     global multi_agent_orchestrator, current_conversation_id
     
     try:
-        # Similar to your existing process_audio but handles multiple responses
+        # Check if multi-agent orchestrator is initialized
+        if not multi_agent_orchestrator:
+            return jsonify({
+                'status': 'error',
+                'message': 'No active multi-agent conversation. Please create a multi-agent conversation first.'
+            }), 400
         
         # Get audio file and transcribe (same as before)
         if 'audio' not in request.files:
