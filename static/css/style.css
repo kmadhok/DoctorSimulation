@@ -332,6 +332,16 @@ main {
     animation: pulse 1.5s infinite;
 }
 
+/* Auto Listen Button - Red styling */
+#autoListenBtn {
+    background: #dc3545;
+    color: white;
+}
+
+#autoListenBtn:hover {
+    background: #c82333;
+}
+
 /* Footer styles */
 footer {
     text-align: center;
