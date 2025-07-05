@@ -62,6 +62,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     let audioQueue = [];
     let isAudioPlaying = false;
     let idleHandle = null;
+    // NEW: single-source-of-truth playback state helpers
+    let pendingResolve = null;    // promise resolver for the clip currently playing
+    let currentSpeaker = null;    // who is speaking (for logging)
 
     function cancelIdleTimer() {
         if (idleHandle) {
@@ -108,11 +111,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 onSpeechStart: () => {
                     console.log('initAutoVAD: Speech detected, starting recording...');
                     
-                    if (currentAudioSource) {
-                        console.log('VAD onSpeechStart: Interrupting TTS playback');
-                        currentAudioSource.stop();
-                        currentAudioSource.onended = null;
-                        currentAudioSource = null;
+                    if (isAudioPlaying) {
+                        handleUserBargeIn();
                     }
                     
                     updateStatus("Listening...");
@@ -593,6 +593,42 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
+    // -------------------------------------------------------------
+    // Playback finalisation & barge-in helpers
+    function finalizePlayback(reason = 'completed') {
+        if (!isAudioPlaying) return;  // idempotent guard
+
+        console.log(`[AUDIO] ${reason} ↦ ${currentSpeaker || 'unknown'}`);
+
+        currentAudioSource = null;
+        isAudioPlaying = false;
+        currentSpeaker = null;
+
+        try {
+            pendingResolve?.();   // free waiters even on error/interrupt
+        } finally {
+            pendingResolve = null;
+        }
+
+        // advance queue or schedule idle follow-up
+        processAudioQueue();
+        if (!isAudioPlaying && audioQueue.length === 0 && !idleHandle) {
+            idleHandle = setTimeout(onIdle, IDLE_MS);
+        }
+    }
+
+    function handleUserBargeIn() {
+        if (!currentAudioSource) return; // nothing playing
+        console.log('🔇  Interrupting TTS (user speech)');
+        try {
+            currentAudioSource.stop();   // usually triggers onended
+        } catch (e) {
+            // ignore race where source already ended
+        }
+        finalizePlayback('interrupted'); // belt-and-suspenders cleanup
+    }
+
+    // Push a clip onto the queue and kick the worker
     async function playAudioResponse(base64Audio, speaker = 'Assistant') {
         return new Promise(resolve => {
             cancelIdleTimer();
@@ -606,13 +642,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         const { base64Audio, speaker, resolve } = audioQueue.shift();
         isAudioPlaying = true;
+        pendingResolve = resolve;
+        currentSpeaker = speaker;
 
         try {
             if (!base64Audio) {
                 console.error(`[AUDIO] ${speaker} – empty payload`);
-                isAudioPlaying = false;
-                resolve();
-                processAudioQueue();
+                finalizePlayback('empty');
                 return;
             }
 
@@ -620,23 +656,14 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (!audioContext || audioContext.state !== 'running') {
                 console.log(`[AUDIO] Using HTML Audio fallback for ${speaker}`);
                 const element = new Audio(`data:audio/mp3;base64,${base64Audio}`);
-                element.onended = () => {
-                    console.log(`[AUDIO] ${speaker} playback completed (HTML Audio)`);
-                    isAudioPlaying = false;
-                    resolve();
-                    processAudioQueue();
-                };
+                element.onended = () => finalizePlayback('completed');
                 element.onerror = (err) => {
                     console.error(`[AUDIO] ${speaker} playback failed (HTML Audio):`, err);
-                    isAudioPlaying = false;
-                    resolve();
-                    processAudioQueue();
+                    finalizePlayback('error');
                 };
                 element.play().catch(err => {
                     console.error(`[AUDIO] ${speaker} play() failed:`, err);
-                    isAudioPlaying = false;
-                    resolve();
-                    processAudioQueue();
+                    finalizePlayback('error');
                 });
                 return;
             }
@@ -651,24 +678,13 @@ document.addEventListener('DOMContentLoaded', async () => {
             source.connect(audioContext.destination);
             currentAudioSource = source;
 
-            source.onended = () => {
-                console.log(`[AUDIO] ${speaker} playback completed (AudioContext)`);
-                currentAudioSource = null;
-                isAudioPlaying = false;
-                resolve();
-                processAudioQueue();
-                if (!isAudioPlaying && audioQueue.length === 0 && !idleHandle) {
-                    idleHandle = setTimeout(onIdle, IDLE_MS);
-                }
-            };
+            source.onended = () => finalizePlayback('completed');
 
             console.log(`[AUDIO] Starting playback for ${speaker}`);
             source.start(0);
         } catch (err) {
             console.error('Audio playback failed', err);
-            isAudioPlaying = false;
-            resolve();
-            processAudioQueue();
+            finalizePlayback('error');
         }
     }
 
