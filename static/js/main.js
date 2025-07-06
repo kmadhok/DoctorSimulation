@@ -7,6 +7,23 @@ const maxDiagnosisAttempts = 3;
 // Move currentConversationId to global scope for diagnosis functions
 let currentConversationId = null;
 
+/**
+ * AUDIO QUEUE BEHAVIOR NOTE:
+ * 
+ * When users interrupt (barge-in), we clear the audio queue to prevent
+ * outdated responses from playing. However, these interrupted responses
+ * remain in the database and conversation history since they were already
+ * processed and saved server-side.
+ * 
+ * This means:
+ * - Database conversation history may include responses user didn't hear
+ * - AI agents will reference these responses in future interactions
+ * - Users can review full conversation history if needed
+ * 
+ * This behavior mirrors real-world medical consultations where interruptions
+ * can occur mid-sentence but the speaker's intended message was still formed.
+ */
+
 document.addEventListener('DOMContentLoaded', async () => {
     // Single declaration of shared variables
     let stopVAD = null;        // will hold the cleanup fn
@@ -65,6 +82,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     // NEW: single-source-of-truth playback state helpers
     let pendingResolve = null;    // promise resolver for the clip currently playing
     let currentSpeaker = null;    // who is speaking (for logging)
+    // NEW: Audio source ID tracking to prevent race conditions
+    let currentAudioSourceId = 0; // Unique ID for each audio source
+    let activeAudioSourceId = null; // ID of the currently valid audio source
+    // NEW: Request ID tracking to prevent server-side race conditions
+    let currentRequestId = 0; // Unique ID for each server request
+    let activeRequestId = null; // ID of the currently valid request
 
     function cancelIdleTimer() {
         if (idleHandle) {
@@ -421,6 +444,20 @@ document.addEventListener('DOMContentLoaded', async () => {
         try {
             updateStatus('Processing with multiple agents...');
             
+            // NEW: Generate unique request ID and mark as active
+            const requestId = ++currentRequestId;
+            activeRequestId = requestId;
+            console.log(`🔄 Starting multi-agent request ${requestId}`);
+            
+            // Clear any stale audio queue
+            if (audioQueue.length > 0) {
+                const queuedSpeakers = audioQueue.map(item => item.speaker || 'Unknown').join(', ');
+                console.log(`🔄 Multi-agent: clearing ${audioQueue.length} stale audio items before processing new input`);
+                console.log(`🔄 Interrupted speakers: ${queuedSpeakers}`);
+                console.log('⚠️ Note: Cleared items were already saved to database');
+                audioQueue.length = 0;
+            }
+            
             const formData = new FormData();
             formData.append('audio', audioBlob);
             formData.append('conversation_id', currentConversationId);
@@ -436,7 +473,16 @@ document.addEventListener('DOMContentLoaded', async () => {
             
             const data = await response.json();
             
+            // NEW: Check if this request is still active before processing response
+            if (activeRequestId !== requestId) {
+                console.log(`🔇 Ignoring response from outdated request ${requestId} (current: ${activeRequestId})`);
+                console.log('⚠️ User has moved on to newer input, discarding stale server response');
+                return;
+            }
+            
             if (data.status === 'success') {
+                console.log(`✅ Processing valid response from request ${requestId}`);
+                
                 // Add user message
                 addMessage('user', data.user_transcription);
                 
@@ -444,8 +490,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 for (const response of data.responses) {
                     addMultiAgentMessage(response);
                     
-                    // Play audio response
-                    if (response.audio) {
+                    // Play audio response (only if request is still active)
+                    if (response.audio && activeRequestId === requestId) {
                         await playAudioResponse(response.audio, response.speaker);
                         // Small delay between agent speeches
                         await new Promise(resolve => setTimeout(resolve, 500));
@@ -501,10 +547,23 @@ document.addEventListener('DOMContentLoaded', async () => {
             return await processMultiAgentAudio(audioBlob);
         }
         
-        // Original single-agent processing continues here...
         try {
             console.log(`processAudio: Processing audio blob of size: ${audioBlob.size} bytes, type: ${audioBlob.type}`);
             updateStatus('Processing...');
+            
+            // NEW: Generate unique request ID and mark as active
+            const requestId = ++currentRequestId;
+            activeRequestId = requestId;
+            console.log(`🔄 Starting single-agent request ${requestId}`);
+            
+            // Clear any stale audio queue
+            if (audioQueue.length > 0) {
+                const queuedSpeakers = audioQueue.map(item => item.speaker || 'Unknown').join(', ');
+                console.log(`🔄 Clearing ${audioQueue.length} stale audio items before processing new input`);
+                console.log(`🔄 Interrupted speakers: ${queuedSpeakers}`);
+                console.log('⚠️ Note: Cleared items were already saved to database');
+                audioQueue.length = 0;
+            }
             
             const formData = new FormData();
             formData.append('audio', audioBlob);
@@ -522,11 +581,20 @@ document.addEventListener('DOMContentLoaded', async () => {
             
             const data = await response.json();
             
+            // NEW: Check if this request is still active before processing response
+            if (activeRequestId !== requestId) {
+                console.log(`🔇 Ignoring response from outdated request ${requestId} (current: ${activeRequestId})`);
+                console.log('⚠️ User has moved on to newer input, discarding stale server response');
+                return;
+            }
+            
             if (data.status === 'success') {
+                console.log(`✅ Processing valid response from request ${requestId}`);
+                
                 addMessage('user', data.user_transcription);
                 addMessage('assistant', data.assistant_response_text);
                 
-                if (data.assistant_response_audio) {
+                if (data.assistant_response_audio && activeRequestId === requestId) {
                     await playAudioResponse(data.assistant_response_audio, 'Assistant');
                 }
                 
@@ -593,39 +661,100 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
+    // NEW: Add this helper function for debugging (can be removed in production)
+    function logAudioQueueState(context) {
+        if (audioQueue.length > 0) {
+            const speakers = audioQueue.map(item => item.speaker || 'Unknown').join(', ');
+            console.log(`[AUDIO QUEUE] ${context}: ${audioQueue.length} items queued from [${speakers}], currently playing: ${isAudioPlaying ? currentSpeaker : 'none'}`);
+        } else {
+            console.log(`[AUDIO QUEUE] ${context}: Empty queue, currently playing: ${isAudioPlaying ? currentSpeaker : 'none'}`);
+        }
+    }
+
+    // NEW: Debug helper for audio source state
+    function logAudioSourceState(context) {
+        console.log(`[AUDIO SOURCE] ${context}: Current ID: ${currentAudioSourceId}, Active ID: ${activeAudioSourceId}, Playing: ${isAudioPlaying ? currentSpeaker : 'none'}`);
+    }
+
+    // NEW: Debug helper for request state
+    function logRequestState(context) {
+        console.log(`[REQUEST] ${context}: Current ID: ${currentRequestId}, Active ID: ${activeRequestId}`);
+    }
+
     // -------------------------------------------------------------
     // Playback finalisation & barge-in helpers
     function finalizePlayback(reason = 'completed') {
-        if (!isAudioPlaying) return;  // idempotent guard
+        if (!isAudioPlaying) return;
 
-        console.log(`[AUDIO] ${reason} ↦ ${currentSpeaker || 'unknown'}`);
+        console.log(`[AUDIO] ${reason} - ${currentSpeaker || 'unknown'}`);
 
         currentAudioSource = null;
         isAudioPlaying = false;
         currentSpeaker = null;
 
         try {
-            pendingResolve?.();   // free waiters even on error/interrupt
+            pendingResolve?.();
         } finally {
             pendingResolve = null;
         }
 
-        // advance queue or schedule idle follow-up
-        processAudioQueue();
-        if (!isAudioPlaying && audioQueue.length === 0 && !idleHandle) {
-            idleHandle = setTimeout(onIdle, IDLE_MS);
+        // Only advance queue if not interrupted
+        if (reason !== 'interrupted') {
+            processAudioQueue();
+            if (!isAudioPlaying && audioQueue.length === 0 && !idleHandle) {
+                idleHandle = setTimeout(onIdle, IDLE_MS);
+            }
+        } else {
+            console.log('[AUDIO] Skipping queue processing due to user interruption');
+            // Schedule idle timer since queue is now empty
+            if (!idleHandle) {
+                idleHandle = setTimeout(onIdle, IDLE_MS);
+            }
         }
     }
 
     function handleUserBargeIn() {
-        if (!currentAudioSource) return; // nothing playing
-        console.log('🔇  Interrupting TTS (user speech)');
+        if (!currentAudioSource) return;
+        
+        const queuedCount = audioQueue.length;
+        const queuedSpeakers = audioQueue.map(item => item.speaker || 'Unknown').join(', ');
+        
+        console.log(`🔇 User barge-in detected - stopping current audio and clearing queue`);
+        console.log(`🔇 Barge-in: stopping audio, clearing ${queuedCount} queued items`);
+        
+        if (queuedCount > 0) {
+            console.log(`🔇 About to clear ${queuedCount} queued responses from: ${queuedSpeakers}`);
+            console.log('⚠️ Note: These responses are already saved in database but won\'t be heard by user');
+        }
+        
+        // NEW: Invalidate current request to ignore pending server responses
+        activeRequestId = null;
+        console.log('🔇 Invalidated current request to prevent server race conditions');
+        
+        // NEW: Invalidate the current audio source to prevent late onended events
+        activeAudioSourceId = null;
+        console.log('🔇 Invalidated current audio source to prevent race conditions');
+        
         try {
-            currentAudioSource.stop();   // usually triggers onended
+            currentAudioSource.stop();
         } catch (e) {
             // ignore race where source already ended
         }
-        finalizePlayback('interrupted'); // belt-and-suspenders cleanup
+        
+        // Resolve pending promises before clearing
+        audioQueue.forEach(item => {
+            if (item.resolve) {
+                try {
+                    item.resolve();
+                } catch (e) {}
+            }
+        });
+        
+        // Clear the audio queue
+        audioQueue.length = 0;
+        console.log('🔇 Audio queue cleared due to user interruption');
+        
+        finalizePlayback('interrupted');
     }
 
     // Push a clip onto the queue and kick the worker
@@ -656,14 +785,41 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (!audioContext || audioContext.state !== 'running') {
                 console.log(`[AUDIO] Using HTML Audio fallback for ${speaker}`);
                 const element = new Audio(`data:audio/mp3;base64,${base64Audio}`);
-                element.onended = () => finalizePlayback('completed');
+                
+                // NEW: Assign unique ID and track active source
+                const sourceId = ++currentAudioSourceId;
+                // Handle integer overflow (extremely unlikely but defensive programming)
+                if (currentAudioSourceId > Number.MAX_SAFE_INTEGER - 1000) {
+                    currentAudioSourceId = 1;
+                    console.log('[AUDIO] Reset audio source ID counter due to overflow');
+                }
+                activeAudioSourceId = sourceId;
+                console.log(`[AUDIO] Created HTML audio source ${sourceId} for ${speaker}`);
+                
+                element.onended = () => {
+                    // NEW: Only finalize if this source is still active
+                    if (activeAudioSourceId === sourceId) {
+                        console.log(`[AUDIO] Valid completion from HTML source ${sourceId} (${speaker})`);
+                        finalizePlayback('completed');
+                    } else {
+                        console.log(`[AUDIO] Ignoring onended from invalidated HTML source ${sourceId} (${speaker})`);
+                    }
+                };
                 element.onerror = (err) => {
-                    console.error(`[AUDIO] ${speaker} playback failed (HTML Audio):`, err);
-                    finalizePlayback('error');
+                    if (activeAudioSourceId === sourceId) {
+                        console.error(`[AUDIO] ${speaker} playback failed (HTML Audio):`, err);
+                        finalizePlayback('error');
+                    } else {
+                        console.log(`[AUDIO] Ignoring onerror from invalidated HTML source ${sourceId} (${speaker})`);
+                    }
                 };
                 element.play().catch(err => {
-                    console.error(`[AUDIO] ${speaker} play() failed:`, err);
-                    finalizePlayback('error');
+                    if (activeAudioSourceId === sourceId) {
+                        console.error(`[AUDIO] ${speaker} play() failed:`, err);
+                        finalizePlayback('error');
+                    } else {
+                        console.log(`[AUDIO] Ignoring play error from invalidated HTML source ${sourceId} (${speaker})`);
+                    }
                 });
                 return;
             }
@@ -678,7 +834,25 @@ document.addEventListener('DOMContentLoaded', async () => {
             source.connect(audioContext.destination);
             currentAudioSource = source;
 
-            source.onended = () => finalizePlayback('completed');
+            // NEW: Assign unique ID and track active source
+            const sourceId = ++currentAudioSourceId;
+            // Handle integer overflow (extremely unlikely but defensive programming)
+            if (currentAudioSourceId > Number.MAX_SAFE_INTEGER - 1000) {
+                currentAudioSourceId = 1;
+                console.log('[AUDIO] Reset audio source ID counter due to overflow');
+            }
+            activeAudioSourceId = sourceId;
+            console.log(`[AUDIO] Created AudioContext source ${sourceId} for ${speaker}`);
+
+            source.onended = () => {
+                // NEW: Only finalize if this source is still active
+                if (activeAudioSourceId === sourceId) {
+                    console.log(`[AUDIO] Valid completion from AudioContext source ${sourceId} (${speaker})`);
+                    finalizePlayback('completed');
+                } else {
+                    console.log(`[AUDIO] Ignoring onended from invalidated AudioContext source ${sourceId} (${speaker})`);
+                }
+            };
 
             console.log(`[AUDIO] Starting playback for ${speaker}`);
             source.start(0);
