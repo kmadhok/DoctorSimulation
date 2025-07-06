@@ -36,6 +36,9 @@ def mock_groq_response(input_text, model=None, system_prompt=None, **kwargs):
         elif "Riley" in system_prompt:
             persona_name = "Riley"
             return "Well hello there! I'm Riley, and I believe laughter is the best medicine. I'll keep things light and find the humor in our journey together."
+        elif "Hope" in system_prompt:
+            persona_name = "Hope"
+            return "Hi there! I'm Hope, always seeing the bright side and eager to explore the opportunities ahead. Let's find the benefits together!"
     
     # Default response based on input
     if "expertise" in input_text.lower():
@@ -166,8 +169,8 @@ def test_agent_personality_consistency():
             orchestrator = MultiAgentConversationOrchestrator()
             personas = get_all_personas()
             
-            # Add Marcus and Luna for personality test
-            test_personas = ['wise_mentor', 'creative_artist']
+            # Add Hope and Sage for personality test
+            test_personas = ['optimistic_debater', 'negative_debater']
             for persona_id in test_personas:
                 if persona_id in personas:
                     orchestrator.add_agent(persona_id)
@@ -193,12 +196,12 @@ def test_agent_personality_consistency():
                     print(f"   🎭 {speaker}: {content[:100]}...")
                     
                     # Simple personality consistency checks
-                    if speaker == "Marcus":
-                        if not any(word in content.lower() for word in ['wisdom', 'experience', 'thoughtful', 'guide']):
-                            print(f"   ⚠️  Marcus response may lack characteristic wisdom tone")
-                    elif speaker == "Luna":
-                        if not any(word in content.lower() for word in ['creative', 'artistic', 'beauty', 'vision', 'inspire']):
-                            print(f"   ⚠️  Luna response may lack characteristic creative tone")
+                    if speaker == "Hope":
+                        if not any(word in content.lower() for word in ['benefit', 'opportun', 'positive', 'possibil']):
+                            print(f"   ⚠️  Hope response may lack characteristic optimistic tone")
+                    elif speaker == "Sage":
+                        if not any(word in content.lower() for word in ['risk', 'limitation', 'analysis', 'problem']):
+                            print(f"   ⚠️  Sage response may lack characteristic critical tone")
             
             print(f"\n✅ Personality consistency test completed")
             return True
