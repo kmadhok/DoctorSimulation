@@ -31,8 +31,8 @@
   - [x] 1.5 Add debate-specific response patterns (challenge opposing views, support arguments with evidence, acknowledge counterpoints)
   - [x] 1.6 Test persona responses to ensure distinct personalities and debate behaviors are working correctly
 
-- [ ] 2.0 Implement PDF Upload and Processing Infrastructure
-  - [ ] 2.1 Create `utils/pdf_processor.py` module with functions for PDF text extraction using pdfplumber library
+- [ ] 2.0 Implement PDF Upload and Processing Infr  astructure
+  - [ ] 2.1 Create `utils/pdf_processor.py` emodule with functions for PDF text extraction using pdfplumber library
   - [ ] 2.2 Add PDF file validation (format checking, size limits ≤5 pages, malicious content scanning)
   - [ ] 2.3 Implement text extraction with error handling for corrupted or image-heavy PDFs
   - [ ] 2.4 Add `store_pdf_content()` and `get_pdf_content()` functions to `utils/database.py` for conversation-linked storage
