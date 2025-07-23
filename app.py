@@ -49,6 +49,7 @@ from utils.groq_tts_speech import generate_speech_audio
 from utils.persona_system import get_persona_system_prompt, get_all_personas, get_persona_by_id
 from utils.database import init_db, create_conversation, add_message, get_conversations, get_conversation, delete_conversation, update_conversation_title, store_conversation_data, get_conversation_data, validate_patient_data_structure, get_all_conversation_data
 from utils.ai_case_generator import generate_patient_case, get_all_specialties, get_available_symptoms_for_specialty, validate_symptom_specialty_combination
+from utils.user_profile_analyzer import analyze_user_personality, analyze_brief_conversations
 
 # Add template folder check before app creation
 template_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates')
@@ -1553,6 +1554,332 @@ def generate_diagnosis_feedback(
     except Exception as e:
         logger.error(f"Error generating feedback: {str(e)}")
         return "Unable to generate feedback. Please try again."
+
+# User Profile API endpoints for personality analysis and summary management
+@app.route('/api/user-profile-summary', methods=['GET'])
+def get_user_profile_summary():
+    """
+    Generate/retrieve user profile analysis based on conversation history.
+    
+    Returns:
+        JSON response containing user personality analysis or brief conversation analysis
+    """
+    try:
+        logger.info("User profile summary requested")
+        
+        # Try to get full personality analysis first
+        analysis_result = analyze_user_personality()
+        
+        if analysis_result['status'] == 'success':
+            # Full personality analysis successful
+            logger.info("Full personality analysis completed successfully")
+            return jsonify({
+                'status': 'success',
+                'analysis_type': 'full_personality',
+                'personality_analysis': analysis_result['analysis']['raw_analysis'],
+                'parsed_sections': analysis_result['analysis']['parsed_sections'],
+                'metadata': analysis_result['metadata']
+            })
+            
+        elif analysis_result['status'] == 'insufficient_data':
+            # Not enough conversations for full analysis, try brief analysis
+            logger.info("Insufficient data for full analysis, trying brief analysis")
+            brief_result = analyze_brief_conversations()
+            
+            if brief_result['status'] == 'success':
+                logger.info("Brief conversation analysis completed successfully")
+                return jsonify({
+                    'status': 'success',
+                    'analysis_type': 'brief_conversations',
+                    'summary': brief_result['summary'],
+                    'metadata': brief_result['metadata']
+                })
+            else:
+                # Brief analysis also failed - return specific error based on type
+                error_type = brief_result.get('error_type', 'unknown')
+                error_message = brief_result.get('message', 'Unable to analyze conversations')
+                
+                logger.error(f"Brief analysis failed: {error_type} - {error_message}")
+                
+                # Return appropriate error response based on error type
+                if error_type == 'database_connection':
+                    return jsonify({
+                        'status': 'error',
+                        'message': 'Unable to access conversation data. Please check your connection and try again.',
+                        'error_type': 'database_error',
+                        'user_message': 'We\'re having trouble accessing your conversation history. Please try again in a moment.'
+                    }), 500
+                elif error_type == 'insufficient_conversations':
+                    conversation_count = brief_result.get('metadata', {}).get('conversation_count', 0)
+                    return jsonify({
+                        'status': 'error',
+                        'message': f'Need more conversations for analysis. Found {conversation_count}, need at least 1 with content.',
+                        'error_type': 'insufficient_data',
+                        'user_message': 'You need to have at least one conversation with substantial content to generate a profile summary. Start a conversation to build your profile!',
+                        'current_conversations': conversation_count,
+                        'minimum_required': 1
+                    }), 400
+                else:
+                    return jsonify({
+                        'status': 'error',
+                        'message': error_message,
+                        'error_type': error_type,
+                        'user_message': 'Unable to analyze your conversations at this time. Please try again later.'
+                    }), 500
+        
+        else:
+            # Full analysis failed for reasons other than insufficient data
+            error_type = analysis_result.get('error_type', 'unknown')
+            error_message = analysis_result.get('message', 'Unknown error')
+            metadata = analysis_result.get('metadata', {})
+            
+            logger.error(f"Personality analysis failed: {error_type} - {error_message}")
+            
+            # Return appropriate error response based on error type
+            if error_type == 'llm_api_failure':
+                retry_recommended = metadata.get('retry_recommended', True)
+                return jsonify({
+                    'status': 'error',
+                    'message': 'AI personality analysis service is temporarily unavailable. Please try again later.',
+                    'error_type': 'api_unavailable',
+                    'user_message': 'The AI analysis service is currently unavailable. Please try again in a few moments.',
+                    'retry_recommended': retry_recommended,
+                    'error_category': metadata.get('error_category', 'unknown')
+                }), 503
+            elif error_type == 'database_connection':
+                return jsonify({
+                    'status': 'error',
+                    'message': 'Unable to access conversation data. Database connection failed.',
+                    'error_type': 'database_error',
+                    'user_message': 'We\'re having trouble accessing your conversation history. Please try again in a moment.',
+                    'conversation_count': metadata.get('conversation_count', 0)
+                }), 500
+            elif error_type == 'insufficient_conversations':
+                conversation_count = metadata.get('conversation_count', 0)
+                return jsonify({
+                    'status': 'error',
+                    'message': f'Need more conversations for analysis. Found {conversation_count}, need at least 5.',
+                    'error_type': 'insufficient_data',
+                    'user_message': 'You need to have at least 5 conversations to generate a comprehensive personality profile. Keep chatting to build your profile!',
+                    'current_conversations': conversation_count,
+                    'minimum_required': 5
+                }), 400
+            elif error_type == 'transcript_aggregation':
+                return jsonify({
+                    'status': 'error',
+                    'message': 'Failed to process conversation transcripts for analysis.',
+                    'error_type': 'data_processing_error',
+                    'user_message': 'Unable to process your conversation data. Please try again.',
+                    'conversation_count': metadata.get('conversation_count', 0)
+                }), 500
+            elif error_type == 'prompt_creation':
+                return jsonify({
+                    'status': 'error',
+                    'message': 'Failed to create analysis prompt from conversation data.',
+                    'error_type': 'processing_error',
+                    'user_message': 'Unable to prepare your conversation data for analysis. Please try again.'
+                }), 500
+            else:
+                return jsonify({
+                    'status': 'error',
+                    'message': error_message,
+                    'error_type': error_type,
+                    'user_message': 'An unexpected error occurred during personality analysis. Please try again later.',
+                    'metadata': metadata
+                }), 500
+                
+    except Exception as e:
+        logger.error(f"Unexpected error in user profile summary: {str(e)}", exc_info=True)
+        return jsonify({
+            'status': 'error',
+            'message': 'An unexpected error occurred while generating your profile summary',
+            'error_type': 'unexpected_error',
+            'user_message': 'Something went wrong while creating your profile summary. Please try again.',
+            'error_details': str(e) if logger.level == logging.DEBUG else None
+        }), 500
+
+@app.route('/api/user-profile-summary', methods=['PUT'])
+def update_user_profile_summary():
+    """
+    Save user-modified summary text for their profile.
+    
+    Expected JSON payload:
+    {
+        "summary_text": "User's custom summary text...",
+        "section": "personality_overview" (optional - if updating specific section)
+    }
+    
+    Returns:
+        JSON response confirming the save operation
+    """
+    try:
+        logger.info("User profile summary update requested")
+        
+        # Get JSON data from request
+        try:
+            data = request.get_json()
+        except Exception as json_error:
+            logger.warning(f"Invalid JSON data provided: {str(json_error)}")
+            return jsonify({
+                'status': 'error',
+                'message': 'Invalid JSON data provided. Please check your request format.',
+                'error_type': 'invalid_json',
+                'user_message': 'The data you sent is not valid JSON. Please check the format and try again.',
+                'json_error': str(json_error),
+                'required_fields': ['summary_text'],
+                'optional_fields': ['section']
+            }), 400
+        
+        if not data:
+            logger.warning("No JSON data provided in PUT request")
+            return jsonify({
+                'status': 'error',
+                'message': 'No data provided. Please send JSON data with summary_text.',
+                'error_type': 'invalid_request',
+                'user_message': 'No data received. Please ensure you\'re sending valid JSON data.',
+                'required_fields': ['summary_text'],
+                'optional_fields': ['section']
+            }), 400
+        
+        # Validate required fields
+        summary_text = data.get('summary_text', '').strip()
+        if not summary_text:
+            logger.warning("Empty summary_text provided")
+            return jsonify({
+                'status': 'error',
+                'message': 'summary_text is required and cannot be empty',
+                'error_type': 'validation_error',
+                'user_message': 'Summary text cannot be empty. Please provide some text to save.',
+                'field': 'summary_text',
+                'issue': 'required_field_empty'
+            }), 400
+        
+        # Validate summary text length (reasonable limits)
+        MAX_SUMMARY_LENGTH = 10000  # 10KB limit for summary text
+        if len(summary_text) > MAX_SUMMARY_LENGTH:
+            logger.warning(f"Summary text too long: {len(summary_text)} chars (max: {MAX_SUMMARY_LENGTH})")
+            return jsonify({
+                'status': 'error',
+                'message': f'Summary text is too long. Maximum length is {MAX_SUMMARY_LENGTH} characters.',
+                'error_type': 'validation_error',
+                'user_message': f'Your summary text is too long. Please keep it under {MAX_SUMMARY_LENGTH} characters.',
+                'field': 'summary_text',
+                'issue': 'text_too_long',
+                'current_length': len(summary_text),
+                'max_length': MAX_SUMMARY_LENGTH
+            }), 400
+        
+        # Optional section parameter for updating specific sections
+        section = data.get('section', '').strip()
+        
+        # Validate section if provided
+        valid_sections = [
+            'personality_overview',
+            'emotional_patterns', 
+            'communication_style',
+            'key_personality_traits',
+            'behavioral_insights',
+            'growth_and_development'
+        ]
+        
+        if section and section not in valid_sections:
+            logger.warning(f"Invalid section provided: {section}")
+            return jsonify({
+                'status': 'error',
+                'message': f'Invalid section "{section}". Valid sections are: {", ".join(valid_sections)}',
+                'error_type': 'validation_error',
+                'user_message': f'The section "{section}" is not valid. Please choose from the available sections.',
+                'field': 'section',
+                'provided_value': section,
+                'valid_options': valid_sections
+            }), 400
+        
+        # Create user profile data structure
+        timestamp = datetime.now().isoformat()
+        
+        if section:
+            # Update specific section
+            data_key = f'user_profile_custom_{section}'
+            profile_data = {
+                'section': section,
+                'custom_text': summary_text,
+                'last_modified': timestamp,
+                'modification_type': 'section_update'
+            }
+            logger.info(f"Saving custom text for section: {section}")
+        else:
+            # Update overall summary
+            data_key = 'user_profile_custom_summary'
+            profile_data = {
+                'custom_summary': summary_text,
+                'last_modified': timestamp,
+                'modification_type': 'full_summary'
+            }
+            logger.info("Saving custom overall summary")
+        
+        # Since this is user-level data (not conversation-specific), we'll use a special
+        # conversation ID of 0 to indicate global user data, or we can store it differently
+        # For now, let's store it as a global user preference
+        # We could also create a dedicated user preferences table, but for simplicity
+        # we'll use the existing conversation_data table with a special conversation_id
+        
+        USER_PROFILE_CONVERSATION_ID = 0  # Special ID for user-level data
+        
+        # Test database connection before attempting to store data
+        try:
+            from utils.database import init_db
+            init_db()  # This will test the database connection
+        except Exception as db_error:
+            logger.error(f"Database connection failed: {str(db_error)}")
+            return jsonify({
+                'status': 'error',
+                'message': 'Database connection failed. Cannot save profile data.',
+                'error_type': 'database_connection_error',
+                'user_message': 'We\'re having trouble connecting to the database. Please try again in a moment.',
+                'operation': 'database_connection_test',
+                'error_details': str(db_error) if logger.level == logging.DEBUG else None
+            }), 500
+        
+        # Store the user's custom profile data
+        success = store_conversation_data(USER_PROFILE_CONVERSATION_ID, data_key, profile_data)
+        
+        if not success:
+            logger.error("Failed to store user profile data in database")
+            return jsonify({
+                'status': 'error',
+                'message': 'Failed to save your profile summary. Database operation failed.',
+                'error_type': 'database_error',
+                'user_message': 'We\'re having trouble saving your profile summary. Please try again in a moment.',
+                'operation': 'save_profile_data',
+                'data_key': data_key,
+                'retry_recommended': True
+            }), 500
+        
+        logger.info(f"Successfully saved user profile data: {data_key}")
+        
+        # Return success response
+        response_data = {
+            'status': 'success',
+            'message': 'Profile summary saved successfully',
+            'saved_at': timestamp,
+            'type': 'section_update' if section else 'full_summary'
+        }
+        
+        if section:
+            response_data['section'] = section
+        
+        return jsonify(response_data)
+        
+    except Exception as e:
+        logger.error(f"Unexpected error in update_user_profile_summary: {str(e)}", exc_info=True)
+        return jsonify({
+            'status': 'error',
+            'message': 'An unexpected error occurred while saving your profile summary',
+            'error_type': 'unexpected_error',
+            'user_message': 'Something went wrong while saving your profile summary. Please try again.',
+            'operation': 'save_profile_summary',
+            'error_details': str(e) if logger.level == logging.DEBUG else None
+        }), 500
 
 # Keep the if __name__ == '__main__' block for running the app
 if __name__ == '__main__':

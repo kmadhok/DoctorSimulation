@@ -1876,4 +1876,2086 @@ textarea.form-control {
         margin-top: 1rem;
         padding: 1rem;
     }
+}
+
+/* =====================================
+   USER PROFILE SIDEBAR STYLES - DESIGN SYSTEM ALIGNED
+   ===================================== */
+
+/* Container layout with user profile sidebar - matches existing sidebar patterns */
+.container.with-user-profile {
+    max-width: 1400px;
+    flex-direction: row;
+    gap: 2rem; /* Matches existing sidebar gap */
+    padding: 1rem;
+}
+
+/* Three-panel layout: conversations + main + profile */
+.container.with-user-profile .main-content {
+    flex: 1;
+    min-width: 0; /* Matches existing pattern */
+}
+
+/* User Profile Sidebar - matches existing sidebar design */
+.user-profile-sidebar {
+    width: 300px; /* Matches existing sidebar width */
+    background-color: white;
+    border-radius: 0.5rem; /* Matches existing border-radius */
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); /* Matches existing shadow */
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: sticky;
+    top: 1rem;
+    height: calc(100vh - 2rem);
+    order: 3; /* Position on the right */
+}
+
+.user-profile-sidebar.collapsed {
+    width: 60px;
+    transition: all 0.2s ease; /* Matches existing transition pattern */
+}
+
+.user-profile-sidebar.expanded {
+    width: 300px;
+    transition: all 0.2s ease; /* Matches existing transition pattern */
+}
+
+/* Profile Sidebar Header - matches existing sidebar-header */
+.user-profile-header {
+    padding: 1rem; /* Matches existing sidebar-header padding */
+    background-color: #f0f0f0; /* Matches existing sidebar-header background */
+    border-bottom: 1px solid #e0e0e0; /* Matches existing border color */
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    min-height: 60px;
+}
+
+.user-profile-header h2 {
+    font-size: 1.2rem; /* Matches existing sidebar h2 font-size */
+    margin: 0;
+    color: #333; /* Matches existing primary text color */
+    font-weight: 500; /* Matches existing heading weight */
+}
+
+.user-profile-header .profile-actions {
+    display: flex;
+    gap: 0.5rem; /* Matches existing sidebar-actions gap */
+}
+
+/* Profile Action Button - matches existing action-button */
+.profile-action-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1.2rem; /* Matches existing action-button font-size */
+    color: #777; /* Matches existing action-button color */
+    padding: 0.2rem; /* Matches existing action-button padding */
+    border-radius: 50%;
+    width: 28px; /* Matches existing action-button width */
+    height: 28px; /* Matches existing action-button height */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease; /* Matches existing transition */
+}
+
+.profile-action-button:hover {
+    background-color: #e0e0e0; /* Matches existing action-button hover */
+    color: #333; /* Matches existing action-button hover color */
+}
+
+.profile-action-button:active {
+    transform: scale(0.95);
+}
+
+/* Profile Content Area */
+.user-profile-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+/* Profile Status Section - matches existing status patterns */
+.profile-status {
+    background-color: #f8f9fa; /* Matches existing form background */
+    border-radius: 0.5rem; /* Matches existing border-radius */
+    padding: 1rem; /* Matches existing card padding */
+    border-left: 4px solid #4caf50; /* Matches established success color */
+    margin-bottom: 1rem; /* Matches existing spacing */
+}
+
+.profile-status.loading {
+    border-left-color: #ff9800; /* Matches existing warning color */
+}
+
+.profile-status.error {
+    border-left-color: #f44336; /* Matches existing error color */
+}
+
+.profile-status.insufficient-data {
+    border-left-color: #4285f4; /* Matches primary blue */
+}
+
+.profile-status-title {
+    font-weight: 500; /* Matches existing heading weight */
+    color: #333; /* Matches existing primary text color */
+    margin-bottom: 0.5rem; /* Matches existing spacing */
+    font-size: 0.9rem; /* Matches existing small text */
+}
+
+.profile-status-message {
+    color: #666; /* Matches existing secondary text color */
+    font-size: 0.8rem; /* Matches existing micro text */
+    line-height: 1.6; /* Matches existing line-height */
+}
+
+/* Profile Summary Section - matches existing card patterns */
+.profile-summary {
+    background-color: white; /* Matches existing card background */
+    border-radius: 0.5rem; /* Matches existing border-radius */
+    border: 1px solid #e0e0e0; /* Matches existing border color */
+    overflow: hidden;
+}
+
+.profile-summary-header {
+    background-color: #f0f0f0; /* Matches existing header background */
+    padding: 1rem; /* Matches existing header padding */
+    border-bottom: 1px solid #e0e0e0; /* Matches existing border color */
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.profile-summary-title {
+    font-weight: 500; /* Matches existing heading weight */
+    color: #333; /* Matches existing primary text color */
+    font-size: 0.9rem; /* Matches existing small text */
+    margin: 0;
+}
+
+.profile-summary-content {
+    padding: 1rem; /* Matches existing card padding */
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.profile-summary-text {
+    color: #333; /* Matches existing primary text color */
+    font-size: 0.8rem; /* Matches existing micro text */
+    line-height: 1.6; /* Matches existing line-height */
+    margin: 0;
+    white-space: pre-wrap;
+}
+
+.profile-summary-sections {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem; /* Matches existing standard spacing */
+}
+
+.profile-section {
+    border-bottom: 1px solid #e0e0e0; /* Matches existing border color */
+    padding-bottom: 1rem; /* Matches existing standard spacing */
+}
+
+.profile-section:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.profile-section-title {
+    font-weight: 500; /* Matches existing heading weight */
+    color: #333; /* Matches existing primary text color */
+    font-size: 0.8rem; /* Matches existing micro text */
+    margin-bottom: 0.5rem; /* Matches existing spacing */
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.profile-section-content {
+    color: #333; /* Matches existing primary text color */
+    font-size: 0.8rem; /* Matches existing micro text */
+    line-height: 1.6; /* Matches existing line-height */
+}
+
+/* Profile Actions - matches existing button patterns */
+.profile-actions-section {
+    background-color: #f8f9fa; /* Matches existing form background */
+    border-radius: 0.5rem; /* Matches existing border-radius */
+    padding: 1rem; /* Matches existing card padding */
+    border: 1px solid #e0e0e0; /* Matches existing border color */
+}
+
+.profile-actions-title {
+    font-weight: 500; /* Matches existing heading weight */
+    color: #333; /* Matches existing primary text color */
+    font-size: 0.9rem; /* Matches existing small text */
+    margin-bottom: 1rem; /* Matches existing spacing */
+}
+
+.profile-action-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem; /* Matches existing gap */
+}
+
+.profile-action-btn {
+    background-color: white; /* Matches existing button background */
+    border: 1px solid #e0e0e0; /* Matches existing border color */
+    border-radius: 4px; /* Matches existing button border-radius */
+    padding: 10px 20px; /* Matches existing button padding */
+    cursor: pointer;
+    transition: all 0.2s ease; /* Matches existing transition */
+    font-size: 0.8rem; /* Matches existing micro text */
+    color: #333; /* Matches existing primary text color */
+    text-align: center;
+}
+
+.profile-action-btn:hover {
+    background-color: #f8f9fa; /* Matches existing form background */
+    border-color: #ccc; /* Matches existing input border */
+}
+
+.profile-action-btn.primary {
+    background-color: #4285f4; /* Matches primary blue */
+    border-color: #4285f4; /* Matches primary blue */
+    color: white;
+}
+
+.profile-action-btn.primary:hover {
+    background-color: #3367d6; /* Matches primary blue dark */
+    border-color: #3367d6; /* Matches primary blue dark */
+}
+
+/* Loading States - matches existing patterns */
+.profile-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem; /* Matches existing large spacing */
+    color: #666; /* Matches existing secondary text color */
+}
+
+.profile-loading-spinner {
+    width: 20px;
+    height: 20px;
+    border: 2px solid #f3f3f3;
+    border-top: 2px solid #4285f4; /* Matches primary blue */
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-right: 0.5rem;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Error States - matches existing error patterns */
+.profile-error {
+    background-color: #ffeaea; /* Light red background */
+    color: #e74c3c; /* Matches existing error color */
+    border: 1px solid #f5c6cb;
+    border-radius: 4px; /* Matches existing border-radius */
+    padding: 1rem; /* Matches existing card padding */
+    font-size: 0.8rem; /* Matches existing micro text */
+    margin-bottom: 1rem; /* Matches existing spacing */
+}
+
+.profile-error-title {
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+
+.profile-error-message {
+    margin: 0;
+}
+
+/* Collapsed State */
+.user-profile-sidebar.collapsed .user-profile-header h2,
+.user-profile-sidebar.collapsed .profile-status-title,
+.user-profile-sidebar.collapsed .profile-status-message,
+.user-profile-sidebar.collapsed .profile-summary,
+.user-profile-sidebar.collapsed .profile-actions-section {
+    display: none;
+}
+
+.user-profile-sidebar.collapsed .user-profile-content {
+    padding: 0.5rem;
+}
+
+.user-profile-sidebar.collapsed .profile-action-button {
+    width: 40px;
+    height: 40px;
+    font-size: 1.3rem;
+}
+
+/* =====================================
+   RESPONSIVE DESIGN SYSTEM
+   ===================================== */
+
+/* Large Desktop: 1400px+ - Full experience */
+@media (min-width: 1400px) {
+    .container.with-user-profile {
+        max-width: 1600px;
+    }
+    
+    .user-profile-sidebar {
+        width: 350px;
+    }
+    
+    .profile-summary-content {
+        max-height: 400px;
+    }
+}
+
+/* Desktop: 1200px - 1399px - Standard desktop */
+@media (max-width: 1399px) and (min-width: 1200px) {
+    .container.with-user-profile {
+        max-width: 1400px;
+    }
+    
+    .user-profile-sidebar {
+        width: 320px;
+    }
+}
+
+/* Medium Desktop: 992px - 1199px - Smaller desktop/large laptop */
+@media (max-width: 1199px) and (min-width: 992px) {
+    .user-profile-sidebar {
+        width: 280px;
+    }
+    
+    .container.with-user-profile {
+        max-width: 1200px;
+        gap: 0.75rem;
+    }
+    
+    .user-profile-content {
+        padding: 0.75rem;
+    }
+    
+    .profile-summary-content {
+        max-height: 280px;
+    }
+}
+
+/* Large Tablet: 768px - 991px - Tablet landscape */
+@media (max-width: 991px) and (min-width: 768px) {
+    .user-profile-sidebar {
+        width: 250px;
+    }
+    
+    .container.with-user-profile {
+        gap: 0.5rem;
+        padding: 0.5rem;
+    }
+    
+    .user-profile-content {
+        padding: 0.5rem;
+        gap: 0.5rem;
+    }
+    
+    .profile-summary-content {
+        max-height: 250px;
+    }
+    
+    .profile-action-button {
+        width: 36px;
+        height: 36px;
+        font-size: 1.2rem;
+    }
+    
+    .profile-action-btn {
+        padding: 0.75rem;
+        font-size: 0.85rem;
+        min-height: 44px; /* Touch-friendly minimum */
+    }
+}
+
+/* Tablet Portrait: 600px - 767px - Transition to mobile layout */
+@media (max-width: 767px) and (min-width: 600px) {
+    .container.with-user-profile {
+        flex-direction: column;
+        max-width: 100%;
+        gap: 1rem;
+        padding: 0.75rem;
+    }
+    
+    .user-profile-sidebar {
+        width: 100%;
+        order: 2;
+        position: relative;
+        height: auto;
+        max-height: 450px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+    
+    .user-profile-sidebar.collapsed {
+        width: 100%;
+        max-height: 70px;
+        overflow: hidden;
+    }
+    
+    .main-content {
+        order: 1;
+    }
+    
+    .sidebar {
+        order: 3;
+        width: 100%;
+    }
+    
+    .profile-action-button {
+        width: 40px;
+        height: 40px;
+        font-size: 1.3rem;
+    }
+    
+    .profile-action-btn {
+        padding: 0.875rem;
+        font-size: 0.9rem;
+        min-height: 48px; /* Better touch target */
+    }
+    
+    .profile-summary-content {
+        max-height: 300px;
+    }
+}
+
+/* Mobile Landscape: 480px - 599px - Phone landscape */
+@media (max-width: 599px) and (min-width: 480px) {
+    .container.with-user-profile {
+        flex-direction: column;
+        max-width: 100%;
+        gap: 0.75rem;
+        padding: 0.5rem;
+    }
+    
+    .user-profile-sidebar {
+        width: 100%;
+        order: 2;
+        position: relative;
+        height: auto;
+        max-height: 350px;
+        border-radius: 0.375rem;
+    }
+    
+    .user-profile-sidebar.collapsed {
+        width: 100%;
+        max-height: 60px;
+        overflow: hidden;
+    }
+    
+    .main-content {
+        order: 1;
+    }
+    
+    .sidebar {
+        order: 3;
+        width: 100%;
+    }
+    
+    .user-profile-header {
+        padding: 0.75rem;
+    }
+    
+    .user-profile-content {
+        padding: 0.75rem;
+        gap: 0.75rem;
+    }
+    
+    .profile-summary-content {
+        max-height: 250px;
+    }
+    
+    .profile-action-button {
+        width: 42px;
+        height: 42px;
+        font-size: 1.4rem;
+    }
+    
+    .profile-action-btn {
+        padding: 1rem;
+        font-size: 0.9rem;
+        min-height: 50px; /* Optimal touch target */
+    }
+}
+
+/* Mobile Portrait: 320px - 479px - Phone portrait */
+@media (max-width: 479px) {
+    .container.with-user-profile {
+        flex-direction: column;
+        max-width: 100%;
+        gap: 0.5rem;
+        padding: 0.25rem;
+    }
+    
+    .user-profile-sidebar {
+        width: 100%;
+        order: 2;
+        position: relative;
+        height: auto;
+        max-height: 300px;
+        border-radius: 0.25rem;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+    
+    .user-profile-sidebar.collapsed {
+        width: 100%;
+        max-height: 50px;
+        overflow: hidden;
+    }
+    
+    .main-content {
+        order: 1;
+    }
+    
+    .sidebar {
+        order: 3;
+        width: 100%;
+    }
+    
+    .user-profile-header {
+        padding: 0.5rem;
+        min-height: 50px;
+    }
+    
+    .user-profile-header h2 {
+        font-size: 1rem;
+    }
+    
+    .user-profile-content {
+        padding: 0.5rem;
+        gap: 0.5rem;
+    }
+    
+    .profile-summary-content {
+        max-height: 200px;
+    }
+    
+    .profile-action-button {
+        width: 44px;
+        height: 44px;
+        font-size: 1.5rem;
+    }
+    
+    .profile-action-btn {
+        padding: 0.875rem;
+        font-size: 0.85rem;
+        min-height: 52px; /* Maximum touch accessibility */
+    }
+    
+    .profile-status {
+        padding: 0.75rem;
+    }
+    
+    .profile-status-title {
+        font-size: 0.85rem;
+    }
+    
+    .profile-status-message {
+        font-size: 0.8rem;
+    }
+    
+    .profile-section-title {
+        font-size: 0.75rem;
+    }
+    
+    .profile-section-content {
+        font-size: 0.8rem;
+    }
+    
+    .profile-actions-section {
+        padding: 0.75rem;
+    }
+    
+    .profile-actions-title {
+        font-size: 0.85rem;
+    }
+}
+
+/* =====================================
+   ORIENTATION-SPECIFIC STYLES
+   ===================================== */
+
+/* Tablet Landscape Orientation */
+@media (max-width: 1024px) and (min-width: 768px) and (orientation: landscape) {
+    .user-profile-sidebar {
+        width: 280px;
+        height: calc(100vh - 1rem);
+    }
+    
+    .container.with-user-profile {
+        height: 100vh;
+        padding: 0.5rem;
+    }
+    
+    .profile-summary-content {
+        max-height: 300px;
+    }
+}
+
+/* Mobile Landscape Orientation */
+@media (max-width: 767px) and (orientation: landscape) {
+    .user-profile-sidebar {
+        max-height: 250px;
+    }
+    
+    .profile-summary-content {
+        max-height: 150px;
+    }
+    
+    .container.with-user-profile {
+        gap: 0.5rem;
+        padding: 0.25rem;
+    }
+    
+    .user-profile-content {
+        padding: 0.5rem;
+        gap: 0.5rem;
+    }
+}
+
+/* =====================================
+   HIGH-DPI DISPLAY ADJUSTMENTS
+   ===================================== */
+
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+    .user-profile-sidebar {
+        box-shadow: 0 1px 5px rgba(0, 0, 0, 0.12);
+    }
+    
+    .profile-action-button {
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+}
+
+/* =====================================
+   PRINT STYLES
+   ===================================== */
+
+@media print {
+    .user-profile-sidebar {
+        position: static;
+        width: 100%;
+        height: auto;
+        max-height: none;
+        box-shadow: none;
+        border: 1px solid #000;
+        break-inside: avoid;
+    }
+    
+    .profile-action-button,
+    .profile-actions-section {
+        display: none;
+    }
+    
+    .user-profile-header {
+        background: white;
+        border-bottom: 1px solid #000;
+    }
+    
+    .profile-summary-content {
+        max-height: none;
+        overflow: visible;
+    }
+}
+
+/* =====================================
+   ACCESSIBILITY ENHANCEMENTS
+   ===================================== */
+
+/* Reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+    .user-profile-sidebar.collapsed,
+    .user-profile-sidebar.expanded {
+        transition: none;
+    }
+    
+    .profile-action-button {
+        transition: none;
+    }
+    
+    .profile-loading-spinner {
+        animation: none;
+    }
+}
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+    .user-profile-sidebar {
+        border: 2px solid #000;
+    }
+    
+    .profile-action-button {
+        border: 1px solid #000;
+    }
+    
+    .profile-status {
+        border: 1px solid #000;
+    }
+}
+
+/* =====================================
+   EDITABLE TEXT AREA COMPONENTS
+   ===================================== */
+
+/* Editable Content Base Styles */
+.profile-editable-content {
+    position: relative;
+    cursor: text;
+    transition: all 0.2s ease;
+}
+
+.profile-editable-content.editing {
+    cursor: default;
+}
+
+.profile-editable-content:hover:not(.editing) {
+    background-color: #f8f9fa;
+    border-radius: 0.25rem;
+    padding: 0.25rem;
+    margin: -0.25rem;
+}
+
+.profile-editable-content.editing {
+    background-color: white;
+    border-radius: 0.25rem;
+    padding: 0.25rem;
+    margin: -0.25rem;
+    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+}
+
+/* Editable Text Display */
+.profile-editable-text {
+    display: block;
+    width: 100%;
+    min-height: 1.5rem;
+    line-height: 1.5;
+    color: #495057;
+    font-size: 0.85rem;
+    word-wrap: break-word;
+    white-space: pre-wrap;
+}
+
+.profile-editable-text.empty {
+    color: #6c757d;
+    font-style: italic;
+}
+
+.profile-editable-text.empty::before {
+    content: 'Click to add your custom summary...';
+}
+
+/* Editable Textarea */
+.profile-editable-textarea {
+    width: 100%;
+    min-height: 80px;
+    max-height: 200px;
+    padding: 0.5rem;
+    border: 2px solid #007bff;
+    border-radius: 0.25rem;
+    font-family: inherit;
+    font-size: 0.85rem;
+    line-height: 1.5;
+    resize: vertical;
+    background-color: white;
+    color: #495057;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.profile-editable-textarea:focus {
+    outline: none;
+    border-color: #0056b3;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.profile-editable-textarea.error {
+    border-color: #dc3545;
+    box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+}
+
+.profile-editable-textarea.success {
+    border-color: #28a745;
+    box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
+}
+
+/* Edit Controls */
+.profile-edit-controls {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+    justify-content: flex-end;
+}
+
+.profile-edit-btn {
+    padding: 0.375rem 0.75rem;
+    border: 1px solid transparent;
+    border-radius: 0.25rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    line-height: 1.5;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: center;
+    white-space: nowrap;
+    user-select: none;
+    min-width: 60px;
+}
+
+.profile-edit-btn:focus {
+    outline: none;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.profile-edit-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.profile-edit-btn.primary {
+    background-color: #007bff;
+    border-color: #007bff;
+    color: white;
+}
+
+.profile-edit-btn.primary:hover:not(:disabled) {
+    background-color: #0056b3;
+    border-color: #0056b3;
+}
+
+.profile-edit-btn.primary:active:not(:disabled) {
+    background-color: #004085;
+    border-color: #003d82;
+    transform: translateY(1px);
+}
+
+.profile-edit-btn.secondary {
+    background-color: #6c757d;
+    border-color: #6c757d;
+    color: white;
+}
+
+.profile-edit-btn.secondary:hover:not(:disabled) {
+    background-color: #545b62;
+    border-color: #4e555b;
+}
+
+.profile-edit-btn.secondary:active:not(:disabled) {
+    background-color: #3d4449;
+    border-color: #383d41;
+    transform: translateY(1px);
+}
+
+.profile-edit-btn.outline {
+    background-color: transparent;
+    border-color: #6c757d;
+    color: #6c757d;
+}
+
+.profile-edit-btn.outline:hover:not(:disabled) {
+    background-color: #6c757d;
+    color: white;
+}
+
+/* Edit Mode Indicator */
+.profile-edit-indicator {
+    position: absolute;
+    top: -0.5rem;
+    right: -0.5rem;
+    background-color: #007bff;
+    color: white;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    font-weight: bold;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+
+/* Character Counter */
+.profile-char-counter {
+    font-size: 0.7rem;
+    color: #6c757d;
+    text-align: right;
+    margin-top: 0.25rem;
+}
+
+.profile-char-counter.warning {
+    color: #ffc107;
+}
+
+.profile-char-counter.error {
+    color: #dc3545;
+}
+
+/* Validation Messages */
+.profile-edit-validation {
+    font-size: 0.75rem;
+    margin-top: 0.25rem;
+    padding: 0.25rem;
+    border-radius: 0.25rem;
+    display: none;
+}
+
+.profile-edit-validation.error {
+    display: block;
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+.profile-edit-validation.success {
+    display: block;
+    background-color: #d1edff;
+    color: #0c5460;
+    border: 1px solid #b8daff;
+}
+
+.profile-edit-validation.info {
+    display: block;
+    background-color: #d1ecf1;
+    color: #0c5460;
+    border: 1px solid #bee5eb;
+}
+
+/* Section-Specific Editing */
+.profile-section.editing {
+    background-color: #f8f9fa;
+    border-radius: 0.5rem;
+    padding: 1rem;
+    margin: -0.5rem;
+    border: 1px solid #dee2e6;
+}
+
+.profile-section.editing .profile-section-title {
+    margin-bottom: 0.75rem;
+    color: #007bff;
+}
+
+.profile-section.editing .profile-section-content {
+    margin-bottom: 0.5rem;
+}
+
+/* Auto-save Indicator */
+.profile-autosave-indicator {
+    font-size: 0.7rem;
+    color: #6c757d;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.profile-autosave-indicator.visible {
+    opacity: 1;
+}
+
+.profile-autosave-indicator.saving {
+    color: #007bff;
+}
+
+.profile-autosave-indicator.saved {
+    color: #28a745;
+}
+
+.profile-autosave-indicator.error {
+    color: #dc3545;
+}
+
+.profile-autosave-indicator::before {
+    content: '';
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: currentColor;
+}
+
+/* Responsive Adjustments for Editing */
+@media (max-width: 767px) {
+    .profile-editable-textarea {
+        min-height: 60px;
+        font-size: 0.8rem;
+    }
+    
+    .profile-edit-controls {
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+    
+    .profile-edit-btn {
+        font-size: 0.8rem;
+        padding: 0.5rem 0.75rem;
+    }
+    
+    .profile-editable-content:hover:not(.editing) {
+        padding: 0.5rem;
+        margin: -0.5rem;
+    }
+    
+    .profile-editable-content.editing {
+        padding: 0.5rem;
+        margin: -0.5rem;
+    }
+}
+
+@media (max-width: 479px) {
+    .profile-editable-textarea {
+        min-height: 50px;
+        font-size: 0.75rem;
+    }
+    
+    .profile-edit-btn {
+        font-size: 0.75rem;
+        padding: 0.375rem 0.5rem;
+        min-width: 50px;
+    }
+    
+    .profile-char-counter {
+        font-size: 0.65rem;
+    }
+}
+
+/* Touch-friendly adjustments for editing */
+@media (max-width: 991px) {
+    .profile-edit-btn {
+        min-height: 44px;
+        padding: 0.75rem 1rem;
+    }
+    
+    .profile-editable-content {
+        min-height: 44px;
+    }
+}
+
+@media (max-width: 599px) {
+    .profile-edit-btn {
+        min-height: 48px;
+        padding: 0.875rem 1rem;
+    }
+}
+
+@media (max-width: 479px) {
+    .profile-edit-btn {
+        min-height: 50px;
+        padding: 1rem;
+    }
+}
+
+/* High contrast mode for editing */
+@media (prefers-contrast: high) {
+    .profile-editable-content.editing {
+        border: 2px solid #000;
+    }
+    
+    .profile-editable-textarea {
+        border: 2px solid #000;
+    }
+    
+    .profile-edit-btn {
+        border: 1px solid #000;
+    }
+}
+
+/* Reduced motion for editing */
+@media (prefers-reduced-motion: reduce) {
+    .profile-editable-content,
+    .profile-edit-btn,
+    .profile-autosave-indicator {
+        transition: none;
+    }
+    
+    .profile-edit-indicator {
+        animation: none;
+    }
+}
+
+/* =====================================
+   LOADING SPINNER COMPONENTS
+   ===================================== */
+
+/* Base Loading Spinner */
+.profile-loading-spinner {
+    width: 20px;
+    height: 20px;
+    border: 2px solid #f3f3f3;
+    border-top: 2px solid #007bff;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-right: 0.5rem;
+}
+
+/* Spinner Variants */
+.profile-loading-spinner.small {
+    width: 16px;
+    height: 16px;
+    border-width: 2px;
+}
+
+.profile-loading-spinner.medium {
+    width: 24px;
+    height: 24px;
+    border-width: 3px;
+}
+
+.profile-loading-spinner.large {
+    width: 32px;
+    height: 32px;
+    border-width: 3px;
+}
+
+/* Spinner Color Variants */
+.profile-loading-spinner.primary {
+    border-top-color: #007bff;
+}
+
+.profile-loading-spinner.success {
+    border-top-color: #28a745;
+}
+
+.profile-loading-spinner.warning {
+    border-top-color: #ffc107;
+}
+
+.profile-loading-spinner.danger {
+    border-top-color: #dc3545;
+}
+
+.profile-loading-spinner.info {
+    border-top-color: #17a2b8;
+}
+
+.profile-loading-spinner.light {
+    border-color: #6c757d;
+    border-top-color: #ffffff;
+}
+
+.profile-loading-spinner.dark {
+    border-color: #f8f9fa;
+    border-top-color: #343a40;
+}
+
+/* Loading Container */
+.profile-loading-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    text-align: center;
+}
+
+.profile-loading-container.inline {
+    display: inline-flex;
+    padding: 0.5rem;
+}
+
+.profile-loading-container.fullscreen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(255, 255, 255, 0.9);
+    z-index: 9999;
+}
+
+.profile-loading-container.overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(255, 255, 255, 0.85);
+    border-radius: inherit;
+}
+
+/* Loading Text */
+.profile-loading-text {
+    color: #6c757d;
+    font-size: 0.85rem;
+    font-weight: 500;
+    margin-left: 0.5rem;
+}
+
+.profile-loading-text.small {
+    font-size: 0.75rem;
+}
+
+.profile-loading-text.large {
+    font-size: 1rem;
+}
+
+/* Dot Loading Animation */
+.profile-loading-dots {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.profile-loading-dots::after {
+    content: '';
+    display: inline-block;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background-color: #007bff;
+    animation: dots 1.5s steps(4, end) infinite;
+}
+
+.profile-loading-dots.dot1::after {
+    animation-delay: 0s;
+}
+
+.profile-loading-dots.dot2::after {
+    animation-delay: 0.375s;
+}
+
+.profile-loading-dots.dot3::after {
+    animation-delay: 0.75s;
+}
+
+/* Pulse Loading Animation */
+.profile-loading-pulse {
+    width: 40px;
+    height: 40px;
+    background-color: #007bff;
+    border-radius: 50%;
+    animation: pulse-scale 1.5s ease-in-out infinite;
+}
+
+.profile-loading-pulse.small {
+    width: 24px;
+    height: 24px;
+}
+
+.profile-loading-pulse.large {
+    width: 56px;
+    height: 56px;
+}
+
+/* Skeleton Loading */
+.profile-loading-skeleton {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: skeleton-loading 1.5s infinite;
+    border-radius: 0.25rem;
+}
+
+.profile-loading-skeleton.text {
+    height: 1rem;
+    margin: 0.25rem 0;
+}
+
+.profile-loading-skeleton.text.small {
+    height: 0.75rem;
+}
+
+.profile-loading-skeleton.text.large {
+    height: 1.25rem;
+}
+
+.profile-loading-skeleton.title {
+    height: 1.5rem;
+    width: 60%;
+    margin: 0.5rem 0;
+}
+
+.profile-loading-skeleton.paragraph {
+    height: 0.875rem;
+    margin: 0.125rem 0;
+}
+
+.profile-loading-skeleton.paragraph:nth-child(odd) {
+    width: 95%;
+}
+
+.profile-loading-skeleton.paragraph:nth-child(even) {
+    width: 80%;
+}
+
+/* =====================================
+   ERROR MESSAGE COMPONENTS
+   ===================================== */
+
+/* Base Error Message */
+.profile-error-message {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    padding: 0.75rem;
+    border-radius: 0.375rem;
+    font-size: 0.85rem;
+    line-height: 1.4;
+    margin: 0.5rem 0;
+    border: 1px solid transparent;
+}
+
+/* Error Message Variants */
+.profile-error-message.error {
+    background-color: #f8d7da;
+    color: #721c24;
+    border-color: #f5c6cb;
+}
+
+.profile-error-message.warning {
+    background-color: #fff3cd;
+    color: #856404;
+    border-color: #ffeaa7;
+}
+
+.profile-error-message.info {
+    background-color: #d1ecf1;
+    color: #0c5460;
+    border-color: #bee5eb;
+}
+
+.profile-error-message.success {
+    background-color: #d4edda;
+    color: #155724;
+    border-color: #c3e6cb;
+}
+
+/* Error Message Icons */
+.profile-error-message::before {
+    content: '';
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    margin-top: 0.125rem;
+}
+
+.profile-error-message.error::before {
+    content: '⚠';
+    background-color: #dc3545;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: bold;
+}
+
+.profile-error-message.warning::before {
+    content: '⚠';
+    background-color: #ffc107;
+    color: #212529;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: bold;
+}
+
+.profile-error-message.info::before {
+    content: 'ℹ';
+    background-color: #17a2b8;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: bold;
+}
+
+.profile-error-message.success::before {
+    content: '✓';
+    background-color: #28a745;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: bold;
+}
+
+/* Error Message Content */
+.profile-error-content {
+    flex: 1;
+}
+
+.profile-error-title {
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+    font-size: 0.875rem;
+}
+
+.profile-error-description {
+    margin: 0;
+    color: inherit;
+    opacity: 0.9;
+}
+
+/* Dismissible Error Messages */
+.profile-error-message.dismissible {
+    padding-right: 2.5rem;
+    position: relative;
+}
+
+.profile-error-dismiss {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    background: none;
+    border: none;
+    font-size: 1.2rem;
+    font-weight: bold;
+    cursor: pointer;
+    color: inherit;
+    opacity: 0.7;
+    transition: opacity 0.2s ease;
+    padding: 0.25rem;
+    border-radius: 0.25rem;
+}
+
+.profile-error-dismiss:hover {
+    opacity: 1;
+}
+
+.profile-error-dismiss:focus {
+    outline: none;
+    opacity: 1;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+/* Inline Error Messages */
+.profile-error-message.inline {
+    margin: 0.25rem 0;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.75rem;
+}
+
+.profile-error-message.inline::before {
+    width: 16px;
+    height: 16px;
+    font-size: 0.7rem;
+}
+
+/* Compact Error Messages */
+.profile-error-message.compact {
+    padding: 0.375rem 0.5rem;
+    font-size: 0.75rem;
+    gap: 0.375rem;
+}
+
+.profile-error-message.compact::before {
+    width: 14px;
+    height: 14px;
+    font-size: 0.6rem;
+}
+
+/* Loading States for Components */
+.profile-section.loading {
+    position: relative;
+    overflow: hidden;
+}
+
+.profile-section.loading::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.8), transparent);
+    animation: shimmer 2s infinite;
+}
+
+.profile-summary.loading .profile-summary-content {
+    opacity: 0.5;
+}
+
+/* =====================================
+   ANIMATIONS
+   ===================================== */
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+@keyframes pulse-scale {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.2); opacity: 0.7; }
+}
+
+@keyframes dots {
+    0%, 20% { opacity: 0; }
+    50% { opacity: 1; }
+    100% { opacity: 0; }
+}
+
+@keyframes skeleton-loading {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+}
+
+@keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+
+@keyframes fade-in {
+    0% { opacity: 0; transform: translateY(10px); }
+    100% { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slide-in {
+    0% { transform: translateX(-100%); opacity: 0; }
+    100% { transform: translateX(0); opacity: 1; }
+}
+
+/* =====================================
+   RESPONSIVE ADJUSTMENTS
+   ===================================== */
+
+@media (max-width: 767px) {
+    .profile-loading-spinner.large {
+        width: 28px;
+        height: 28px;
+    }
+    
+    .profile-loading-text {
+        font-size: 0.8rem;
+    }
+    
+    .profile-error-message {
+        padding: 0.5rem;
+        font-size: 0.8rem;
+    }
+    
+    .profile-error-message::before {
+        width: 18px;
+        height: 18px;
+        font-size: 0.7rem;
+    }
+}
+
+@media (max-width: 479px) {
+    .profile-loading-spinner.large {
+        width: 24px;
+        height: 24px;
+    }
+    
+    .profile-loading-text {
+        font-size: 0.75rem;
+    }
+    
+    .profile-error-message {
+        padding: 0.375rem;
+        font-size: 0.75rem;
+    }
+    
+    .profile-error-message::before {
+        width: 16px;
+        height: 16px;
+        font-size: 0.65rem;
+    }
+}
+
+/* =====================================
+   ACCESSIBILITY ENHANCEMENTS
+   ===================================== */
+
+/* Reduced motion preferences */
+@media (prefers-reduced-motion: reduce) {
+    .profile-loading-spinner,
+    .profile-loading-pulse,
+    .profile-loading-skeleton,
+    .profile-section.loading::after {
+        animation: none;
+    }
+    
+    .profile-loading-spinner {
+        border-top-color: #007bff;
+        border-right-color: #007bff;
+    }
+    
+    .profile-error-message {
+        animation: none;
+    }
+}
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+    .profile-error-message {
+        border-width: 2px;
+        border-style: solid;
+    }
+    
+    .profile-error-message.error {
+        border-color: #dc3545;
+    }
+    
+    .profile-error-message.warning {
+        border-color: #ffc107;
+    }
+    
+    .profile-error-message.info {
+        border-color: #17a2b8;
+    }
+    
+    .profile-error-message.success {
+        border-color: #28a745;
+    }
+    
+    .profile-loading-spinner {
+        border-width: 3px;
+    }
+}
+
+/* Screen reader support */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+.profile-loading-container[aria-live="polite"] {
+    /* Announced by screen readers */
+}
+
+.profile-error-message[role="alert"] {
+    /* Immediately announced by screen readers */
+}
+
+/* =============================================================================
+   REFRESH BUTTON COMPONENT - Task 3.5
+   ============================================================================= */
+
+/* Primary refresh button component - matches existing button patterns */
+.profile-refresh-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 10px 20px; /* Matches existing button padding */
+    border: 1px solid #4285f4; /* Matches primary blue */
+    border-radius: 4px; /* Matches existing button border-radius */
+    background-color: #4285f4; /* Matches primary blue */
+    color: white;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* Matches existing font */
+    font-size: 0.8rem; /* Matches existing micro text */
+    font-weight: 500; /* Matches existing heading weight */
+    line-height: 1.6; /* Matches existing line-height */
+    cursor: pointer;
+    transition: all 0.2s ease; /* Matches existing transition */
+    text-align: center;
+    white-space: nowrap;
+    user-select: none;
+    min-width: 100px;
+    position: relative;
+}
+
+.profile-refresh-btn:hover:not(:disabled) {
+    background-color: #3367d6; /* Matches primary blue dark */
+    border-color: #3367d6; /* Matches primary blue dark */
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(66, 133, 244, 0.2); /* Matches primary blue shadow */
+}
+
+.profile-refresh-btn:active:not(:disabled) {
+    background-color: #2c5aa0; /* Darker blue for active state */
+    border-color: #2c5aa0;
+    transform: translateY(0);
+    box-shadow: 0 1px 2px rgba(66, 133, 244, 0.2); /* Matches primary blue shadow */
+}
+
+.profile-refresh-btn:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.25); /* Matches existing focus shadow */
+}
+
+.profile-refresh-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+/* Refresh button variants - aligned with design system */
+.profile-refresh-btn.secondary {
+    background-color: #777; /* Matches existing muted text color */
+    border-color: #777;
+    color: white;
+}
+
+.profile-refresh-btn.secondary:hover:not(:disabled) {
+    background-color: #666; /* Matches existing secondary text color */
+    border-color: #666;
+}
+
+.profile-refresh-btn.secondary:active:not(:disabled) {
+    background-color: #555;
+    border-color: #555;
+}
+
+.profile-refresh-btn.outline {
+    background-color: transparent;
+    color: #4285f4; /* Matches primary blue */
+    border-color: #4285f4; /* Matches primary blue */
+}
+
+.profile-refresh-btn.outline:hover:not(:disabled) {
+    background-color: #4285f4; /* Matches primary blue */
+    color: white;
+}
+
+.profile-refresh-btn.outline:active:not(:disabled) {
+    background-color: #3367d6; /* Matches primary blue dark */
+    border-color: #3367d6;
+}
+
+.profile-refresh-btn.small {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+    min-width: 70px;
+}
+
+.profile-refresh-btn.large {
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+    min-width: 120px;
+}
+
+/* Refresh button icon */
+.profile-refresh-icon {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    transition: transform 0.2s ease;
+}
+
+.profile-refresh-btn:hover .profile-refresh-icon {
+    transform: rotate(90deg);
+}
+
+.profile-refresh-btn.loading .profile-refresh-icon {
+    animation: spin 1s linear infinite;
+}
+
+/* Refresh button loading state */
+.profile-refresh-btn.loading {
+    pointer-events: none;
+    opacity: 0.8;
+}
+
+.profile-refresh-btn.loading .profile-refresh-text {
+    opacity: 0.7;
+}
+
+.profile-refresh-btn.loading .profile-refresh-icon {
+    animation: spin 1s linear infinite;
+}
+
+/* Refresh button spinner integration */
+.profile-refresh-btn .profile-loading-spinner {
+    width: 16px;
+    height: 16px;
+    border-width: 2px;
+    border-color: rgba(255, 255, 255, 0.3);
+    border-top-color: white;
+    display: none;
+}
+
+.profile-refresh-btn.loading .profile-loading-spinner {
+    display: inline-block;
+}
+
+.profile-refresh-btn.loading .profile-refresh-icon {
+    display: none;
+}
+
+/* Refresh button group */
+.profile-refresh-btn-group {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.profile-refresh-btn-group .profile-refresh-btn {
+    flex: 1;
+}
+
+.profile-refresh-btn-group .profile-refresh-btn.icon-only {
+    flex: 0 0 auto;
+    min-width: auto;
+    padding: 0.5rem;
+    width: 40px;
+}
+
+/* Refresh button toolbar integration */
+.profile-toolbar .profile-refresh-btn {
+    height: 32px;
+    padding: 0.25rem 0.75rem;
+    font-size: 0.75rem;
+    min-width: 80px;
+}
+
+.profile-toolbar .profile-refresh-btn.icon-only {
+    width: 32px;
+    min-width: 32px;
+    padding: 0.25rem;
+}
+
+/* Refresh button in sidebar header */
+.sidebar-header .profile-refresh-btn {
+    height: 28px;
+    padding: 0.2rem 0.6rem;
+    font-size: 0.7rem;
+    min-width: 70px;
+    border-radius: 0.25rem;
+}
+
+/* Refresh button states for specific contexts - matches design system colors */
+.profile-refresh-btn.success {
+    background-color: #4caf50; /* Matches existing success color */
+    border-color: #4caf50;
+    color: white;
+}
+
+.profile-refresh-btn.success:hover:not(:disabled) {
+    background-color: #43a047; /* Darker green for hover */
+    border-color: #43a047;
+}
+
+.profile-refresh-btn.warning {
+    background-color: #ff9800; /* Matches existing warning color */
+    border-color: #ff9800;
+    color: white;
+}
+
+.profile-refresh-btn.warning:hover:not(:disabled) {
+    background-color: #f57c00; /* Darker orange for hover */
+    border-color: #f57c00;
+}
+
+.profile-refresh-btn.danger {
+    background-color: #f44336; /* Matches existing error color */
+    border-color: #f44336;
+    color: white;
+}
+
+.profile-refresh-btn.danger:hover:not(:disabled) {
+    background-color: #e74c3c; /* Matches existing error color alternative */
+    border-color: #e74c3c;
+}
+
+/* Refresh button with tooltip */
+.profile-refresh-btn[title] {
+    position: relative;
+}
+
+.profile-refresh-btn[title]:hover::after {
+    content: attr(title);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #333;
+    color: white;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+    font-size: 0.75rem;
+    white-space: nowrap;
+    z-index: 1000;
+    margin-bottom: 0.25rem;
+    opacity: 0;
+    animation: fade-in 0.2s ease forwards;
+}
+
+/* Refresh button accessibility */
+.profile-refresh-btn:focus-visible {
+    outline: 2px solid #007bff;
+    outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .profile-refresh-btn,
+    .profile-refresh-icon,
+    .profile-refresh-btn .profile-loading-spinner {
+        animation: none !important;
+        transition: none !important;
+        transform: none !important;
+    }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    .profile-refresh-btn {
+        border-width: 2px;
+        font-weight: 600;
+    }
+    
+    .profile-refresh-btn.outline {
+        border-width: 2px;
+    }
+    
+    .profile-refresh-btn:focus {
+        outline: 3px solid;
+        outline-offset: 2px;
+    }
+}
+
+/* Responsive design for refresh button */
+@media (max-width: 480px) {
+    .profile-refresh-btn {
+        padding: 0.375rem 0.75rem;
+        font-size: 0.8rem;
+        min-width: 80px;
+    }
+    
+    .profile-refresh-btn.small {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.7rem;
+        min-width: 60px;
+    }
+    
+    .profile-refresh-btn-group {
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+    
+    .profile-refresh-btn-group .profile-refresh-btn {
+        width: 100%;
+    }
+    
+    .sidebar-header .profile-refresh-btn {
+        height: 28px;
+        padding: 0.2rem 0.5rem;
+        font-size: 0.65rem;
+        min-width: 60px;
+    }
+}
+
+@media (max-width: 360px) {
+    .profile-refresh-btn {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.75rem;
+        min-width: 70px;
+    }
+    
+    .profile-refresh-btn .profile-refresh-icon {
+        width: 14px;
+        height: 14px;
+    }
+    
+    .profile-refresh-btn .profile-loading-spinner {
+        width: 14px;
+        height: 14px;
+    }
+}
+
+/* Touch device optimizations */
+@media (hover: none) and (pointer: coarse) {
+    .profile-refresh-btn {
+        min-height: 44px;
+        padding: 0.75rem 1rem;
+        font-size: 0.9rem;
+    }
+    
+    .profile-refresh-btn.small {
+        min-height: 40px;
+        padding: 0.5rem 0.75rem;
+        font-size: 0.8rem;
+    }
+    
+    .profile-refresh-btn:hover {
+        transform: none;
+        box-shadow: none;
+    }
+    
+    .profile-refresh-btn:active {
+        transform: scale(0.98);
+    }
+}
+
+/* Large screen optimizations */
+@media (min-width: 1200px) {
+    .profile-refresh-btn {
+        padding: 0.5rem 1.25rem;
+        font-size: 0.9rem;
+        min-width: 110px;
+    }
+    
+    .profile-refresh-btn.large {
+        padding: 0.75rem 1.75rem;
+        font-size: 1.1rem;
+        min-width: 130px;
+    }
+}
+
+/* Screen reader support */
+.profile-refresh-btn .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* Refresh button animation keyframes */
+@keyframes refresh-success {
+    0% {
+        transform: scale(1);
+        background-color: #28a745;
+    }
+    50% {
+        transform: scale(1.05);
+        background-color: #34ce57;
+    }
+    100% {
+        transform: scale(1);
+        background-color: #28a745;
+    }
+}
+
+.profile-refresh-btn.success.pulse {
+    animation: refresh-success 0.3s ease-in-out;
+}
+
+/* Refresh button with custom icon content */
+.profile-refresh-btn.icon-refresh::before {
+    content: "↻";
+    font-size: 1.1em;
+    font-weight: bold;
+}
+
+.profile-refresh-btn.icon-update::before {
+    content: "⟳";
+    font-size: 1.1em;
+    font-weight: bold;
+}
+
+.profile-refresh-btn.icon-sync::before {
+    content: "⇄";
+    font-size: 1.1em;
+    font-weight: bold;
 } 
