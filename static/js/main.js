@@ -48,6 +48,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         all_symptoms: {}
     };
 
+    // User profile state management
+    let userProfileState = {
+        isLoaded: false,
+        currentProfile: null,
+        isEditing: false,
+        isLoading: false,
+        conversationCount: 0
+    };
+
     async function initAutoVAD() {
         console.log('initAutoVAD: Starting VAD initialization...');
         
@@ -266,6 +275,310 @@ document.addEventListener('DOMContentLoaded', async () => {
     //     }
     // }
     
+    // =============================================================================
+    // USER PROFILE MANAGEMENT FUNCTIONS - Tasks 4.2, 4.3, 4.4
+    // =============================================================================
+    
+    // Load user profile from API
+    async function loadUserProfile() {
+        try {
+            updateStatus('Loading user profile...');
+            userProfileState.isLoading = true;
+            showProfileLoading(true);
+            
+            const response = await fetch('/api/user-profile-summary');
+            const data = await response.json();
+            
+            if (data.status === 'success') {
+                userProfileState.currentProfile = data.profile;
+                userProfileState.isLoaded = true;
+                userProfileState.conversationCount = data.conversation_count || 0;
+                populateProfileDisplay(data.profile);
+                showProfileSection('summary');
+                updateStatus('Profile loaded');
+            } else if (data.status === 'insufficient_data') {
+                showProfileStatus('insufficient-data', data.message);
+                updateStatus('Profile unavailable - need more conversations');
+            } else {
+                console.error('Error loading profile:', data.message);
+                showProfileError('Error loading profile: ' + data.message);
+                updateStatus('Error loading profile');
+            }
+        } catch (error) {
+            console.error('Error loading profile:', error);
+            showProfileError('Failed to load profile. Please try again.');
+            updateStatus('Error loading profile');
+        } finally {
+            userProfileState.isLoading = false;
+            showProfileLoading(false);
+        }
+    }
+    
+    // Update user profile via API
+    async function updateUserProfile(summaryText) {
+        try {
+            updateStatus('Saving profile...');
+            showProfileLoading(true);
+            
+            const response = await fetch('/api/user-profile-summary', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ summary_text: summaryText })
+            });
+            
+            const data = await response.json();
+            
+            if (data.status === 'success') {
+                userProfileState.currentProfile = data.profile;
+                populateProfileDisplay(data.profile);
+                showProfileSection('summary');
+                updateStatus('Profile saved successfully');
+                return true;
+            } else {
+                console.error('Error updating profile:', data.message);
+                showProfileError('Error saving profile: ' + data.message);
+                updateStatus('Error saving profile');
+                return false;
+            }
+        } catch (error) {
+            console.error('Error updating profile:', error);
+            showProfileError('Failed to save profile. Please try again.');
+            updateStatus('Error saving profile');
+            return false;
+        } finally {
+            showProfileLoading(false);
+        }
+    }
+    
+    // Generate new profile analysis
+    async function generateNewProfile() {
+        try {
+            updateStatus('Generating new profile analysis...');
+            showProfileLoading(true);
+            
+            // Clear current profile first
+            userProfileState.currentProfile = null;
+            showProfileStatus('loading', 'Analyzing your conversations...');
+            
+            const response = await fetch('/api/user-profile-summary?force_regenerate=true');
+            const data = await response.json();
+            
+            if (data.status === 'success') {
+                userProfileState.currentProfile = data.profile;
+                userProfileState.isLoaded = true;
+                populateProfileDisplay(data.profile);
+                showProfileSection('summary');
+                updateStatus('New profile analysis generated');
+            } else if (data.status === 'insufficient_data') {
+                showProfileStatus('insufficient-data', data.message);
+                updateStatus('Cannot generate profile - need more conversations');
+            } else {
+                console.error('Error generating profile:', data.message);
+                showProfileError('Error generating profile: ' + data.message);
+                updateStatus('Error generating profile');
+            }
+        } catch (error) {
+            console.error('Error generating profile:', error);
+            showProfileError('Failed to generate profile. Please try again.');
+            updateStatus('Error generating profile');
+        } finally {
+            showProfileLoading(false);
+        }
+    }
+    
+    // Clear profile data
+    async function clearProfileData() {
+        if (!confirm('Are you sure you want to clear your profile data? This action cannot be undone.')) {
+            return;
+        }
+        
+        try {
+            updateStatus('Clearing profile data...');
+            showProfileLoading(true);
+            
+            const response = await fetch('/api/user-profile-summary', {
+                method: 'DELETE'
+            });
+            
+            const data = await response.json();
+            
+            if (data.status === 'success') {
+                userProfileState.currentProfile = null;
+                userProfileState.isLoaded = false;
+                showProfileStatus('loading', 'Your profile has been cleared');
+                updateStatus('Profile data cleared');
+            } else {
+                console.error('Error clearing profile:', data.message);
+                showProfileError('Error clearing profile: ' + data.message);
+                updateStatus('Error clearing profile');
+            }
+        } catch (error) {
+            console.error('Error clearing profile:', error);
+            showProfileError('Failed to clear profile. Please try again.');
+            updateStatus('Error clearing profile');
+        } finally {
+            showProfileLoading(false);
+        }
+    }
+    
+    // UI Helper Functions
+    function populateProfileDisplay(profile) {
+        const profileSummaryText = document.getElementById('profileSummaryText');
+        if (profileSummaryText && profile) {
+            profileSummaryText.textContent = profile.summary || 'No profile data available';
+        }
+    }
+    
+    function showProfileSection(section) {
+        // Hide all sections first
+        const sections = ['status', 'summary', 'edit', 'actions', 'error', 'loading'];
+        sections.forEach(s => {
+            const element = document.getElementById(`profile${s.charAt(0).toUpperCase() + s.slice(1)}`);
+            if (element) {
+                element.style.display = s === section ? 'block' : 'none';
+            }
+        });
+        
+        // Show actions section if profile is loaded
+        const actionsSection = document.getElementById('profileActionsSection');
+        if (actionsSection && userProfileState.isLoaded) {
+            actionsSection.style.display = 'block';
+        }
+    }
+    
+    function showProfileStatus(type, message) {
+        const statusSection = document.getElementById('profileStatus');
+        const statusMessage = document.getElementById('profileStatusMessage');
+        
+        if (statusSection && statusMessage) {
+            statusSection.className = `profile-status ${type}`;
+            statusMessage.textContent = message;
+            showProfileSection('status');
+        }
+    }
+    
+    function showProfileError(message) {
+        const errorSection = document.getElementById('profileError');
+        const errorMessage = document.getElementById('profileErrorMessage');
+        
+        if (errorSection && errorMessage) {
+            errorMessage.textContent = message;
+            errorSection.style.display = 'block';
+        }
+    }
+    
+    function showProfileLoading(show) {
+        const loadingSection = document.getElementById('profileLoading');
+        if (loadingSection) {
+            loadingSection.style.display = show ? 'block' : 'none';
+        }
+    }
+    
+    function enterEditMode() {
+        const currentProfile = userProfileState.currentProfile;
+        const editTextarea = document.getElementById('profileEditTextarea');
+        
+        if (editTextarea && currentProfile) {
+            editTextarea.value = currentProfile.summary || '';
+            userProfileState.isEditing = true;
+            showProfileSection('edit');
+        }
+    }
+    
+    function exitEditMode() {
+        userProfileState.isEditing = false;
+        showProfileSection('summary');
+    }
+    
+    async function saveProfileEdit() {
+        const editTextarea = document.getElementById('profileEditTextarea');
+        if (!editTextarea) return;
+        
+        const newText = editTextarea.value.trim();
+        if (!newText) {
+            showProfileError('Profile text cannot be empty');
+            return;
+        }
+        
+        const success = await updateUserProfile(newText);
+        if (success) {
+            exitEditMode();
+        }
+    }
+    
+    // Event Handlers - Task 4.4
+    function setupProfileEventHandlers() {
+        // Refresh button
+        const refreshBtn = document.getElementById('refreshProfileBtn');
+        if (refreshBtn) {
+            refreshBtn.addEventListener('click', async () => {
+                await loadUserProfile();
+            });
+        }
+        
+        // Toggle button
+        const toggleBtn = document.getElementById('toggleProfileBtn');
+        if (toggleBtn) {
+            toggleBtn.addEventListener('click', () => {
+                const sidebar = document.getElementById('userProfileSidebar');
+                if (sidebar) {
+                    sidebar.classList.toggle('collapsed');
+                    const icon = toggleBtn.querySelector('.action-icon');
+                    if (icon) {
+                        icon.textContent = sidebar.classList.contains('collapsed') ? '+' : '−';
+                    }
+                }
+            });
+        }
+        
+        // Edit button
+        const editBtn = document.getElementById('editProfileBtn');
+        if (editBtn) {
+            editBtn.addEventListener('click', enterEditMode);
+        }
+        
+        // Save button
+        const saveBtn = document.getElementById('saveProfileBtn');
+        if (saveBtn) {
+            saveBtn.addEventListener('click', saveProfileEdit);
+        }
+        
+        // Cancel edit button
+        const cancelBtn = document.getElementById('cancelEditBtn');
+        if (cancelBtn) {
+            cancelBtn.addEventListener('click', exitEditMode);
+        }
+        
+        // Generate new profile button
+        const generateBtn = document.getElementById('generateNewProfileBtn');
+        if (generateBtn) {
+            generateBtn.addEventListener('click', generateNewProfile);
+        }
+        
+        // Clear profile button
+        const clearBtn = document.getElementById('clearProfileBtn');
+        if (clearBtn) {
+            clearBtn.addEventListener('click', clearProfileData);
+        }
+        
+        // Textarea keyboard shortcuts
+        const editTextarea = document.getElementById('profileEditTextarea');
+        if (editTextarea) {
+            editTextarea.addEventListener('keydown', (event) => {
+                // Ctrl+Enter or Cmd+Enter to save
+                if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') {
+                    event.preventDefault();
+                    saveProfileEdit();
+                }
+                // Escape to cancel
+                if (event.key === 'Escape') {
+                    event.preventDefault();
+                    exitEditMode();
+                }
+            });
+        }
+    }
+    
     // Load available personas and populate the selector
     async function loadPersonas() {
         try {
@@ -326,6 +639,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     console.log('<<<<< MAIN.JS: Awaiting loadConversationHistory... >>>>>');
     await loadConversationHistory();
     console.log('<<<<< MAIN.JS: loadConversationHistory complete. >>>>>');
+
+    // Initialize user profile system
+    console.log('<<<<< MAIN.JS: Setting up profile event handlers... >>>>>');
+    setupProfileEventHandlers();
+    console.log('<<<<< MAIN.JS: Profile event handlers complete. >>>>>');
+    
+    console.log('<<<<< MAIN.JS: Awaiting loadUserProfile... >>>>>');
+    await loadUserProfile();
+    console.log('<<<<< MAIN.JS: loadUserProfile complete. >>>>>');
 
     // Load conversation history
     // await loadConversationHistory();

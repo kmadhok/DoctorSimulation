@@ -144,7 +144,7 @@
     </style>
 </head>
 <body>
-    <div class="container with-sidebar">
+    <div class="container with-sidebar with-user-profile">
         <!-- Sidebar for Conversation History -->
         <aside class="sidebar">
             <div class="sidebar-header">
@@ -255,6 +255,89 @@
                 <p>AI Persona Chat - Powered by Groq API</p>
             </footer>
         </div>
+
+        <!-- User Profile Sidebar -->
+        <aside class="user-profile-sidebar" id="userProfileSidebar">
+            <div class="user-profile-header">
+                <h2>Your Profile Summary</h2>
+                <div class="profile-actions">
+                    <button id="refreshProfileBtn" class="profile-action-button profile-refresh-btn small" title="Refresh profile">
+                        <span class="profile-refresh-icon">↻</span>
+                    </button>
+                    <button id="toggleProfileBtn" class="profile-action-button" title="Toggle profile">
+                        <span class="action-icon">−</span>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="user-profile-content" id="userProfileContent">
+                <!-- Profile Status Section -->
+                <div class="profile-status" id="profileStatus">
+                    <div class="profile-status-title">Status</div>
+                    <div class="profile-status-message" id="profileStatusMessage">Loading your profile...</div>
+                </div>
+
+                <!-- Profile Summary Section -->
+                <div class="profile-summary" id="profileSummary" style="display: none;">
+                    <div class="profile-summary-header">
+                        <h3 class="profile-summary-title">AI Analysis</h3>
+                        <div class="profile-actions">
+                            <button id="editProfileBtn" class="profile-edit-btn small secondary" title="Edit profile">
+                                <span class="action-icon">✎</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="profile-summary-content">
+                        <div class="profile-summary-text" id="profileSummaryText">
+                            <!-- Profile analysis will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Editable Profile Section (hidden by default) -->
+                <div class="profile-edit-section" id="profileEditSection" style="display: none;">
+                    <div class="profile-summary-header">
+                        <h3 class="profile-summary-title">Edit Profile</h3>
+                        <div class="profile-actions">
+                            <button id="saveProfileBtn" class="profile-edit-btn small primary" title="Save changes">
+                                Save
+                            </button>
+                            <button id="cancelEditBtn" class="profile-edit-btn small secondary" title="Cancel editing">
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                    <div class="profile-summary-content">
+                        <textarea class="profile-edit-textarea" id="profileEditTextarea" placeholder="Edit your profile summary here..."></textarea>
+                    </div>
+                </div>
+
+                <!-- Profile Actions Section -->
+                <div class="profile-actions-section" id="profileActionsSection" style="display: none;">
+                    <div class="profile-actions-title">Quick Actions</div>
+                    <div class="profile-action-buttons">
+                        <button class="profile-action-btn" id="generateNewProfileBtn">
+                            Generate New Analysis
+                        </button>
+                        <button class="profile-action-btn" id="clearProfileBtn">
+                            Clear Profile Data
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Error Display Section -->
+                <div class="profile-error" id="profileError" style="display: none;">
+                    <div class="profile-error-title">Error</div>
+                    <div class="profile-error-message" id="profileErrorMessage"></div>
+                </div>
+
+                <!-- Loading Display Section -->
+                <div class="profile-loading" id="profileLoading" style="display: none;">
+                    <div class="profile-loading-spinner"></div>
+                    <div class="profile-loading-text">Analyzing conversations...</div>
+                </div>
+            </div>
+        </aside>
 
     </div>
 

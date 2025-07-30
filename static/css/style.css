@@ -3292,9 +3292,43 @@ textarea.form-control {
 }
 
 .profile-error-title {
-    font-weight: 600;
-    margin-bottom: 0.25rem;
-    font-size: 0.875rem;
+    font-weight: 500; /* Matches existing heading weight */
+    margin-bottom: 0.5rem; /* Matches existing spacing */
+    font-size: 0.8rem; /* Matches existing micro text */
+}
+
+/* Profile Edit Textarea - matches existing form patterns */
+.profile-edit-textarea {
+    width: 100%;
+    min-height: 120px;
+    padding: 10px 12px; /* Matches existing input padding */
+    border: 1px solid #e0e0e0; /* Matches existing border color */
+    border-radius: 4px; /* Matches existing input border-radius */
+    background-color: white; /* Matches existing input background */
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* Matches existing font */
+    font-size: 0.8rem; /* Matches existing micro text */
+    line-height: 1.6; /* Matches existing line-height */
+    color: #333; /* Matches existing primary text color */
+    resize: vertical;
+    transition: all 0.2s ease; /* Matches existing transition */
+}
+
+.profile-edit-textarea:focus {
+    outline: none;
+    border-color: #4285f4; /* Matches primary blue */
+    box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.25); /* Matches existing focus shadow */
+}
+
+.profile-edit-textarea::placeholder {
+    color: #666; /* Matches existing secondary text color */
+}
+
+/* Profile Edit Section - matches existing card patterns */
+.profile-edit-section {
+    background-color: white; /* Matches existing card background */
+    border-radius: 0.5rem; /* Matches existing border-radius */
+    border: 1px solid #e0e0e0; /* Matches existing border color */
+    overflow: hidden;
 }
 
 .profile-error-description {
