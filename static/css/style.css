@@ -154,6 +154,13 @@ body {
     font-style: italic;
 }
 
+.error-state {
+    text-align: center;
+    padding: 2rem;
+    color: #e74c3c;
+    font-style: italic;
+}
+
 .conversation-action-btn {
     background: none;
     border: none;

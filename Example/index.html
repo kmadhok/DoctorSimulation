@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voice Conversation App</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        .persona-selector {
+            margin-bottom: 20px;
+        }
+        
+        .persona-description {
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #f5f5f5;
+            border-radius: 5px;
+            font-style: italic;
+            color: #666;
+            border-left: 4px solid #007bff;
+        }
+        
+        .persona-selector label {
+            font-weight: bold;
+            margin-bottom: 8px;
+            display: block;
+        }
+        
+        .persona-selector select {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: white;
+            font-size: 14px;
+        }
+        
+        .persona-selector select:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+        }
+
+        /* Persona Info Panel Styles */
+        .persona-info-panel {
+            margin: 20px 0;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background: #f9f9f9;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .persona-info-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            background: linear-gradient(135deg, #007bff, #0056b3);
+            color: white;
+            border-radius: 8px 8px 0 0;
+            margin: 0;
+        }
+
+        .persona-info-header h3 {
+            margin: 0;
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .toggle-btn {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.3);
+            padding: 5px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: background-color 0.2s;
+        }
+
+        .toggle-btn:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        .persona-info-content {
+            padding: 20px;
+        }
+
+        .persona-section {
+            margin-bottom: 20px;
+        }
+
+        .persona-section:last-child {
+            margin-bottom: 0;
+        }
+
+        .persona-section h4 {
+            color: #333;
+            margin: 0 0 8px 0;
+            font-size: 14px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 4px;
+        }
+
+        .persona-detail-text {
+            margin: 0;
+            color: #555;
+            line-height: 1.5;
+            font-size: 14px;
+        }
+
+        .trait-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .trait-tag {
+            background: #007bff;
+            color: white;
+            padding: 4px 10px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .response-patterns-list {
+            margin: 0;
+            padding-left: 18px;
+            color: #555;
+        }
+
+        .response-patterns-list li {
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+
+        .response-patterns-list li:last-child {
+            margin-bottom: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container with-sidebar with-user-profile">
+        <!-- Sidebar for Conversation History -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2>Conversation History</h2>
+                <div class="sidebar-actions">
+                    <button id="newConversationBtn" class="action-button" title="New Conversation">
+                        <span class="action-icon">+</span>
+                    </button>
+                    <button id="refreshConversationsBtn" class="action-button" title="Refresh conversations">
+                        <span class="action-icon">↻</span>
+                    </button>
+                </div>
+            </div>
+            <div class="conversation-list" id="conversationList">
+                <!-- Conversation history will be loaded here -->
+                <div class="empty-state">No saved conversations</div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <header>
+                <h1>Choose Your AI Conversation Companion</h1>
+                <div class="persona-selector">
+                    <label for="personaSelect">Select a Persona to Chat With:</label>
+                    <select id="personaSelect">
+                        <option value="">Choose your companion...</option>
+                        <!-- Options will be populated dynamically -->
+                    </select>
+                    <div id="personaDescription" class="persona-description" style="display: none;">
+                        <!-- Persona description will appear here -->
+                    </div>
+                </div>
+
+                <!-- Detailed Persona Information Panel -->
+                <div id="personaInfoPanel" class="persona-info-panel" style="display: none;">
+                    <div class="persona-info-header">
+                        <h3 id="personaInfoName">Persona Details</h3>
+                        <button id="togglePersonaInfo" class="toggle-btn">Hide Details</button>
+                    </div>
+                    
+                    <div class="persona-info-content">
+                        <div class="persona-section">
+                            <h4>About</h4>
+                            <p id="personaInfoDescription" class="persona-detail-text"></p>
+                        </div>
+                        
+                        <div class="persona-section">
+                            <h4>Personality Traits</h4>
+                            <div id="personaTraits" class="trait-tags"></div>
+                        </div>
+                        
+                        <div class="persona-section">
+                            <h4>Speaking Style</h4>
+                            <p id="personaSpeakingStyle" class="persona-detail-text"></p>
+                        </div>
+                        
+                        <div class="persona-section">
+                            <h4>Background</h4>
+                            <p id="personaBackground" class="persona-detail-text"></p>
+                        </div>
+                        
+                        <div class="persona-section">
+                            <h4>Worldview</h4>
+                            <p id="personaWorldview" class="persona-detail-text"></p>
+                        </div>
+                        
+                        <div class="persona-section">
+                            <h4>Conversation Approach</h4>
+                            <ul id="personaResponsePatterns" class="response-patterns-list"></ul>
+                        </div>
+                    </div>
+                </div>
+
+
+
+                
+                <div class="voice-selector">
+                    <label for="voiceSelect">Select Voice:</label>
+                    <select id="voiceSelect">
+                        <option value="Fritz-PlayAI">Fritz (Default)</option>
+                        <option value="Cillian-PlayAI">Cillian</option>
+                        <option value="Arista-PlayAI">Arista</option>
+                        <option value="Celeste-PlayAI">Celeste</option>
+                        <option value="Mamaw-PlayAI">Bill</option>
+                        <option value="Cheyenne-PlayAI">Emily</option>
+                    </select>
+                </div>
+                <p class="status" id="status">Ready</p>
+            </header>
+            
+            <main>
+                <div class="conversation" id="conversation">
+                    <!-- Conversation messages will be displayed here -->
+                </div>
+                
+                <!-- ❷ NEW  insert in exactly the same place -->
+                <div class="controls">
+                    <button id="autoListenBtn" class="record-button">
+                        <span class="record-icon"></span>
+                        Auto Listen
+                    </button>
+                </div>
+
+            </main>
+            
+            <footer>
+                <p>AI Persona Chat - Powered by Groq API</p>
+            </footer>
+        </div>
+
+        <!-- User Profile Sidebar -->
+        <aside class="user-profile-sidebar" id="userProfileSidebar">
+            <div class="user-profile-header">
+                <h2>Your Profile Summary</h2>
+                <div class="profile-actions">
+                    <button id="refreshProfileBtn" class="profile-action-button profile-refresh-btn small" title="Refresh profile">
+                        <span class="profile-refresh-icon">↻</span>
+                    </button>
+                    <button id="toggleProfileBtn" class="profile-action-button" title="Toggle profile">
+                        <span class="action-icon">−</span>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="user-profile-content" id="userProfileContent">
+                <!-- Profile Status Section -->
+                <div class="profile-status" id="profileStatus">
+                    <div class="profile-status-title">Status</div>
+                    <div class="profile-status-message" id="profileStatusMessage">Loading your profile...</div>
+                </div>
+
+                <!-- Profile Summary Section -->
+                <div class="profile-summary" id="profileSummary" style="display: none;">
+                    <div class="profile-summary-header">
+                        <h3 class="profile-summary-title">AI Analysis</h3>
+                        <div class="profile-actions">
+                            <button id="editProfileBtn" class="profile-edit-btn small secondary" title="Edit profile">
+                                <span class="action-icon">✎</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="profile-summary-content">
+                        <div class="profile-summary-text" id="profileSummaryText">
+                            <!-- Profile analysis will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Editable Profile Section (hidden by default) -->
+                <div class="profile-edit-section" id="profileEditSection" style="display: none;">
+                    <div class="profile-summary-header">
+                        <h3 class="profile-summary-title">Edit Profile</h3>
+                        <div class="profile-actions">
+                            <button id="saveProfileBtn" class="profile-edit-btn small primary" title="Save changes">
+                                Save
+                            </button>
+                            <button id="cancelEditBtn" class="profile-edit-btn small secondary" title="Cancel editing">
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                    <div class="profile-summary-content">
+                        <textarea class="profile-edit-textarea" id="profileEditTextarea" placeholder="Edit your profile summary here..."></textarea>
+                    </div>
+                </div>
+
+                <!-- Profile Actions Section -->
+                <div class="profile-actions-section" id="profileActionsSection" style="display: none;">
+                    <div class="profile-actions-title">Quick Actions</div>
+                    <div class="profile-action-buttons">
+                        <button class="profile-action-btn" id="generateNewProfileBtn">
+                            Generate New Analysis
+                        </button>
+                        <button class="profile-action-btn" id="clearProfileBtn">
+                            Clear Profile Data
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Error Display Section -->
+                <div class="profile-error" id="profileError" style="display: none;">
+                    <div class="profile-error-title">Error</div>
+                    <div class="profile-error-message" id="profileErrorMessage"></div>
+                </div>
+
+                <!-- Loading Display Section -->
+                <div class="profile-loading" id="profileLoading" style="display: none;">
+                    <div class="profile-loading-spinner"></div>
+                    <div class="profile-loading-text">Analyzing conversations...</div>
+                </div>
+            </div>
+        </aside>
+
+    </div>
+
+    <!-- Add logging div for debugging -->
+    <div id="vadLogs" style="display: none; position: fixed; bottom: 0; right: 0; max-height: 300px; overflow-y: auto; background: rgba(0,0,0,0.8); color: white; padding: 10px; font-family: monospace; font-size: 12px;">
+        <div style="margin-bottom: 10px;">
+            <button onclick="document.getElementById('vadLogContent').innerHTML = ''">Clear Logs</button>
+            <button onclick="document.getElementById('vadLogs').style.display = 'none'">Hide</button>
+        </div>
+        <div id="vadLogContent"></div>
+    </div>
+
+    <!-- Load dependencies with detailed logging -->
+    <script>
+        // Initialize logging system
+        const vadLogger = {
+            log: function(step, message, type = 'info') {
+                const timestamp = new Date().toISOString().split('T')[1];
+                const logElement = document.getElementById('vadLogContent');
+                const color = type === 'error' ? 'red' : type === 'success' ? 'green' : 'white';
+                
+                // Console logging
+                console.log(`[VAD ${step}] ${message}`);
+                
+                // UI logging
+                if (logElement) {
+                    logElement.innerHTML = `<div style="color: ${color};">[${timestamp}] [${step}] ${message}</div>` + logElement.innerHTML;
+                }
+            },
+            error: function(step, message) {
+                this.log(step, message, 'error');
+            },
+            success: function(step, message) {
+                this.log(step, message, 'success');
+            }
+        };
+
+        // Show logs button in header
+        document.addEventListener('DOMContentLoaded', () => {
+            const header = document.querySelector('header');
+            if (header) {
+                const showLogsBtn = document.createElement('button');
+                showLogsBtn.textContent = 'Show VAD Logs';
+                showLogsBtn.onclick = () => document.getElementById('vadLogs').style.display = 'block';
+                header.appendChild(showLogsBtn);
+            }
+        });
+    </script>
+
+    <!-- onnxruntime – must be first so it defines global `ort` -->
+    <script
+    src="{{ url_for('static', filename='vad-model/ort.min.js') }}"
+    onload="vadLogger.success('DEPS', 'ONNX Runtime loaded successfully')"
+    onerror="vadLogger.error('DEPS', 'Failed to load ONNX Runtime')">
+    </script>
+
+    <!-- VAD wrapper – exposes global `vad` -->
+    <script
+    src="{{ url_for('static', filename='vad-model/bundle.min.js') }}"
+    onload="vadLogger.success('DEPS', 'VAD bundle loaded successfully')"
+    onerror="vadLogger.error('DEPS', 'Failed to load VAD bundle')">
+    </script>
+
+    <!-- ⭐ your application logic (needs `vad` to exist) -->
+    <script
+    src="{{ url_for('static', filename='js/main.js') }}"
+    onload="vadLogger.success('DEPS', 'Main script loaded successfully')"
+    onerror="vadLogger.error('DEPS', 'Failed to load main script')">
+    </script>
+
+    <!-- Medical Knowledge and Form Management Script -->
+    <script>
+        // Medical knowledge data - will be populated from backend
+        let medicalKnowledge = {
+            specialties: {},
+            all_symptoms: {}
+        };
+
+        // Form state management
+        const formState = {
+            selectedSpecialty: null,
+            selectedSymptoms: [],
+            isLoading: false
+        };
+
+        // Initialize medical knowledge on page load
+        async function initializeMedicalKnowledge() {
+            try {
+                const response = await fetch('/api/medical-knowledge');
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    medicalKnowledge = data;
+                    populateSpecialtySelector();
+                    console.log('Medical knowledge loaded:', medicalKnowledge);
+                } else {
+                    console.error('Failed to load medical knowledge:', data.message);
+                    showFormError('Failed to load medical specialties. Please refresh the page.');
+                }
+            } catch (error) {
+                console.error('Error loading medical knowledge:', error);
+                showFormError('Failed to load medical specialties. Please check your connection and refresh.');
+            }
+        }
+
+        // Populate specialty selector with options
+        function populateSpecialtySelector() {
+            const specialtySelect = document.getElementById('medicalSpecialty');
+            if (!specialtySelect) return;
+
+            // Clear existing options (except the first one)
+            while (specialtySelect.options.length > 1) {
+                specialtySelect.removeChild(specialtySelect.lastChild);
+            }
+
+            // Add specialty options
+            Object.entries(medicalKnowledge.specialties).forEach(([key, specialty]) => {
+                const option = document.createElement('option');
+                option.value = key;
+                option.textContent = specialty.name;
+                option.dataset.description = specialty.description;
+                specialtySelect.appendChild(option);
+            });
+        }
+
+        // Handle specialty selection change
+        function handleSpecialtyChange(event) {
+            const selectedKey = event.target.value;
+            const descriptionDiv = document.getElementById('specialtyDescription');
+            const symptomsContainer = document.getElementById('symptomsContainer');
+            const symptomsInstructions = document.getElementById('symptomsInstructions');
+
+            formState.selectedSpecialty = selectedKey;
+            formState.selectedSymptoms = []; // Reset selected symptoms
+
+            if (selectedKey && medicalKnowledge.specialties[selectedKey]) {
+                const specialty = medicalKnowledge.specialties[selectedKey];
+                
+                // Show specialty description
+                descriptionDiv.textContent = specialty.description;
+                descriptionDiv.style.display = 'block';
+                
+                // Populate symptoms for this specialty
+                populateSymptoms(specialty.symptoms);
+                
+                // Show symptoms container
+                symptomsInstructions.style.display = 'none';
+                symptomsContainer.style.display = 'block';
+            } else {
+                // Clear everything
+                descriptionDiv.textContent = '';
+                descriptionDiv.style.display = 'none';
+                symptomsContainer.style.display = 'none';
+                symptomsInstructions.style.display = 'block';
+                symptomsInstructions.textContent = 'Select a specialty above to see available symptoms';
+            }
+
+            // Clear any previous validation errors
+            clearFieldError('specialtyError');
+            clearFieldError('symptomsError');
+        }
+
+        // Populate symptoms checkboxes for selected specialty
+        function populateSymptoms(symptomKeys) {
+            const container = document.getElementById('symptomsContainer');
+            if (!container) return;
+
+            // Clear existing checkboxes
+            container.innerHTML = '';
+
+            // Create symptom checkboxes
+            symptomKeys.forEach(symptomKey => {
+                const symptomName = medicalKnowledge.all_symptoms[symptomKey] || symptomKey;
+                
+                const checkboxDiv = document.createElement('div');
+                checkboxDiv.className = 'symptom-checkbox';
+                
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.id = `symptom_${symptomKey}`;
+                checkbox.value = symptomKey;
+                checkbox.addEventListener('change', handleSymptomChange);
+                
+                const label = document.createElement('label');
+                label.htmlFor = `symptom_${symptomKey}`;
+                label.textContent = symptomName;
+                
+                checkboxDiv.appendChild(checkbox);
+                checkboxDiv.appendChild(label);
+                container.appendChild(checkboxDiv);
+            });
+
+            // Add instructions
+            if (symptomKeys.length > 0) {
+                const instructionsDiv = document.createElement('div');
+                instructionsDiv.className = 'symptoms-instructions';
+                instructionsDiv.innerHTML = '<small>Select one or more symptoms that the patient should present with:</small>';
+                container.insertBefore(instructionsDiv, container.firstChild);
+            }
+        }
+
+        // Handle symptom checkbox changes
+        function handleSymptomChange(event) {
+            const symptomKey = event.target.value;
+            
+            if (event.target.checked) {
+                if (!formState.selectedSymptoms.includes(symptomKey)) {
+                    formState.selectedSymptoms.push(symptomKey);
+                }
+            } else {
+                formState.selectedSymptoms = formState.selectedSymptoms.filter(s => s !== symptomKey);
+            }
+
+            console.log('Selected symptoms:', formState.selectedSymptoms);
+            
+            // Clear symptoms validation error if at least one selected
+            if (formState.selectedSymptoms.length > 0) {
+                clearFieldError('symptomsError');
+            }
+        }
+
+        // Form validation functions
+        function validateForm() {
+            let isValid = true;
+            const errors = [];
+
+            // Clear previous validation
+            clearAllErrors();
+
+            // Age validation
+            const age = document.getElementById('patientAge').value;
+            if (!age || age < 1 || age > 120) {
+                showFieldError('ageError', 'Age must be between 1 and 120');
+                errors.push('Valid age is required');
+                isValid = false;
+            }
+
+            // Gender validation
+            const gender = document.getElementById('patientGender').value;
+            if (!gender) {
+                showFieldError('genderError', 'Gender selection is required');
+                errors.push('Gender selection is required');
+                isValid = false;
+            }
+
+            // Occupation validation
+            const occupation = document.getElementById('patientOccupation').value.trim();
+            if (!occupation) {
+                showFieldError('occupationError', 'Occupation is required');
+                errors.push('Occupation is required');
+                isValid = false;
+            }
+
+            // Specialty validation
+            if (!formState.selectedSpecialty) {
+                showFieldError('specialtyError', 'Medical specialty selection is required');
+                errors.push('Medical specialty selection is required');
+                isValid = false;
+            }
+
+            // Symptoms validation
+            if (formState.selectedSymptoms.length === 0) {
+                showFieldError('symptomsError', 'At least one symptom must be selected');
+                errors.push('At least one symptom must be selected');
+                isValid = false;
+            }
+
+            // Severity validation
+            const severity = document.getElementById('symptomSeverity').value;
+            if (!severity) {
+                showFieldError('severityError', 'Symptom severity selection is required');
+                errors.push('Symptom severity selection is required');
+                isValid = false;
+            }
+
+            // Show validation summary if there are errors
+            if (!isValid) {
+                showValidationSummary(errors);
+            } else {
+                hideValidationSummary();
+            }
+
+            return isValid;
+        }
+
+        // Validation helper functions
+        function showFieldError(elementId, message) {
+            const errorElement = document.getElementById(elementId);
+            if (errorElement) {
+                errorElement.textContent = message;
+                errorElement.style.display = 'block';
+            }
+        }
+
+        function clearFieldError(elementId) {
+            const errorElement = document.getElementById(elementId);
+            if (errorElement) {
+                errorElement.textContent = '';
+                errorElement.style.display = 'none';
+            }
+        }
+
+        function clearAllErrors() {
+            const errorElements = document.querySelectorAll('.error-message');
+            errorElements.forEach(element => {
+                element.textContent = '';
+                element.style.display = 'none';
+            });
+        }
+
+        function showValidationSummary(errors) {
+            const summaryDiv = document.getElementById('formValidationSummary');
+            const errorsList = document.getElementById('validationErrorsList');
+            
+            if (summaryDiv && errorsList) {
+                errorsList.innerHTML = '';
+                errors.forEach(error => {
+                    const li = document.createElement('li');
+                    li.textContent = error;
+                    errorsList.appendChild(li);
+                });
+                summaryDiv.style.display = 'block';
+                summaryDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+        }
+
+        function hideValidationSummary() {
+            const summaryDiv = document.getElementById('formValidationSummary');
+            if (summaryDiv) {
+                summaryDiv.style.display = 'none';
+            }
+        }
+
+        function showFormError(message) {
+            const symptomsInstructions = document.getElementById('symptomsInstructions');
+            if (symptomsInstructions) {
+                symptomsInstructions.textContent = message;
+                symptomsInstructions.style.color = 'red';
+            }
+        }
+
+        // Loading state management
+        function setLoadingState(isLoading) {
+            formState.isLoading = isLoading;
+            const loadingDiv = document.getElementById('aiGenerationLoading');
+            const formFields = document.getElementById('customPatientFormFields');
+            const submitButton = document.getElementById('createCustomPatient');
+            const buttonText = submitButton?.querySelector('.button-text');
+            const buttonSpinner = submitButton?.querySelector('.button-spinner');
+
+            if (isLoading) {
+                loadingDiv.style.display = 'block';
+                formFields.style.opacity = '0.6';
+                formFields.style.pointerEvents = 'none';
+                if (submitButton) submitButton.disabled = true;
+                if (buttonText) buttonText.style.display = 'none';
+                if (buttonSpinner) buttonSpinner.style.display = 'inline';
+            } else {
+                loadingDiv.style.display = 'none';
+                formFields.style.opacity = '1';
+                formFields.style.pointerEvents = 'auto';
+                if (submitButton) submitButton.disabled = false;
+                if (buttonText) buttonText.style.display = 'inline';
+                if (buttonSpinner) buttonSpinner.style.display = 'none';
+            }
+        }
+
+        // Event listeners setup
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize medical knowledge
+            initializeMedicalKnowledge();
+
+            // Specialty selection change handler
+            const specialtySelect = document.getElementById('medicalSpecialty');
+            if (specialtySelect) {
+                specialtySelect.addEventListener('change', handleSpecialtyChange);
+            }
+
+            // Form submission will be handled in main.js
+            console.log('Medical form management initialized');
+        });
+    </script>
+
+</body>
+</html> 

@@ -11,10 +11,13 @@ python app.py --port 8001
 
 ### Testing
 ```bash
-# Run all tests
+# Run comprehensive test suite (recommended)
+python run_all_tests.py
+
+# Run pytest suite
 python -m pytest
 
-# Run specific test categories
+# Run specific test categories  
 python -m pytest tests/unit/
 python -m pytest tests/integration/
 
@@ -22,6 +25,8 @@ python -m pytest tests/integration/
 python test_patient_simulation.py
 python test_multi_agent.py
 python test_integration_multi_agent.py
+python test_standalone_crew_agents.py
+python test_standalone_persona_system.py
 ```
 
 ### Dependencies
@@ -60,9 +65,12 @@ The application centers around a sophisticated orchestration system that manages
 
 **Flask Application (`app.py`)**
 - `/process_audio_multi_agent` - Main endpoint for multi-agent conversations
-- `/api/create-multi-agent-conversation` - Initialize multi-agent sessions
+- `/api/create-multi-agent-conversation` - Initialize multi-agent sessions  
+- `/process_audio` - Single-agent voice conversations
+- `/generate_patient_case` - AI-generated medical case creation
 - Request ID tracking prevents server-side race conditions during interruptions
-- Comprehensive logging for debugging conversation flow
+- Session-based conversation management with SQLite persistence
+- Comprehensive logging (`app.log`) for debugging conversation flow
 
 ### Key Conversation Mechanics
 
@@ -84,16 +92,26 @@ The application centers around a sophisticated orchestration system that manages
 - `conversation_history` provides shared context for all agents
 
 **Testing Structure**
-- `tests/unit/` - Unit tests for individual components
+- `run_all_tests.py` - Comprehensive test runner with detailed reporting
+- `tests/unit/` - Unit tests for individual components (LLM, transcription, TTS)
 - `tests/integration/` - Integration tests for conversation flows
-- Individual test files: `test_multi_agent.py`, `test_patient_simulation.py`, etc.
+- Standalone test files: `test_standalone_crew_agents.py`, `test_standalone_persona_system.py`
+- Application tests: `test_multi_agent.py`, `test_patient_simulation.py`, `test_integration_multi_agent.py`
 
 ### Environment Setup
 
-Required environment variables:
-- `GROQ_API_KEY` - Groq API key for LLM, transcription, and TTS services
+**Required Environment Variables**
+- `GROQ_API_KEY` - Groq API key for LLM, transcription, and TTS services (obtain from [Groq Console](https://console.groq.com/keys))
 
-Database: SQLite (`conversations.db`) for persistent conversation history
+**Database**
+- SQLite (`conversations.db`) - Persistent conversation history and patient simulation data
+
+**Key Dependencies**
+- Flask 2.3.3 - Web framework
+- CrewAI 0.130.0 - Multi-agent orchestration
+- Groq 0.9.0 - LLM, transcription, and TTS APIs  
+- pytest 7.4.3 - Testing framework
+- Node.js - Required for VAD model setup (`npm install`)
 
 ### Frontend Architecture
 
@@ -105,5 +123,17 @@ Database: SQLite (`conversations.db`) for persistent conversation history
 
 **Multi-Agent Interface**:
 - Conference call setup UI for selecting active agents
-- Real-time speaking indicators showing which agent is active
+- Real-time speaking indicators showing which agent is active  
 - User controls for pausing, interrupting, and managing conversation flow
+
+### Key Architecture Files
+
+**Core System Components**
+- `app.py` - Main Flask application with voice processing endpoints
+- `utils/crew_agents.py` - MultiAgentConversationOrchestrator using CrewAI
+- `utils/persona_system.py` - Persona definitions and management
+- `utils/groq_integration.py` - LLM response generation
+- `utils/groq_transcribe.py` - Speech-to-text processing
+- `utils/groq_tts_speech.py` - Text-to-speech generation
+- `utils/database.py` - SQLite conversation persistence
+- `static/js/main.js` - Frontend voice processing and agent interaction

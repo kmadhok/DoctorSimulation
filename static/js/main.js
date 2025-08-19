@@ -276,6 +276,25 @@ document.addEventListener('DOMContentLoaded', async () => {
         console.log('Manual record button listener attached');
     }
 
+    // Conversation sidebar event listeners
+    if (refreshConversationsBtn) {
+        refreshConversationsBtn.addEventListener('click', async (event) => {
+            event.preventDefault();
+            console.log('Refresh conversations button clicked');
+            await loadConversationHistory();
+        });
+        console.log('Refresh conversations button listener attached');
+    }
+
+    if (newConversationBtn) {
+        newConversationBtn.addEventListener('click', (event) => {
+            event.preventDefault();
+            console.log('New conversation button clicked');
+            createNewConversation();
+        });
+        console.log('New conversation button listener attached');
+    }
+
     // MULTI-AGENT FUNCTIONS
     function createMultiAgentSetupUI() {
         const setupHTML = `
@@ -904,8 +923,123 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     async function loadConversationHistory() {
-        // Placeholder function - would load conversation history from backend
-        console.log('Loading conversation history...');
+        try {
+            console.log('Loading conversation history from backend...');
+            const response = await fetch('/api/conversations');
+            const conversations = await response.json();
+            
+            const conversationListElement = document.getElementById('conversationList');
+            if (!conversationListElement) {
+                console.error('Conversation list element not found');
+                return;
+            }
+            
+            // Clear existing content
+            conversationListElement.innerHTML = '';
+            
+            if (!conversations || conversations.length === 0) {
+                conversationListElement.innerHTML = '<div class="empty-state">No saved conversations</div>';
+                return;
+            }
+            
+            // Render each conversation
+            conversations.forEach(conversation => {
+                const conversationItem = document.createElement('div');
+                conversationItem.className = 'conversation-item';
+                conversationItem.dataset.conversationId = conversation.id;
+                
+                // Format the date
+                const createdDate = new Date(conversation.created_at);
+                const formattedDate = createdDate.toLocaleDateString() + ' ' + 
+                                   createdDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                
+                conversationItem.innerHTML = `
+                    <div class="conversation-title">${conversation.title}</div>
+                    <div class="conversation-meta">
+                        <span class="conversation-date">${formattedDate}</span>
+                        ${conversation.simulation_file ? `<span class="conversation-type">File: ${conversation.simulation_file}</span>` : ''}
+                    </div>
+                `;
+                
+                // Add click handler to load conversation
+                conversationItem.addEventListener('click', () => loadConversation(conversation.id));
+                
+                conversationListElement.appendChild(conversationItem);
+            });
+            
+            console.log(`Loaded ${conversations.length} conversations`);
+            
+        } catch (error) {
+            console.error('Error loading conversation history:', error);
+            const conversationListElement = document.getElementById('conversationList');
+            if (conversationListElement) {
+                conversationListElement.innerHTML = '<div class="error-state">Failed to load conversations</div>';
+            }
+        }
+    }
+    
+    async function loadConversation(conversationId) {
+        try {
+            console.log(`Loading conversation ${conversationId}...`);
+            const response = await fetch(`/api/conversations/${conversationId}`);
+            const conversation = await response.json();
+            
+            if (!conversation) {
+                console.error('Conversation not found');
+                return;
+            }
+            
+            // Clear current conversation display
+            const conversationElement = document.getElementById('conversation');
+            if (conversationElement) {
+                conversationElement.innerHTML = '';
+            }
+            
+            // Load conversation messages
+            if (conversation.messages && conversation.messages.length > 0) {
+                conversation.messages.forEach(message => {
+                    addMessage(message.role, message.content);
+                });
+            }
+            
+            // Update current conversation ID
+            currentConversationId = conversationId;
+            
+            // Highlight selected conversation in sidebar
+            document.querySelectorAll('.conversation-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            const selectedItem = document.querySelector(`[data-conversation-id="${conversationId}"]`);
+            if (selectedItem) {
+                selectedItem.classList.add('active');
+            }
+            
+            console.log(`Loaded conversation: ${conversation.title}`);
+            updateStatus(`Loaded: ${conversation.title}`);
+            
+        } catch (error) {
+            console.error('Error loading conversation:', error);
+            updateStatus('Failed to load conversation');
+        }
+    }
+    
+    function createNewConversation() {
+        // Clear current conversation
+        const conversationElement = document.getElementById('conversation');
+        if (conversationElement) {
+            conversationElement.innerHTML = '';
+        }
+        
+        // Reset conversation ID
+        currentConversationId = null;
+        
+        // Clear active selection in sidebar
+        document.querySelectorAll('.conversation-item').forEach(item => {
+            item.classList.remove('active');
+        });
+        
+        console.log('Started new conversation');
+        updateStatus('New conversation started');
     }
 
     // Manual recording functions
@@ -973,6 +1107,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Initialize everything
     updateStatus('Ready');
     addMultiAgentButton();
+    
+    // Load conversation history on page load
+    await loadConversationHistory();
     
     // Initialize personas and other components
     console.log('App initialization complete');

@@ -145,25 +145,7 @@
     </style>
 </head>
 <body>
-    <div class="container with-sidebar">
-        <!-- Sidebar for Conversation History -->
-        <aside class="sidebar">
-            <div class="sidebar-header">
-                <h2>Conversation History</h2>
-                <div class="sidebar-actions">
-                    <button id="newConversationBtn" class="action-button" title="New Conversation">
-                        <span class="action-icon">+</span>
-                    </button>
-                    <button id="refreshConversationsBtn" class="action-button" title="Refresh conversations">
-                        <span class="action-icon">↻</span>
-                    </button>
-                </div>
-            </div>
-            <div class="conversation-list" id="conversationList">
-                <!-- Conversation history will be loaded here -->
-                <div class="empty-state">No saved conversations</div>
-            </div>
-        </aside>
+    <div class="container">
 
         <!-- Main Content -->
         <div class="main-content">
@@ -233,6 +215,11 @@
                         <option value="Mamaw-PlayAI">Bill</option>
                         <option value="Cheyenne-PlayAI">Emily</option>
                     </select>
+                </div>
+                <div class="conversation-controls">
+                    <button id="newConversationBtn" class="btn btn-secondary" style="margin-right: 10px;">
+                        🗨️ New Conversation
+                    </button>
                 </div>
                 <p class="status" id="status">Ready</p>
             </header>
