@@ -121,7 +121,7 @@ if __name__ == "__main__":
     
     parser = argparse.ArgumentParser(description="Get a response from Groq LLM")
     parser.add_argument("--text", type=str, help="Input text to send to LLM")
-    parser.add_argument("--model", type=str, default="llama3-8b-8192", help="Groq model to use")
+    parser.add_argument("--model", type=str, default="llama-3.3-70b-versatile", help="Groq model to use")
     parser.add_argument("--history-file", type=str, help="JSON file containing conversation history")
     parser.add_argument("--system-prompt", type=str, help="Custom system prompt")
     

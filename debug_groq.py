@@ -95,7 +95,7 @@ try:
             {"role": "system", "content": "You are a helpful assistant."},
             {"role": "user", "content": "Hello, how are you?"}
         ],
-        model="llama3-8b-8192",
+        model="llama-3.3-70b-versatile",
         max_tokens=10
     )
     

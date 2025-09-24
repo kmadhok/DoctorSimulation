@@ -50,28 +50,30 @@ class MultiAgentConversationOrchestrator:
         # Create agent role and goal based on persona
         role = f"{persona_data['name']} - {persona_data['description']}"
         
-        goal = f"""Participate in a group conversation as {persona_data['name']}. 
+        goal = f"""Participate in a group conversation as {persona_data['name']}.
+        Debate mode: take a clear stance, be concise, and avoid questions.
         Maintain your personality: {', '.join(characteristics.get('personality_traits', []))}.
         Speaking style: {characteristics.get('speaking_style', 'natural conversation')}.
         Background: {characteristics.get('background', 'No specific background')}.
         Worldview: {characteristics.get('worldview', 'Open-minded perspective')}.
-        
+
         Response patterns:
         {chr(10).join(['• ' + pattern for pattern in characteristics.get('response_patterns', [])])}
         """
         
         backstory = f"""You are {persona_data['name']}, participating in a group conversation.
-        
+
         Your personality: {', '.join(characteristics.get('personality_traits', []))}
         Your background: {characteristics.get('background', 'You have a rich life experience')}
         Your worldview: {characteristics.get('worldview', 'You see the world with optimism')}
-        
+
         In conversations, you:
         {chr(10).join(['• ' + pattern for pattern in characteristics.get('response_patterns', [])])}
-        
+
         Speak naturally as yourself, not as an AI assistant. Engage authentically with others in the conversation.
-        Keep responses conversational and under 3 sentences. You can respond to what others say and ask questions.
-        Be yourself and maintain your unique personality throughout the conversation.
+        Keep responses under 2 sentences. Take a clear, assertive stance.
+        Do NOT ask questions or request clarification unless safety-critical.
+        No meta commentary.
         """
         
         # Tools for the agent
@@ -231,7 +233,7 @@ class MultiAgentConversationOrchestrator:
             context = self._get_recent_context(6)
             
             personality_desc = f"""You are {persona_data['name']}, {persona_data['description']}.
-            
+
 Your personality: {', '.join(characteristics.get('personality_traits', []))}
 Your speaking style: {characteristics.get('speaking_style', 'natural conversation')}
 Your background: {characteristics.get('background', 'diverse life experience')}
@@ -240,7 +242,11 @@ Your worldview: {characteristics.get('worldview', 'balanced perspective')}
 In conversations, you:
 {chr(10).join(['• ' + pattern for pattern in characteristics.get('response_patterns', [])])}
 
-Keep your response conversational, natural, and true to your personality. Respond in 1-3 sentences.
+Debate mode:
+- Make a clear claim first, then one supporting reason or example.
+- Avoid questions and clarification prompts; do not ask the user anything.
+- Keep it 1–2 sentences, direct, and confident.
+- No meta commentary or disclaimers.
 Do not mention that you are an AI. You are simply {persona_data['name']} participating in a conversation."""
             
             # Create the full prompt
@@ -249,12 +255,13 @@ Do not mention that you are an AI. You are simply {persona_data['name']} partici
 
 User just said: "{user_message}"
 
-Respond as {persona_data['name']} would respond naturally in this conversation:"""
+Respond as {persona_data['name']} would respond naturally in this conversation.
+Follow the Debate mode strictly. Provide a decisive stance, not a question:"""
             
             # Get response from Groq
             response_text = get_groq_response(
                 input_text=prompt,
-                model="llama3-8b-8192",
+                # Use default model from utils.groq_integration
                 system_prompt=personality_desc
             )
             
@@ -414,7 +421,7 @@ Respond as {persona_data['name']} would respond naturally in this conversation:"
 
             raw = get_groq_response(
                 input_text=user_prompt,
-                model="llama3-8b-8192",
+                # Use default model from utils.groq_integration
                 history=[],
                 system_prompt=system_prompt
             )

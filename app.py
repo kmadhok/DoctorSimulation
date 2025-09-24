@@ -31,6 +31,10 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+# Application mode: 'conference' (default) or 'doctor'
+APP_MODE = os.environ.get('APP_MODE', 'conference').lower()
+logger.info(f"Application mode: {APP_MODE}")
+
 # Initialize Flask only after patching
 from flask import Flask, request, jsonify, render_template, session
 import json
@@ -53,6 +57,11 @@ if not os.path.exists(template_dir):
     with open(os.path.join(template_dir, 'index.html'), 'w') as f:
         f.write('<html><body><h1>Doctor Simulation</h1><p>Welcome to the Doctor Simulation app.</p></body></html>')
     logger.info(f"Created templates directory and basic index.html at {template_dir}")
+
+# Reports directory for Markdown exports
+REPORTS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'reports')
+os.makedirs(REPORTS_DIR, exist_ok=True)
+logger.info(f"Reports directory ensured at {REPORTS_DIR}")
 
 # Initialize Flask app with explicit template folder
 app = Flask(__name__, template_folder=template_dir)
@@ -119,6 +128,82 @@ MEDICAL_SYNONYMS = {
     'acid reflux': ['gerd', 'gastroesophageal reflux disease', 'heartburn'],
     'panic attack': ['anxiety attack', 'panic disorder']
 }
+
+# ---- Markdown report helpers ----
+def _report_file_path(conversation_id: int | None) -> str:
+    """Return the Markdown path for a conversation. Falls back to timestamped file if no ID."""
+    if conversation_id:
+        return os.path.join(REPORTS_DIR, f"conversation_{conversation_id}.md")
+    # Fallback unique filename
+    ts = datetime.now().strftime('%Y%m%d_%H%M%S')
+    return os.path.join(REPORTS_DIR, f"session_{ts}.md")
+
+
+def _ensure_report_header(conversation_id: int | None) -> str:
+    """Ensure the report file exists and has an initial header. Returns the file path."""
+    path = _report_file_path(conversation_id)
+    if not os.path.exists(path):
+        try:
+            conversation = get_conversation(conversation_id) if conversation_id else None
+            persona_data = get_conversation_data(conversation_id, 'persona_data') if conversation_id else None
+            with open(path, 'w', encoding='utf-8') as f:
+                f.write(f"# Reports: Conversation {conversation_id if conversation_id else 'Session'}\n\n")
+                if conversation:
+                    f.write(f"- Title: {conversation.get('title', 'Untitled')}\n")
+                if persona_data:
+                    f.write(f"- Persona: {persona_data.get('name', 'Unknown')}\n")
+                f.write(f"- Created: {datetime.now().isoformat()}\n\n")
+                f.write("---\n\n")
+        except Exception as e:
+            logger.error(f"Failed to initialize report header at {path}: {e}")
+    return path
+
+
+def append_markdown_entry(
+    conversation_id: int | None,
+    user_text: str | None = None,
+    assistant_text: str | None = None,
+    responses: list[dict] | None = None,
+    voice_id: str | None = None,
+    label: str = "Turn"
+) -> None:
+    """Append a structured Markdown entry to the report file.
+
+    - For single-agent, pass user_text and assistant_text.
+    - For multi-agent, pass user_text and a list of responses dicts with 'speaker' and 'content'.
+    """
+    try:
+        path = _ensure_report_header(conversation_id)
+        timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        lines: list[str] = []
+        lines.append(f"## {label} - {timestamp}\n")
+        if voice_id:
+            lines.append(f"- Voice: `{voice_id}`\n")
+        if user_text:
+            lines.append("### User\n")
+            lines.append(user_text.strip() + "\n\n")
+
+        if responses is not None:
+            # Multi-agent style
+            lines.append("### Assistant Responses\n")
+            for i, r in enumerate(responses, start=1):
+                speaker = r.get('speaker') or r.get('agent_id') or 'Assistant'
+                content = r.get('content', '').strip()
+                lines.append(f"- **{speaker}**\n\n")
+                if content:
+                    lines.append(content + "\n\n")
+        elif assistant_text is not None:
+            # Single-agent style
+            lines.append("### Assistant\n")
+            lines.append(assistant_text.strip() + "\n\n")
+
+        lines.append("---\n\n")
+
+        with open(path, 'a', encoding='utf-8') as f:
+            f.writelines(lines)
+        logger.info(f"Appended Markdown report entry to {path}")
+    except Exception as e:
+        logger.error(f"Failed to append Markdown entry: {e}")
 
 def initialize_patient_data(custom_data=None):
     global current_patient_simulation
@@ -484,6 +569,17 @@ def process_multi_agent_message():
                     'voice_id': response['voice_id']
                 }
                 # You might want to extend your database schema to store this metadata
+
+        # Append to Markdown report
+        try:
+            append_markdown_entry(
+                current_conversation_id,
+                user_text=user_message,
+                responses=responses,
+                label="Multi-Agent Turn"
+            )
+        except Exception as _e:
+            logger.warning(f"Markdown reporting failed for multi-agent message: {_e}")
         
         return jsonify({
             'status': 'success',
@@ -730,6 +826,17 @@ def process_audio_multi_agent():
             'timestamp': datetime.now().isoformat()
         }))
         
+        # Append to Markdown report
+        try:
+            append_markdown_entry(
+                current_conversation_id,
+                user_text=transcription,
+                responses=responses,
+                label="Multi-Agent Turn"
+            )
+        except Exception as _e:
+            logger.warning(f"Markdown reporting failed for multi-agent audio: {_e}")
+        
         return jsonify({
             'status': 'success',
             'user_transcription': transcription,
@@ -902,6 +1009,37 @@ def generate_patient_case_route():
             # Log successful generation with final summary
             logger.info(f"🎉 AI PATIENT CASE FULLY DEPLOYED: {case_title}")
             logger.info("   Case is now active and ready for doctor-patient simulation")
+            
+            # Append a Markdown summary of the generated case
+            try:
+                symptoms_list = generation_metadata.get('input_symptoms', [])
+                pd = patient_data.get('patient_details', {})
+                md_summary = []
+                md_summary.append(f"Diagnosis: {case_summary.get('diagnosis', 'Unknown')}")
+                md_summary.append(f"Specialty: {generation_metadata.get('specialty', 'Unknown')}")
+                md_summary.append(f"Severity: {generation_metadata.get('severity', 'Unknown')}")
+                if symptoms_list:
+                    md_summary.append(f"Symptoms: {', '.join(symptoms_list)}")
+                if pd:
+                    md_summary.append(f"Patient: {pd.get('gender', 'Unknown')}, {pd.get('age', 'Unknown')} y/o; Occupation: {pd.get('occupation', 'Unknown')}")
+                learning_objs = case_summary.get('learning_objectives', [])
+                if learning_objs:
+                    md_summary.append("Learning Objectives:")
+                    for lo in learning_objs:
+                        md_summary.append(f" - {lo}")
+                warnings_list = result.get('warnings', [])
+                if warnings_list:
+                    md_summary.append("Warnings:")
+                    for w in warnings_list:
+                        md_summary.append(f" - {w}")
+                append_markdown_entry(
+                    current_conversation_id,
+                    user_text="AI patient case generated",
+                    assistant_text="\n".join(md_summary),
+                    label="Case Generated"
+                )
+            except Exception as _e:
+                logger.warning(f"Markdown reporting failed for case generation: {_e}")
             
             return jsonify({
                 'status': 'success',
@@ -1247,7 +1385,7 @@ def process_audio():
                 # Get LLM response with patient simulation context (or default if none)
                 response_text = get_groq_response(
                     input_text=transcription,
-                    model="llama3-8b-8192",
+                    model="llama-3.3-70b-versatile",
                     history=conversation_history,
                     system_prompt=system_prompt
                 )
@@ -1255,7 +1393,7 @@ def process_audio():
             # First interaction or empty history
             response_text = get_groq_response(
                 input_text=transcription,
-                model="llama3-8b-8192",
+                model="llama-3.3-70b-versatile",
                 system_prompt=system_prompt
             )
         
@@ -1307,6 +1445,18 @@ def process_audio():
         else:
             base64_audio = ""
             logger.error("Speech audio generation failed, returning empty audio")
+        
+        # Append to Markdown report (single-agent)
+        try:
+            append_markdown_entry(
+                current_conversation_id,
+                user_text=transcription,
+                assistant_text=response_text,
+                voice_id=voice_id,
+                label="Turn"
+            )
+        except Exception as _e:
+            logger.warning(f"Markdown reporting failed for single-agent audio: {_e}")
         
         return jsonify({
             'status': 'success',
@@ -1479,7 +1629,7 @@ def diagnose_api():
     # Test Groq API connection
     try:
         # Simple test that doesn't require audio
-        test_response = get_groq_response("Hello, this is a test.", model="llama3-8b-8192")
+        test_response = get_groq_response("Hello, this is a test.", model="llama-3.3-70b-versatile")
         results["tests"]["groq_text_api"] = "SUCCESS" if test_response else "FAILED"
     except Exception as e:
         results["tests"]["groq_text_api"] = f"ERROR: {str(e)}"

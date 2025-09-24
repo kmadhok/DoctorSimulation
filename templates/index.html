@@ -3,257 +3,197 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Voice Conversation App</title>
+    <title>AI Conference Call</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/multi-agent.css') }}">
-    <style>
-        .persona-selector {
-            margin-bottom: 20px;
-        }
-        
-        .persona-description {
-            margin-top: 10px;
-            padding: 10px;
-            background-color: #f5f5f5;
-            border-radius: 5px;
-            font-style: italic;
-            color: #666;
-            border-left: 4px solid #007bff;
-        }
-        
-        .persona-selector label {
-            font-weight: bold;
-            margin-bottom: 8px;
-            display: block;
-        }
-        
-        .persona-selector select {
-            width: 100%;
-            padding: 8px 12px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            background-color: white;
-            font-size: 14px;
-        }
-        
-        .persona-selector select:focus {
-            outline: none;
-            border-color: #007bff;
-            box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
-        }
-
-        /* Persona Info Panel Styles */
-        .persona-info-panel {
-            margin: 20px 0;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            background: #f9f9f9;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-
-        .persona-info-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 15px 20px;
-            background: linear-gradient(135deg, #007bff, #0056b3);
-            color: white;
-            border-radius: 8px 8px 0 0;
-            margin: 0;
-        }
-
-        .persona-info-header h3 {
-            margin: 0;
-            font-size: 18px;
-            font-weight: 600;
-        }
-
-        .toggle-btn {
-            background: rgba(255,255,255,0.2);
-            color: white;
-            border: 1px solid rgba(255,255,255,0.3);
-            padding: 5px 12px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 12px;
-            transition: background-color 0.2s;
-        }
-
-        .toggle-btn:hover {
-            background: rgba(255,255,255,0.3);
-        }
-
-        .persona-info-content {
-            padding: 20px;
-        }
-
-        .persona-section {
-            margin-bottom: 20px;
-        }
-
-        .persona-section:last-child {
-            margin-bottom: 0;
-        }
-
-        .persona-section h4 {
-            color: #333;
-            margin: 0 0 8px 0;
-            font-size: 14px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            border-bottom: 2px solid #007bff;
-            padding-bottom: 4px;
-        }
-
-        .persona-detail-text {
-            margin: 0;
-            color: #555;
-            line-height: 1.5;
-            font-size: 14px;
-        }
-
-        .trait-tags {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-        }
-
-        .trait-tag {
-            background: #007bff;
-            color: white;
-            padding: 4px 10px;
-            border-radius: 15px;
-            font-size: 12px;
-            font-weight: 500;
-        }
-
-        .response-patterns-list {
-            margin: 0;
-            padding-left: 18px;
-            color: #555;
-        }
-
-        .response-patterns-list li {
-            margin-bottom: 5px;
-            font-size: 14px;
-        }
-
-        .response-patterns-list li:last-child {
-            margin-bottom: 0;
-        }
-    </style>
 </head>
 <body>
-    <div class="container">
+    <div class="app-container">
+        
+        <!-- Header -->
+        <header class="app-header">
+            <div class="logo-section">
+                <h1>🎯 AI Conference Call</h1>
+                <p>Have conversations with multiple AI personalities</p>
+            </div>
+            <div class="header-actions">
+                <button id="moreOptionsBtn" class="btn btn-outline">More Options</button>
+            </div>
+        </header>
 
-        <!-- Main Content -->
-        <div class="main-content">
-            <header>
-                <h1>Choose Your AI Conversation Companion</h1>
-                <div class="persona-selector">
-                    <label for="personaSelect">Select a Persona to Chat With:</label>
-                    <select id="personaSelect">
-                        <option value="">Choose your companion...</option>
-                        <!-- Options will be populated dynamically -->
-                    </select>
-                    <div id="personaDescription" class="persona-description" style="display: none;">
-                        <!-- Persona description will appear here -->
-                    </div>
-                </div>
-
-                <!-- Detailed Persona Information Panel -->
-                <div id="personaInfoPanel" class="persona-info-panel" style="display: none;">
-                    <div class="persona-info-header">
-                        <h3 id="personaInfoName">Persona Details</h3>
-                        <button id="togglePersonaInfo" class="toggle-btn">Hide Details</button>
+        <!-- Main Content Area -->
+        <main class="main-area">
+            
+            <!-- Welcome/Setup State -->
+            <div id="welcomeState" class="welcome-state">
+                <div class="welcome-content">
+                    <div class="welcome-hero">
+                        <div class="hero-icon">🗣️</div>
+                        <h2>Start Your AI Conference Call</h2>
+                        <p>Select two AI personalities to have a dynamic conversation with you</p>
                     </div>
                     
-                    <div class="persona-info-content">
-                        <div class="persona-section">
-                            <h4>About</h4>
-                            <p id="personaInfoDescription" class="persona-detail-text"></p>
+                    <!-- Available Agents Display -->
+                    <div class="agents-preview">
+                        <h3>Available Participants</h3>
+                        <div id="agentCards" class="agent-cards">
+                            <!-- Agent cards will be populated by JavaScript -->
                         </div>
-                        
-                        <div class="persona-section">
-                            <h4>Personality Traits</h4>
-                            <div id="personaTraits" class="trait-tags"></div>
+                    </div>
+
+                    <div class="welcome-actions">
+                        <button id="startConferenceBtn" class="btn btn-primary btn-large">
+                            <span class="btn-icon">🎯</span>
+                            Start Conference Call
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Conference Active State -->
+            <div id="conferenceState" class="conference-state" style="display: none;">
+                
+                <!-- Conference Header -->
+                <div class="conference-header">
+                    <div class="conference-info">
+                        <div class="conference-status">
+                            <div class="status-indicator active"></div>
+                            <span>Conference Call Active</span>
                         </div>
-                        
-                        <div class="persona-section">
-                            <h4>Speaking Style</h4>
-                            <p id="personaSpeakingStyle" class="persona-detail-text"></p>
+                        <div id="activeAgentsList" class="active-agents">
+                            <!-- Active agents will be shown here -->
                         </div>
-                        
-                        <div class="persona-section">
-                            <h4>Background</h4>
-                            <p id="personaBackground" class="persona-detail-text"></p>
-                        </div>
-                        
-                        <div class="persona-section">
-                            <h4>Worldview</h4>
-                            <p id="personaWorldview" class="persona-detail-text"></p>
-                        </div>
-                        
-                        <div class="persona-section">
-                            <h4>Conversation Approach</h4>
-                            <ul id="personaResponsePatterns" class="response-patterns-list"></ul>
+                    </div>
+                    <div class="conference-controls">
+                        <button id="pauseBtn" class="btn btn-secondary">⏸️ Pause</button>
+                        <button id="endConferenceBtn" class="btn btn-danger">End Call</button>
+                    </div>
+                </div>
+
+                <!-- Speaking Indicator -->
+                <div id="speakingIndicator" class="speaking-indicator" style="display: none;">
+                    <div class="speaker-avatar"></div>
+                    <div class="speaker-info">
+                        <span id="currentSpeaker"></span>
+                        <div class="speaking-animation">
+                            <div class="wave"></div>
+                            <div class="wave"></div>
+                            <div class="wave"></div>
                         </div>
                     </div>
                 </div>
 
+                <!-- Conversation Display -->
+                <div class="conversation-area">
+                    <div class="conversation" id="conversation">
+                        <!-- Conversation messages will be displayed here -->
+                    </div>
+                </div>
 
+                <!-- Voice Controls -->
+                <div class="voice-controls">
+                    <div class="controls-group">
+                        <button id="autoListenBtn" class="btn btn-voice active">
+                            <span class="record-icon"></span>
+                            Auto Listen
+                        </button>
+                        <button id="manualRecordBtn" class="btn btn-voice" style="display: none;">
+                            <span class="record-icon"></span>
+                            Manual Record
+                        </button>
+                    </div>
+                    <div class="status-area">
+                        <p class="status" id="status">Ready to start conversation</p>
+                    </div>
+                </div>
+            </div>
 
+        </main>
+
+        <!-- More Options Sidebar -->
+        <div id="optionsSidebar" class="options-sidebar" style="display: none;">
+            <div class="sidebar-header">
+                <h3>More Options</h3>
+                <button id="closeSidebarBtn" class="btn btn-icon">×</button>
+            </div>
+            <div class="sidebar-content">
                 
-                <div class="voice-selector">
-                    <label for="voiceSelect">Select Voice:</label>
-                    <select id="voiceSelect">
-                        <option value="Fritz-PlayAI">Fritz (Default)</option>
-                        <option value="Cillian-PlayAI">Cillian</option>
-                        <option value="Arista-PlayAI">Arista</option>
-                        <option value="Celeste-PlayAI">Celeste</option>
-                        <option value="Mamaw-PlayAI">Bill</option>
-                        <option value="Cheyenne-PlayAI">Emily</option>
-                    </select>
-                </div>
-                <div class="conversation-controls">
-                    <button id="newConversationBtn" class="btn btn-secondary" style="margin-right: 10px;">
-                        🗨️ New Conversation
-                    </button>
-                </div>
-                <p class="status" id="status">Ready</p>
-            </header>
-            
-            <main>
-                <div class="conversation" id="conversation">
-                    <!-- Conversation messages will be displayed here -->
-                </div>
-                
-                <!-- ❷ NEW  insert in exactly the same place -->
-                <div class="controls">
-                    <button id="multiAgentModeBtn" class="btn btn-primary" style="margin-right: 10px;">
-                        🎯 Start Conference Call
-                    </button>
-                    <button id="autoListenBtn" class="record-button">
-                        <span class="record-icon"></span>
-                        Auto Listen
-                    </button>
-                    <button id="manualRecordBtn" class="record-button" style="margin-left: 10px; display: none;">
-                        <span class="record-icon"></span>
-                        Manual Record
-                    </button>
+                <!-- Single Chat Option -->
+                <div class="option-section">
+                    <h4>1-on-1 Chat</h4>
+                    <p>Chat with a single AI personality</p>
+                    <div class="persona-selector">
+                        <select id="personaSelect">
+                            <option value="">Choose personality...</option>
+                        </select>
+                        <button id="startSingleChatBtn" class="btn btn-secondary">Start Chat</button>
+                    </div>
                 </div>
 
-            </main>
-            
-            <footer>
-                <p>AI Persona Chat - Powered by Groq API</p>
-            </footer>
+                <!-- Voice Settings -->
+                <div class="option-section">
+                    <h4>Voice Settings</h4>
+                    <div class="voice-selector">
+                        <label for="voiceSelect">Default Voice:</label>
+                        <select id="voiceSelect">
+                            <option value="Fritz-PlayAI">Fritz (Default)</option>
+                            <option value="Cillian-PlayAI">Cillian</option>
+                            <option value="Arista-PlayAI">Arista</option>
+                            <option value="Celeste-PlayAI">Celeste</option>
+                            <option value="Mamaw-PlayAI">Bill</option>
+                            <option value="Cheyenne-PlayAI">Emily</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Conversation Management -->
+                <div class="option-section">
+                    <h4>Conversation</h4>
+                    <button id="newConversationBtn" class="btn btn-secondary">🗨️ New Conversation</button>
+                </div>
+
+                <!-- Medical Case Generation -->
+                <div class="option-section">
+                    <h4>Medical Cases</h4>
+                    <p>Generate AI patient cases (advanced feature)</p>
+                    <button id="medicalCaseBtn" class="btn btn-secondary">Create Medical Case</button>
+                </div>
+
+            </div>
         </div>
+
+        <!-- Conference Setup Modal -->
+        <div id="conferenceSetupModal" class="modal-overlay" style="display: none;">
+            <div class="modal-content conference-setup">
+                <div class="modal-header">
+                    <h3>Select Conference Participants</h3>
+                    <button id="closeSetupModal" class="btn btn-icon">×</button>
+                </div>
+                <div class="modal-body">
+                    <p class="setup-instructions">Choose 2 AI personalities to join your conference call:</p>
+                    <div id="agentSelectionGrid" class="agent-selection-grid">
+                        <!-- Agent selection cards will be populated here -->
+                    </div>
+                    <div class="selection-summary">
+                        <span id="selectionCount">0 selected</span>
+                        <small>Select at least 2 participants</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button id="cancelSetupBtn" class="btn btn-secondary">Cancel</button>
+                    <button id="confirmStartBtn" class="btn btn-primary" disabled>
+                        Start Conference Call
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Overlay for when options sidebar is open -->
+        <div id="sidebarOverlay" class="sidebar-overlay" style="display: none;"></div>
 
     </div>
 
-    <!-- Add logging div for debugging -->
+    <!-- Debug logging (hidden by default) -->
     <div id="vadLogs" style="display: none; position: fixed; bottom: 0; right: 0; max-height: 300px; overflow-y: auto; background: rgba(0,0,0,0.8); color: white; padding: 10px; font-family: monospace; font-size: 12px;">
         <div style="margin-bottom: 10px;">
             <button onclick="document.getElementById('vadLogContent').innerHTML = ''">Clear Logs</button>
@@ -262,7 +202,7 @@
         <div id="vadLogContent"></div>
     </div>
 
-    <!-- Load dependencies with detailed logging -->
+    <!-- JavaScript Initialization -->
     <script>
         // Initialize logging system
         const vadLogger = {
@@ -271,10 +211,8 @@
                 const logElement = document.getElementById('vadLogContent');
                 const color = type === 'error' ? 'red' : type === 'success' ? 'green' : 'white';
                 
-                // Console logging
                 console.log(`[VAD ${step}] ${message}`);
                 
-                // UI logging
                 if (logElement) {
                     logElement.innerHTML = `<div style="color: ${color};">[${timestamp}] [${step}] ${message}</div>` + logElement.innerHTML;
                 }
@@ -287,543 +225,307 @@
             }
         };
 
-        // Show logs button in header
+        // Show logs button (for debugging)
         document.addEventListener('DOMContentLoaded', () => {
-            const header = document.querySelector('header');
-            if (header) {
+            const headerActions = document.querySelector('.header-actions');
+            if (headerActions && window.location.search.includes('debug')) {
                 const showLogsBtn = document.createElement('button');
-                showLogsBtn.textContent = 'Show VAD Logs';
+                showLogsBtn.textContent = 'Debug';
+                showLogsBtn.className = 'btn btn-outline';
                 showLogsBtn.onclick = () => document.getElementById('vadLogs').style.display = 'block';
-                header.appendChild(showLogsBtn);
+                headerActions.appendChild(showLogsBtn);
             }
         });
     </script>
 
-    <!-- onnxruntime – must be first so it defines global `ort` -->
+    <!-- Load Audio Dependencies -->
     <script>
-        // Configure ONNX runtime before it loads to avoid threading issues
         window.onrtLoaded = function() {
             if (typeof ort !== 'undefined') {
                 ort.env.wasm.wasmPaths = '/static/vad-model/';
-                ort.env.wasm.numThreads = 1; // Disable threading to avoid .mjs issues
+                ort.env.wasm.numThreads = 1;
                 ort.env.wasm.simd = true;
                 vadLogger.success('CONFIG', 'ONNX Runtime configured for local files');
             }
         };
     </script>
     <script
-    src="{{ url_for('static', filename='vad-model/ort.min.js') }}"
-    onload="vadLogger.success('DEPS', 'ONNX Runtime loaded successfully'); if(window.onrtLoaded) window.onrtLoaded();"
-    onerror="vadLogger.error('DEPS', 'Failed to load ONNX Runtime')">
+        src="{{ url_for('static', filename='vad-model/ort.min.js') }}"
+        onload="vadLogger.success('DEPS', 'ONNX Runtime loaded successfully'); if(window.onrtLoaded) window.onrtLoaded();"
+        onerror="vadLogger.error('DEPS', 'Failed to load ONNX Runtime')">
     </script>
-
-    <!-- VAD wrapper – exposes global `vad` -->
     <script
-    src="{{ url_for('static', filename='vad-model/bundle.min.js') }}"
-    onload="vadLogger.success('DEPS', 'VAD bundle loaded successfully')"
-    onerror="vadLogger.error('DEPS', 'Failed to load VAD bundle')">
+        src="{{ url_for('static', filename='vad-model/bundle.min.js') }}"
+        onload="vadLogger.success('DEPS', 'VAD bundle loaded successfully')"
+        onerror="vadLogger.error('DEPS', 'Failed to load VAD bundle')">
     </script>
 
-    <!-- ⭐ your application logic (needs `vad` to exist) -->
+    <!-- Main Application Logic -->
     <script
-    src="{{ url_for('static', filename='js/main.js') }}"
-    onload="vadLogger.success('DEPS', 'Main script loaded successfully')"
-    onerror="vadLogger.error('DEPS', 'Failed to load main script')">
+        src="{{ url_for('static', filename='js/main.js') }}"
+        onload="vadLogger.success('DEPS', 'Main script loaded successfully')"
+        onerror="vadLogger.error('DEPS', 'Failed to load main script')">
     </script>
 
-    <!-- Medical Knowledge and Form Management Script -->
+    <!-- Conference Call UI Logic -->
     <script>
-        // Medical knowledge data - will be populated from backend
-        let medicalKnowledge = {
-            specialties: {},
-            all_symptoms: {}
-        };
+        // Conference Call UI Management
+        let selectedAgents = new Set();
+        let availableAgents = {};
 
-        // Form state management
-        const formState = {
-            selectedSpecialty: null,
-            selectedSymptoms: [],
-            isLoading: false
-        };
-
-        // Initialize medical knowledge on page load
-        async function initializeMedicalKnowledge() {
-            try {
-                const response = await fetch('/api/medical-knowledge');
-                const data = await response.json();
-                
-                if (data.status === 'success') {
-                    medicalKnowledge = data;
-                    populateSpecialtySelector();
-                    console.log('Medical knowledge loaded:', medicalKnowledge);
-                } else {
-                    console.error('Failed to load medical knowledge:', data.message);
-                    showFormError('Failed to load medical specialties. Please refresh the page.');
-                }
-            } catch (error) {
-                console.error('Error loading medical knowledge:', error);
-                showFormError('Failed to load medical specialties. Please check your connection and refresh.');
-            }
-        }
-
-        // Populate specialty selector with options
-        function populateSpecialtySelector() {
-            const specialtySelect = document.getElementById('medicalSpecialty');
-            if (!specialtySelect) return;
-
-            // Clear existing options (except the first one)
-            while (specialtySelect.options.length > 1) {
-                specialtySelect.removeChild(specialtySelect.lastChild);
-            }
-
-            // Add specialty options
-            Object.entries(medicalKnowledge.specialties).forEach(([key, specialty]) => {
-                const option = document.createElement('option');
-                option.value = key;
-                option.textContent = specialty.name;
-                option.dataset.description = specialty.description;
-                specialtySelect.appendChild(option);
-            });
-        }
-
-        // Handle specialty selection change
-        function handleSpecialtyChange(event) {
-            const selectedKey = event.target.value;
-            const descriptionDiv = document.getElementById('specialtyDescription');
-            const symptomsContainer = document.getElementById('symptomsContainer');
-            const symptomsInstructions = document.getElementById('symptomsInstructions');
-
-            formState.selectedSpecialty = selectedKey;
-            formState.selectedSymptoms = []; // Reset selected symptoms
-
-            if (selectedKey && medicalKnowledge.specialties[selectedKey]) {
-                const specialty = medicalKnowledge.specialties[selectedKey];
-                
-                // Show specialty description
-                descriptionDiv.textContent = specialty.description;
-                descriptionDiv.style.display = 'block';
-                
-                // Populate symptoms for this specialty
-                populateSymptoms(specialty.symptoms);
-                
-                // Show symptoms container
-                symptomsInstructions.style.display = 'none';
-                symptomsContainer.style.display = 'block';
-            } else {
-                // Clear everything
-                descriptionDiv.textContent = '';
-                descriptionDiv.style.display = 'none';
-                symptomsContainer.style.display = 'none';
-                symptomsInstructions.style.display = 'block';
-                symptomsInstructions.textContent = 'Select a specialty above to see available symptoms';
-            }
-
-            // Clear any previous validation errors
-            clearFieldError('specialtyError');
-            clearFieldError('symptomsError');
-        }
-
-        // Populate symptoms checkboxes for selected specialty
-        function populateSymptoms(symptomKeys) {
-            const container = document.getElementById('symptomsContainer');
-            if (!container) return;
-
-            // Clear existing checkboxes
-            container.innerHTML = '';
-
-            // Create symptom checkboxes
-            symptomKeys.forEach(symptomKey => {
-                const symptomName = medicalKnowledge.all_symptoms[symptomKey] || symptomKey;
-                
-                const checkboxDiv = document.createElement('div');
-                checkboxDiv.className = 'symptom-checkbox';
-                
-                const checkbox = document.createElement('input');
-                checkbox.type = 'checkbox';
-                checkbox.id = `symptom_${symptomKey}`;
-                checkbox.value = symptomKey;
-                checkbox.addEventListener('change', handleSymptomChange);
-                
-                const label = document.createElement('label');
-                label.htmlFor = `symptom_${symptomKey}`;
-                label.textContent = symptomName;
-                
-                checkboxDiv.appendChild(checkbox);
-                checkboxDiv.appendChild(label);
-                container.appendChild(checkboxDiv);
-            });
-
-            // Add instructions
-            if (symptomKeys.length > 0) {
-                const instructionsDiv = document.createElement('div');
-                instructionsDiv.className = 'symptoms-instructions';
-                instructionsDiv.innerHTML = '<small>Select one or more symptoms that the patient should present with:</small>';
-                container.insertBefore(instructionsDiv, container.firstChild);
-            }
-        }
-
-        // Handle symptom checkbox changes
-        function handleSymptomChange(event) {
-            const symptomKey = event.target.value;
-            
-            if (event.target.checked) {
-                if (!formState.selectedSymptoms.includes(symptomKey)) {
-                    formState.selectedSymptoms.push(symptomKey);
-                }
-            } else {
-                formState.selectedSymptoms = formState.selectedSymptoms.filter(s => s !== symptomKey);
-            }
-
-            console.log('Selected symptoms:', formState.selectedSymptoms);
-            
-            // Clear symptoms validation error if at least one selected
-            if (formState.selectedSymptoms.length > 0) {
-                clearFieldError('symptomsError');
-            }
-        }
-
-        // Form validation functions
-        function validateForm() {
-            let isValid = true;
-            const errors = [];
-
-            // Clear previous validation
-            clearAllErrors();
-
-            // Age validation
-            const age = document.getElementById('patientAge').value;
-            if (!age || age < 1 || age > 120) {
-                showFieldError('ageError', 'Age must be between 1 and 120');
-                errors.push('Valid age is required');
-                isValid = false;
-            }
-
-            // Gender validation
-            const gender = document.getElementById('patientGender').value;
-            if (!gender) {
-                showFieldError('genderError', 'Gender selection is required');
-                errors.push('Gender selection is required');
-                isValid = false;
-            }
-
-            // Occupation validation
-            const occupation = document.getElementById('patientOccupation').value.trim();
-            if (!occupation) {
-                showFieldError('occupationError', 'Occupation is required');
-                errors.push('Occupation is required');
-                isValid = false;
-            }
-
-            // Specialty validation
-            if (!formState.selectedSpecialty) {
-                showFieldError('specialtyError', 'Medical specialty selection is required');
-                errors.push('Medical specialty selection is required');
-                isValid = false;
-            }
-
-            // Symptoms validation
-            if (formState.selectedSymptoms.length === 0) {
-                showFieldError('symptomsError', 'At least one symptom must be selected');
-                errors.push('At least one symptom must be selected');
-                isValid = false;
-            }
-
-            // Severity validation
-            const severity = document.getElementById('symptomSeverity').value;
-            if (!severity) {
-                showFieldError('severityError', 'Symptom severity selection is required');
-                errors.push('Symptom severity selection is required');
-                isValid = false;
-            }
-
-            // Show validation summary if there are errors
-            if (!isValid) {
-                showValidationSummary(errors);
-            } else {
-                hideValidationSummary();
-            }
-
-            return isValid;
-        }
-
-        // Validation helper functions
-        function showFieldError(elementId, message) {
-            const errorElement = document.getElementById(elementId);
-            if (errorElement) {
-                errorElement.textContent = message;
-                errorElement.style.display = 'block';
-            }
-        }
-
-        function clearFieldError(elementId) {
-            const errorElement = document.getElementById(elementId);
-            if (errorElement) {
-                errorElement.textContent = '';
-                errorElement.style.display = 'none';
-            }
-        }
-
-        function clearAllErrors() {
-            const errorElements = document.querySelectorAll('.error-message');
-            errorElements.forEach(element => {
-                element.textContent = '';
-                element.style.display = 'none';
-            });
-        }
-
-        function showValidationSummary(errors) {
-            const summaryDiv = document.getElementById('formValidationSummary');
-            const errorsList = document.getElementById('validationErrorsList');
-            
-            if (summaryDiv && errorsList) {
-                errorsList.innerHTML = '';
-                errors.forEach(error => {
-                    const li = document.createElement('li');
-                    li.textContent = error;
-                    errorsList.appendChild(li);
-                });
-                summaryDiv.style.display = 'block';
-                summaryDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-            }
-        }
-
-        function hideValidationSummary() {
-            const summaryDiv = document.getElementById('formValidationSummary');
-            if (summaryDiv) {
-                summaryDiv.style.display = 'none';
-            }
-        }
-
-        function showFormError(message) {
-            const symptomsInstructions = document.getElementById('symptomsInstructions');
-            if (symptomsInstructions) {
-                symptomsInstructions.textContent = message;
-                symptomsInstructions.style.color = 'red';
-            }
-        }
-
-        // Loading state management
-        function setLoadingState(isLoading) {
-            formState.isLoading = isLoading;
-            const loadingDiv = document.getElementById('aiGenerationLoading');
-            const formFields = document.getElementById('customPatientFormFields');
-            const submitButton = document.getElementById('createCustomPatient');
-            const buttonText = submitButton?.querySelector('.button-text');
-            const buttonSpinner = submitButton?.querySelector('.button-spinner');
-
-            if (isLoading) {
-                loadingDiv.style.display = 'block';
-                formFields.style.opacity = '0.6';
-                formFields.style.pointerEvents = 'none';
-                if (submitButton) submitButton.disabled = true;
-                if (buttonText) buttonText.style.display = 'none';
-                if (buttonSpinner) buttonSpinner.style.display = 'inline';
-            } else {
-                loadingDiv.style.display = 'none';
-                formFields.style.opacity = '1';
-                formFields.style.pointerEvents = 'auto';
-                if (submitButton) submitButton.disabled = false;
-                if (buttonText) buttonText.style.display = 'inline';
-                if (buttonSpinner) buttonSpinner.style.display = 'none';
-            }
-        }
-
-        // Event listeners setup
-        document.addEventListener('DOMContentLoaded', function() {
-            // Initialize medical knowledge
-            initializeMedicalKnowledge();
-
-            // Specialty selection change handler
-            const specialtySelect = document.getElementById('medicalSpecialty');
-            if (specialtySelect) {
-                specialtySelect.addEventListener('change', handleSpecialtyChange);
-            }
-
-            // Form submission will be handled in main.js
-            console.log('Medical form management initialized');
+        // Initialize the interface
+        document.addEventListener('DOMContentLoaded', async () => {
+            await loadAvailableAgents();
+            setupEventListeners();
+            displayAgentCards();
         });
-    </script>
 
-    <!-- Multi-Agent Conference Call Script -->
-    <script>
-        // Multi-agent conversation state
-        let multiAgentMode = false;
-        let activeAgents = [];
-        let currentMultiAgentConversationId = null;
-
-        // Function to show multi-agent setup modal
-        function showMultiAgentSetup() {
-            // Create modal if it doesn't exist
-            if (!document.getElementById('multiAgentSetup')) {
-                createMultiAgentSetupUI();
-            }
-            populateAgentSelection();
-            document.getElementById('multiAgentSetup').style.display = 'flex';
-        }
-
-        // Create the multi-agent setup UI
-        function createMultiAgentSetupUI() {
-            const setupHTML = `
-                <div class="multi-agent-setup" id="multiAgentSetup" style="display: none;">
-                    <div>
-                        <div class="multi-agent-header">
-                            <h3>🎯 Start Conference Call</h3>
-                            <button class="close-btn" onclick="hideMultiAgentSetup()">&times;</button>
-                        </div>
-                        <div class="multi-agent-content">
-                            <p>Select 2 or more personas to participate in a group conversation:</p>
-                            <div class="agent-selection-list" id="agentSelectionList">
-                                <!-- Agents will be populated here -->
-                            </div>
-                            <div class="multi-agent-actions">
-                                <button class="btn btn-secondary" onclick="hideMultiAgentSetup()">Cancel</button>
-                                <button class="btn btn-primary" id="startMultiAgentBtn" onclick="startMultiAgentConversation()" disabled>
-                                    Start Conference Call
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `;
-            document.body.insertAdjacentHTML('beforeend', setupHTML);
-        }
-
-        // Hide the multi-agent setup modal
-        function hideMultiAgentSetup() {
-            const setup = document.getElementById('multiAgentSetup');
-            if (setup) {
-                setup.remove();
-            }
-        }
-
-        // Populate agent selection list
-        async function populateAgentSelection() {
+        // Load available agents from backend
+        async function loadAvailableAgents() {
             try {
                 const response = await fetch('/api/personas');
                 const data = await response.json();
                 
                 if (data.status === 'success') {
-                    const agentsList = document.getElementById('agentSelectionList');
-                    agentsList.innerHTML = '';
-                    
-                    for (const [personaId, persona] of Object.entries(data.personas)) {
-                        const agentItem = document.createElement('div');
-                        agentItem.className = 'agent-selection-item';
-                        agentItem.innerHTML = `
-                            <label class="agent-checkbox-label">
-                                <input type="checkbox" value="${personaId}" onchange="updateStartButtonState()">
-                                <div class="agent-info">
-                                    <strong>${persona.name}</strong>
-                                    <p>${persona.description}</p>
-                                    <small>Voice: ${persona.voice_id}</small>
-                                </div>
-                            </label>
-                        `;
-                        agentsList.appendChild(agentItem);
-                    }
+                    availableAgents = data.personas;
+                    populatePersonaSelect();
                 }
             } catch (error) {
                 console.error('Error loading agents:', error);
             }
         }
 
-        // Update start button state based on selection
-        function updateStartButtonState() {
-            const checkboxes = document.querySelectorAll('#agentSelectionList input[type="checkbox"]:checked');
-            const startBtn = document.getElementById('startMultiAgentBtn');
-            if (startBtn) {
-                startBtn.disabled = checkboxes.length < 2;
+        // Populate persona select for single chat
+        function populatePersonaSelect() {
+            const select = document.getElementById('personaSelect');
+            const option = select.querySelector('option[value=""]');
+            
+            // Clear existing options except the first one
+            while (select.children.length > 1) {
+                select.removeChild(select.lastChild);
+            }
+            
+            // Add persona options
+            Object.entries(availableAgents).forEach(([id, persona]) => {
+                const option = document.createElement('option');
+                option.value = id;
+                option.textContent = persona.name;
+                select.appendChild(option);
+            });
+        }
+
+        // Display agent cards in welcome state
+        function displayAgentCards() {
+            const container = document.getElementById('agentCards');
+            container.innerHTML = '';
+
+            Object.entries(availableAgents).forEach(([id, agent]) => {
+                const card = document.createElement('div');
+                card.className = 'agent-card preview';
+                card.innerHTML = `
+                    <div class="agent-avatar">${getAgentIcon(id)}</div>
+                    <div class="agent-info">
+                        <h4>${agent.name}</h4>
+                        <p>${agent.description}</p>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        // Setup event listeners
+        function setupEventListeners() {
+            // More Options toggle
+            document.getElementById('moreOptionsBtn').addEventListener('click', toggleOptionsSidebar);
+            document.getElementById('closeSidebarBtn').addEventListener('click', closeOptionsSidebar);
+            document.getElementById('sidebarOverlay').addEventListener('click', closeOptionsSidebar);
+
+            // Conference setup
+            document.getElementById('startConferenceBtn').addEventListener('click', openConferenceSetup);
+            document.getElementById('closeSetupModal').addEventListener('click', closeConferenceSetup);
+            document.getElementById('cancelSetupBtn').addEventListener('click', closeConferenceSetup);
+            document.getElementById('confirmStartBtn').addEventListener('click', startConference);
+
+            // Conference controls
+            document.getElementById('endConferenceBtn').addEventListener('click', endConference);
+
+            // Single chat
+            document.getElementById('startSingleChatBtn').addEventListener('click', startSingleChat);
+        }
+
+        // Get icon for agent
+        function getAgentIcon(agentId) {
+            const icons = {
+                'optimistic_debater': '😊',
+                'negative_debater': '🤔',
+                'neutral_debater': '⚖️'
+            };
+            return icons[agentId] || '🤖';
+        }
+
+        // Toggle options sidebar
+        function toggleOptionsSidebar() {
+            const sidebar = document.getElementById('optionsSidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            const isVisible = sidebar.style.display !== 'none';
+
+            if (isVisible) {
+                closeOptionsSidebar();
+            } else {
+                sidebar.style.display = 'block';
+                overlay.style.display = 'block';
+                document.body.classList.add('sidebar-open');
             }
         }
 
-        // Start multi-agent conversation
-        async function startMultiAgentConversation() {
-            try {
-                const checkboxes = document.querySelectorAll('#agentSelectionList input[type="checkbox"]:checked');
-                const selectedAgents = Array.from(checkboxes).map(cb => cb.value);
+        function closeOptionsSidebar() {
+            document.getElementById('optionsSidebar').style.display = 'none';
+            document.getElementById('sidebarOverlay').style.display = 'none';
+            document.body.classList.remove('sidebar-open');
+        }
+
+        // Conference setup modal
+        function openConferenceSetup() {
+            populateAgentSelectionGrid();
+            document.getElementById('conferenceSetupModal').style.display = 'flex';
+        }
+
+        function closeConferenceSetup() {
+            document.getElementById('conferenceSetupModal').style.display = 'none';
+            selectedAgents.clear();
+            updateSelectionSummary();
+        }
+
+        function populateAgentSelectionGrid() {
+            const grid = document.getElementById('agentSelectionGrid');
+            grid.innerHTML = '';
+
+            Object.entries(availableAgents).forEach(([id, agent]) => {
+                const card = document.createElement('div');
+                card.className = 'agent-selection-card';
+                card.innerHTML = `
+                    <div class="selection-indicator"></div>
+                    <div class="agent-avatar">${getAgentIcon(id)}</div>
+                    <div class="agent-info">
+                        <h4>${agent.name}</h4>
+                        <p>${agent.description}</p>
+                        <small>Voice: ${agent.voice_id}</small>
+                    </div>
+                `;
                 
+                card.addEventListener('click', () => toggleAgentSelection(id, card));
+                grid.appendChild(card);
+            });
+        }
+
+        function toggleAgentSelection(agentId, cardElement) {
+            if (selectedAgents.has(agentId)) {
+                selectedAgents.delete(agentId);
+                cardElement.classList.remove('selected');
+            } else {
+                selectedAgents.add(agentId);
+                cardElement.classList.add('selected');
+            }
+            updateSelectionSummary();
+        }
+
+        function updateSelectionSummary() {
+            const count = selectedAgents.size;
+            document.getElementById('selectionCount').textContent = `${count} selected`;
+            document.getElementById('confirmStartBtn').disabled = count < 2;
+        }
+
+        // Start conference
+        async function startConference() {
+            try {
                 const response = await fetch('/api/multi-agent/create', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        agent_ids: selectedAgents
+                        agent_ids: Array.from(selectedAgents)
                     })
                 });
                 
                 const data = await response.json();
                 
                 if (data.status === 'success') {
-                    multiAgentMode = true;
-                    activeAgents = data.active_agents;
-                    currentMultiAgentConversationId = data.conversation_id;
+                    // Switch to conference state
+                    document.getElementById('welcomeState').style.display = 'none';
+                    document.getElementById('conferenceState').style.display = 'block';
                     
-                    // Clear conversation and update UI
-                    const conversationElement = document.getElementById('conversation');
-                    if (conversationElement) {
-                        conversationElement.innerHTML = '';
-                    }
+                    // Update active agents display
+                    updateActiveAgentsDisplay(data.active_agents);
                     
-                    updateUIForMultiAgent();
-                    hideMultiAgentSetup();
+                    // Clear conversation
+                    document.getElementById('conversation').innerHTML = '';
                     
-                    console.log('Multi-agent conversation started with agents:', activeAgents.map(a => a.name));
-                    alert('Conference call started with ' + activeAgents.map(a => a.name).join(', '));
+                    closeConferenceSetup();
+                    
+                    console.log('Conference started with agents:', data.active_agents.map(a => a.name));
                 } else {
-                    alert('Error starting multi-agent conversation: ' + data.message);
+                    alert('Error starting conference: ' + data.message);
                 }
             } catch (error) {
-                console.error('Error starting multi-agent conversation:', error);
-                alert('Error starting multi-agent conversation');
+                console.error('Error starting conference:', error);
+                alert('Error starting conference');
             }
         }
 
-        // Update UI for multi-agent mode
-        function updateUIForMultiAgent() {
-            // Add multi-agent indicator
-            const indicator = document.createElement('div');
-            indicator.className = 'multi-agent-indicator';
-            indicator.id = 'multiAgentIndicator';
-            indicator.innerHTML = `
-                <div>
-                    <strong>🎯 Conference Call Active</strong>
-                    <div class="active-agents">
-                        ${activeAgents.map(agent => `<span class="agent-badge">${agent.name}</span>`).join('')}
-                    </div>
-                </div>
-                <button class="btn btn-secondary" onclick="exitMultiAgent()">Exit Conference</button>
-            `;
-            
-            // Insert after header
-            const header = document.querySelector('header');
-            header.insertAdjacentElement('afterend', indicator);
+        function updateActiveAgentsDisplay(agents) {
+            const container = document.getElementById('activeAgentsList');
+            container.innerHTML = agents.map(agent => 
+                `<span class="agent-badge">
+                    ${getAgentIcon(agent.id)} ${agent.name}
+                </span>`
+            ).join('');
         }
 
-        // Exit multi-agent mode
-        function exitMultiAgent() {
-            multiAgentMode = false;
-            activeAgents = [];
-            currentMultiAgentConversationId = null;
-            
-            // Remove multi-agent indicator
-            const indicator = document.getElementById('multiAgentIndicator');
-            if (indicator) {
-                indicator.remove();
+        // End conference
+        function endConference() {
+            if (confirm('Are you sure you want to end the conference call?')) {
+                document.getElementById('conferenceState').style.display = 'none';
+                document.getElementById('welcomeState').style.display = 'block';
+                selectedAgents.clear();
             }
-            
-            console.log('Exited multi-agent mode');
-            alert('Conference call ended');
         }
 
-        // Initialize multi-agent button
-        document.addEventListener('DOMContentLoaded', () => {
-            const multiAgentBtn = document.getElementById('multiAgentModeBtn');
-            if (multiAgentBtn) {
-                multiAgentBtn.addEventListener('click', showMultiAgentSetup);
+        // Start single chat
+        async function startSingleChat() {
+            const personaId = document.getElementById('personaSelect').value;
+            if (!personaId) {
+                alert('Please select a personality first');
+                return;
             }
-        });
+
+            try {
+                const response = await fetch('/api/select-persona', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        persona_id: personaId
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    // Switch to single chat mode (you can implement this state)
+                    alert('Single chat started with ' + data.persona.name);
+                    closeOptionsSidebar();
+                } else {
+                    alert('Error starting single chat: ' + data.message);
+                }
+            } catch (error) {
+                console.error('Error starting single chat:', error);
+                alert('Error starting single chat');
+            }
+        }
+
     </script>
 
 </body>
-</html> 
+</html>

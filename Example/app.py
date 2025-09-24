@@ -807,7 +807,7 @@ def process_audio():
                 # Get LLM response with patient simulation context (or default if none)
                 response_text = get_groq_response(
                     input_text=transcription,
-                    model="llama3-8b-8192",
+                    model="llama-3.3-70b-versatile",
                     history=conversation_history,
                     system_prompt=system_prompt
                 )
@@ -815,7 +815,7 @@ def process_audio():
             # First interaction or empty history
             response_text = get_groq_response(
                 input_text=transcription,
-                model="llama3-8b-8192",
+                model="llama-3.3-70b-versatile",
                 system_prompt=system_prompt
             )
         
@@ -1039,7 +1039,7 @@ def diagnose_api():
     # Test Groq API connection
     try:
         # Simple test that doesn't require audio
-        test_response = get_groq_response("Hello, this is a test.", model="llama3-8b-8192")
+        test_response = get_groq_response("Hello, this is a test.", model="llama-3.3-70b-versatile")
         results["tests"]["groq_text_api"] = "SUCCESS" if test_response else "FAILED"
     except Exception as e:
         results["tests"]["groq_text_api"] = f"ERROR: {str(e)}"

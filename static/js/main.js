@@ -42,8 +42,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     let currentAudioSource = null; // Track current audio source for interruption
     let microphoneSetup = false;
 
-    // NEW: Multi-agent conversation state
-    let multiAgentMode = false;
+    // NEW: Multi-agent conversation state (default to conference mode)
+    let multiAgentMode = true;
     let activeAgents = [];
     let currentMultiAgentConversationId = null;
 
@@ -526,6 +526,42 @@ document.addEventListener('DOMContentLoaded', async () => {
             updateStatus('Error processing audio');
         }
     }
+
+    // Auto-start a conference call with two default personas on load
+    async function autoStartConference() {
+        try {
+            // Only start if not already in a multi-agent conversation
+            if (multiAgentMode && currentConversationId) {
+                return;
+            }
+            const selectedAgents = ['optimistic_debater', 'negative_debater'];
+            const response = await fetch('/api/multi-agent/create', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ agent_ids: selectedAgents })
+            });
+            const data = await response.json();
+            if (data.status === 'success') {
+                multiAgentMode = true;
+                activeAgents = data.active_agents;
+                currentMultiAgentConversationId = data.conversation_id;
+                currentConversationId = data.conversation_id;
+                if (!audioContext) {
+                    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                conversationElement.innerHTML = '';
+                updateUIForMultiAgent();
+                console.log('Conference mode auto-started with agents:', activeAgents.map(a => a.name));
+            } else {
+                console.warn('Auto-start conference failed:', data.message);
+            }
+        } catch (err) {
+            console.warn('Auto-start conference error:', err);
+        }
+    }
+
+    // Kick off conference mode by default
+    autoStartConference();
 
     function addMultiAgentMessage(response) {
         const messageDiv = document.createElement('div');
